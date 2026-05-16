@@ -26,7 +26,7 @@ class TDL_Admin_Status {
      */
     public static function add_status_page() {
         add_submenu_page(
-            'edit.php?post_type=tdl_distributor',
+            'edit.php?post_type=distributor',
             __('Geocoding Status', 'taylor-distributor-locator'),
             __('Geocoding Status', 'taylor-distributor-locator'),
             'manage_options',
@@ -39,7 +39,7 @@ class TDL_Admin_Status {
      * Enqueue scripts for status page
      */
     public static function enqueue_scripts($hook) {
-        if ($hook !== 'tdl_distributor_page_tdl-geo-status') {
+        if ($hook !== 'distributor_page_tdl-geo-status') {
             return;
         }
         

@@ -13,13 +13,12 @@ class TDL_Post_Type {
      * Initialize the class
      */
     public static function init() {
-        add_action('init', [__CLASS__, 'register_post_type']);
-        add_action('save_post_tdl_distributor', [__CLASS__, 'update_data_version']);
-        
+        add_action('save_post_distributor', [__CLASS__, 'update_data_version']);
+
         // Custom Columns
-        add_filter('manage_edit-tdl_distributor_columns', [__CLASS__, 'add_custom_columns']);
-        add_action('manage_tdl_distributor_posts_custom_column', [__CLASS__, 'render_custom_columns'], 10, 2);
-        add_filter('manage_edit-tdl_distributor_sortable_columns', [__CLASS__, 'sortable_columns']);
+        add_filter('manage_edit-distributor_columns', [__CLASS__, 'add_custom_columns']);
+        add_action('manage_distributor_posts_custom_column', [__CLASS__, 'render_custom_columns'], 10, 2);
+        add_filter('manage_edit-distributor_sortable_columns', [__CLASS__, 'sortable_columns']);
         
         // Sorting
         add_action('pre_get_posts', [__CLASS__, 'default_sort_order']);
@@ -40,7 +39,7 @@ class TDL_Post_Type {
      * Enqueue scripts for the distributor list table
      */
     public static function enqueue_admin_scripts($hook) {
-        if ($hook !== 'edit.php' || get_post_type() !== 'tdl_distributor') {
+        if ($hook !== 'edit.php' || get_post_type() !== 'distributor') {
             return;
         }
 
@@ -68,7 +67,7 @@ class TDL_Post_Type {
      * Render filter dropdown
      */
     public static function filter_by_geocode_status($post_type) {
-        if ($post_type !== 'tdl_distributor') {
+        if ($post_type !== 'distributor') {
             return;
         }
 
@@ -97,7 +96,7 @@ class TDL_Post_Type {
      * Handle filter logic
      */
     public static function handle_geocode_status_filter($query) {
-        if (!is_admin() || !$query->is_main_query() || $query->get('post_type') !== 'tdl_distributor') {
+        if (!is_admin() || !$query->is_main_query() || $query->get('post_type') !== 'distributor') {
             return;
         }
 
@@ -183,43 +182,6 @@ class TDL_Post_Type {
         wp_send_json_success($result);
     }
 
-    /**
-     * Register the distributor post type
-     */
-    public static function register_post_type() {
-        $labels = [
-            'name'                  => _x('Distributors', 'Post type general name', 'taylor-distributor-locator'),
-            'singular_name'         => _x('Distributor', 'Post type singular name', 'taylor-distributor-locator'),
-            'menu_name'             => _x('Distributors', 'Admin Menu text', 'taylor-distributor-locator'),
-            'name_admin_bar'        => _x('Distributor', 'Add New on Toolbar', 'taylor-distributor-locator'),
-            'add_new'               => __('Add New', 'taylor-distributor-locator'),
-            'add_new_item'          => __('Add New Distributor', 'taylor-distributor-locator'),
-            'new_item'              => __('New Distributor', 'taylor-distributor-locator'),
-            'edit_item'             => __('Edit Distributor', 'taylor-distributor-locator'),
-            'view_item'             => __('View Distributor', 'taylor-distributor-locator'),
-            'all_items'             => __('All Distributors', 'taylor-distributor-locator'),
-            'search_items'          => __('Search Distributors', 'taylor-distributor-locator'),
-            'not_found'             => __('No distributors found.', 'taylor-distributor-locator'),
-            'not_found_in_trash'    => __('No distributors found in Trash.', 'taylor-distributor-locator'),
-        ];
-        
-        $args = [
-            'labels'              => $labels,
-            'public'              => false,
-            'show_ui'             => true,
-            'show_in_menu'        => true,
-            'menu_position'       => 25,
-            'menu_icon'           => 'dashicons-location-alt',
-            'supports'            => ['title', 'thumbnail'],
-            'has_archive'         => false,
-            'publicly_queryable'  => false,
-            'show_in_rest'        => true,
-            'capability_type'     => 'post',
-        ];
-        
-        register_post_type('tdl_distributor', $args);
-    }
-    
     /**
      * Update data version on save
      */
@@ -383,7 +345,7 @@ class TDL_Post_Type {
      * Set default sort order
      */
     public static function default_sort_order($query) {
-        if (!is_admin() || !$query->is_main_query() || $query->get('post_type') !== 'tdl_distributor') {
+        if (!is_admin() || !$query->is_main_query() || $query->get('post_type') !== 'distributor') {
             return;
         }
 

@@ -22,7 +22,7 @@ class TDL_CSV_Exporter {
      */
     public static function add_export_page() {
         add_submenu_page(
-            'edit.php?post_type=tdl_distributor',
+            'edit.php?post_type=distributor',
             __('Export CSV', 'taylor-distributor-locator'),
             __('Export CSV', 'taylor-distributor-locator'),
             'manage_options',
@@ -105,7 +105,7 @@ class TDL_CSV_Exporter {
         
         // Fetch all distributors
         $distributors = get_posts([
-            'post_type' => 'tdl_distributor',
+            'post_type' => 'distributor',
             'posts_per_page' => -1,
             'post_status' => 'any',
         ]);
@@ -118,14 +118,14 @@ class TDL_CSV_Exporter {
             // Get Metadata
             $meta = [
                 'company_name' => $distributor->post_title,
-                'website' => get_post_meta($distributor->ID, '_tdl_website', true),
-                'phone' => get_post_meta($distributor->ID, '_tdl_phone_main', true),
-                'email_main' => get_post_meta($distributor->ID, '_tdl_email_main', true),
-                'email_sales' => get_post_meta($distributor->ID, '_tdl_email_sales', true),
-                'email_parts' => get_post_meta($distributor->ID, '_tdl_email_parts', true),
-                'email_service' => get_post_meta($distributor->ID, '_tdl_email_service', true),
-                'email_installations' => get_post_meta($distributor->ID, '_tdl_email_installs', true),
-                'service_area_notes' => get_post_meta($distributor->ID, '_tdl_service_area_notes', true),
+                'website' => get_post_meta($distributor->ID, 'wpcf-website', true),
+                'phone' => get_post_meta($distributor->ID, 'wpcf-phone', true),
+                'email_main' => get_post_meta($distributor->ID, 'wpcf-email_main', true),
+                'email_sales' => get_post_meta($distributor->ID, 'wpcf-email_sales', true),
+                'email_parts' => get_post_meta($distributor->ID, 'wpcf-email_parts', true),
+                'email_service' => get_post_meta($distributor->ID, 'wpcf-email_service', true),
+                'email_installations' => get_post_meta($distributor->ID, 'wpcf-email_installations', true),
+                'service_area_notes' => get_post_meta($distributor->ID, 'wpcf-service_area_description', true),
             ];
             
             // Get Service Zones

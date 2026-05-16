@@ -268,13 +268,13 @@ class TDL_REST_API {
 
         // Count total matches
         $count_sql = "SELECT COUNT(DISTINCT ID) FROM {$wpdb->posts} 
-                WHERE post_type = 'tdl_distributor' AND post_status = 'publish' 
+                WHERE post_type = 'distributor' AND post_status = 'publish' 
                 AND ({$where_clause})";
         $total = (int) $wpdb->get_var($wpdb->prepare($count_sql, $params));
 
         // Main Query with ORDER BY and pagination
         $sql = "SELECT DISTINCT ID FROM {$wpdb->posts} 
-                WHERE post_type = 'tdl_distributor' AND post_status = 'publish' 
+                WHERE post_type = 'distributor' AND post_status = 'publish' 
                 AND ({$where_clause})
                 ORDER BY post_title ASC
                 LIMIT %d OFFSET %d";
@@ -346,7 +346,7 @@ class TDL_REST_API {
         $total = (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(DISTINCT z.distributor_id) FROM {$zones_table} z
              JOIN {$wpdb->posts} p ON z.distributor_id = p.ID
-             WHERE p.post_status = 'publish' AND p.post_type = 'tdl_distributor'
+             WHERE p.post_status = 'publish' AND p.post_type = 'distributor'
              AND ((z.zone_type = 'zip' AND z.zone_value = %s)
                 OR (z.zone_type = 'zip_range' AND z.range_start <= %d AND z.range_end >= %d))",
             $zip, $zip_int, $zip_int
@@ -356,7 +356,7 @@ class TDL_REST_API {
         $paged_ids = $wpdb->get_col($wpdb->prepare(
             "SELECT DISTINCT z.distributor_id FROM {$zones_table} z
              JOIN {$wpdb->posts} p ON z.distributor_id = p.ID
-             WHERE p.post_status = 'publish' AND p.post_type = 'tdl_distributor'
+             WHERE p.post_status = 'publish' AND p.post_type = 'distributor'
              AND ((z.zone_type = 'zip' AND z.zone_value = %s)
                 OR (z.zone_type = 'zip_range' AND z.range_start <= %d AND z.range_end >= %d))
              ORDER BY p.post_title ASC
@@ -407,7 +407,7 @@ class TDL_REST_API {
             $total = (int) $wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(DISTINCT l.distributor_id) FROM {$locations_table} l
                  JOIN {$wpdb->posts} p ON l.distributor_id = p.ID
-                 WHERE p.post_status = 'publish' AND p.post_type = 'tdl_distributor'
+                 WHERE p.post_status = 'publish' AND p.post_type = 'distributor'
                  AND l.city LIKE %s AND l.state_province = %s",
                 '%' . $wpdb->esc_like($city) . '%',
                 $state_code
@@ -416,7 +416,7 @@ class TDL_REST_API {
             $paged_ids = $wpdb->get_col($wpdb->prepare(
                 "SELECT DISTINCT l.distributor_id FROM {$locations_table} l
                  JOIN {$wpdb->posts} p ON l.distributor_id = p.ID
-                 WHERE p.post_status = 'publish' AND p.post_type = 'tdl_distributor'
+                 WHERE p.post_status = 'publish' AND p.post_type = 'distributor'
                  AND l.city LIKE %s AND l.state_province = %s
                  ORDER BY p.post_title ASC
                  LIMIT %d OFFSET %d",
@@ -430,7 +430,7 @@ class TDL_REST_API {
             $total = (int) $wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(DISTINCT l.distributor_id) FROM {$locations_table} l
                  JOIN {$wpdb->posts} p ON l.distributor_id = p.ID
-                 WHERE p.post_status = 'publish' AND p.post_type = 'tdl_distributor'
+                 WHERE p.post_status = 'publish' AND p.post_type = 'distributor'
                  AND l.city LIKE %s",
                 '%' . $wpdb->esc_like($city) . '%'
             ));
@@ -438,7 +438,7 @@ class TDL_REST_API {
             $paged_ids = $wpdb->get_col($wpdb->prepare(
                 "SELECT DISTINCT l.distributor_id FROM {$locations_table} l
                  JOIN {$wpdb->posts} p ON l.distributor_id = p.ID
-                 WHERE p.post_status = 'publish' AND p.post_type = 'tdl_distributor'
+                 WHERE p.post_status = 'publish' AND p.post_type = 'distributor'
                  AND l.city LIKE %s
                  ORDER BY p.post_title ASC
                  LIMIT %d OFFSET %d",
@@ -476,7 +476,7 @@ class TDL_REST_API {
         $total = (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(DISTINCT z.distributor_id) FROM {$zones_table} z
              JOIN {$wpdb->posts} p ON z.distributor_id = p.ID
-             WHERE p.post_status = 'publish' AND p.post_type = 'tdl_distributor'
+             WHERE p.post_status = 'publish' AND p.post_type = 'distributor'
              AND z.zone_type = 'state' AND z.zone_value = %s AND z.country_context = %s",
             $state_code, $country_code
         ));
@@ -485,7 +485,7 @@ class TDL_REST_API {
         $paged_ids = $wpdb->get_col($wpdb->prepare(
             "SELECT DISTINCT z.distributor_id FROM {$zones_table} z
              JOIN {$wpdb->posts} p ON z.distributor_id = p.ID
-             WHERE p.post_status = 'publish' AND p.post_type = 'tdl_distributor'
+             WHERE p.post_status = 'publish' AND p.post_type = 'distributor'
              AND z.zone_type = 'state' AND z.zone_value = %s AND z.country_context = %s
              ORDER BY p.post_title ASC
              LIMIT %d OFFSET %d",
@@ -525,7 +525,7 @@ class TDL_REST_API {
             $total = (int) $wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(DISTINCT z.distributor_id) FROM {$zones_table} z
                  JOIN {$wpdb->posts} p ON z.distributor_id = p.ID
-                 WHERE p.post_status = 'publish' AND p.post_type = 'tdl_distributor'
+                 WHERE p.post_status = 'publish' AND p.post_type = 'distributor'
                  AND z.country_context = %s",
                 $country_code
             ));
@@ -533,7 +533,7 @@ class TDL_REST_API {
             $paged_ids = $wpdb->get_col($wpdb->prepare(
                 "SELECT DISTINCT z.distributor_id FROM {$zones_table} z
                  JOIN {$wpdb->posts} p ON z.distributor_id = p.ID
-                 WHERE p.post_status = 'publish' AND p.post_type = 'tdl_distributor'
+                 WHERE p.post_status = 'publish' AND p.post_type = 'distributor'
                  AND z.country_context = %s
                  ORDER BY p.post_title ASC
                  LIMIT %d OFFSET %d",
@@ -544,7 +544,7 @@ class TDL_REST_API {
             $total = (int) $wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(DISTINCT z.distributor_id) FROM {$zones_table} z
                  JOIN {$wpdb->posts} p ON z.distributor_id = p.ID
-                 WHERE p.post_status = 'publish' AND p.post_type = 'tdl_distributor'
+                 WHERE p.post_status = 'publish' AND p.post_type = 'distributor'
                  AND z.zone_type = 'country' AND z.zone_value = %s",
                 $country_code
             ));
@@ -552,7 +552,7 @@ class TDL_REST_API {
             $paged_ids = $wpdb->get_col($wpdb->prepare(
                 "SELECT DISTINCT z.distributor_id FROM {$zones_table} z
                  JOIN {$wpdb->posts} p ON z.distributor_id = p.ID
-                 WHERE p.post_status = 'publish' AND p.post_type = 'tdl_distributor'
+                 WHERE p.post_status = 'publish' AND p.post_type = 'distributor'
                  AND z.zone_type = 'country' AND z.zone_value = %s
                  ORDER BY p.post_title ASC
                  LIMIT %d OFFSET %d",
@@ -666,7 +666,7 @@ class TDL_REST_API {
         
         // Batch fetch all posts at once
         $posts = get_posts([
-            'post_type' => 'tdl_distributor',
+            'post_type' => 'distributor',
             'post_status' => 'publish',
             'post__in' => $ids,
             'orderby' => 'post__in', // Preserve the SQL-sorted order from caller
@@ -735,23 +735,18 @@ class TDL_REST_API {
                 ];
             }
             
-            // Get email_other (meta already cached by update_postmeta_cache)
-            $email_other = get_post_meta($id, '_tdl_email_other', true);
-            $email_other = $email_other ? json_decode($email_other, true) : [];
-            
             $results[] = [
                 'id' => $id,
                 'name' => $post->post_title,
-                'phone' => get_post_meta($id, '_tdl_phone_main', true),
-                'website' => get_post_meta($id, '_tdl_website', true),
-                'service_area_notes' => get_post_meta($id, '_tdl_service_area_notes', true),
+                'phone' => get_post_meta($id, 'wpcf-phone', true),
+                'website' => get_post_meta($id, 'wpcf-website', true),
+                'service_area_notes' => get_post_meta($id, 'wpcf-service_area_description', true),
                 'emails' => [
-                    'main' => get_post_meta($id, '_tdl_email_main', true),
-                    'sales' => get_post_meta($id, '_tdl_email_sales', true),
-                    'parts' => get_post_meta($id, '_tdl_email_parts', true),
-                    'service' => get_post_meta($id, '_tdl_email_service', true),
-                    'installations' => get_post_meta($id, '_tdl_email_installs', true),
-                    'other' => $email_other,
+                    'main' => get_post_meta($id, 'wpcf-email_main', true),
+                    'sales' => get_post_meta($id, 'wpcf-email_sales', true),
+                    'parts' => get_post_meta($id, 'wpcf-email_parts', true),
+                    'service' => get_post_meta($id, 'wpcf-email_service', true),
+                    'installations' => get_post_meta($id, 'wpcf-email_installations', true),
                 ],
                 'locations' => $location_data,
             ];

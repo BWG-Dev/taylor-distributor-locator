@@ -25,7 +25,7 @@ class TDL_Admin_Settings {
      */
     public static function add_settings_page() {
         add_submenu_page(
-            'edit.php?post_type=tdl_distributor',
+            'edit.php?post_type=distributor',
             __('Settings', 'taylor-distributor-locator'),
             __('Settings', 'taylor-distributor-locator'),
             'manage_options',
@@ -314,7 +314,7 @@ class TDL_Admin_Settings {
     public static function render_settings_scripts() {
         // Only render on our settings page
         $screen = get_current_screen();
-        if (!$screen || $screen->id !== 'tdl_distributor_page_tdl-settings') {
+        if (!$screen || $screen->id !== 'distributor_page_tdl-settings') {
             return;
         }
         ?>
@@ -356,7 +356,7 @@ class TDL_Admin_Settings {
      */
     public static function render_clear_cache_field() {
         $clear_url = wp_nonce_url(
-            admin_url('edit.php?post_type=tdl_distributor&page=tdl-settings&action=clear_cache'),
+            admin_url('edit.php?post_type=distributor&page=tdl-settings&action=clear_cache'),
             'tdl_clear_cache_nonce',
             'tdl_nonce'
         );
@@ -395,7 +395,7 @@ class TDL_Admin_Settings {
         update_option('tdl_data_version', time());
 
         // Redirect back to settings with success message
-        wp_redirect(admin_url('edit.php?post_type=tdl_distributor&page=tdl-settings&settings-updated=cache_cleared'));
+        wp_redirect(admin_url('edit.php?post_type=distributor&page=tdl-settings&settings-updated=cache_cleared'));
         exit;
     }
 

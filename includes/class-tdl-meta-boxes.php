@@ -14,7 +14,7 @@ class TDL_Meta_Boxes {
      */
     public static function init() {
         add_action('add_meta_boxes', [__CLASS__, 'add_meta_boxes']);
-        add_action('save_post_tdl_distributor', [__CLASS__, 'save_meta_boxes'], 10, 2);
+        add_action('save_post_distributor', [__CLASS__, 'save_meta_boxes'], 10, 2);
         add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_scripts']);
         add_action('admin_notices', [__CLASS__, 'show_geocode_notices']);
     }
@@ -25,7 +25,7 @@ class TDL_Meta_Boxes {
     public static function enqueue_scripts($hook) {
         global $post_type;
         
-        if ($post_type !== 'tdl_distributor') {
+        if ($post_type !== 'distributor') {
             return;
         }
         
@@ -78,28 +78,19 @@ class TDL_Meta_Boxes {
      */
     public static function add_meta_boxes() {
         add_meta_box(
-            'tdl_contact_info',
-            __('Contact Information', 'taylor-distributor-locator'),
-            [__CLASS__, 'render_contact_meta_box'],
-            'tdl_distributor',
-            'normal',
-            'high'
-        );
-        
-        add_meta_box(
             'tdl_locations',
             __('Physical Locations', 'taylor-distributor-locator'),
             [__CLASS__, 'render_locations_meta_box'],
-            'tdl_distributor',
+            'distributor',
             'normal',
             'high'
         );
-        
+
         add_meta_box(
             'tdl_service_zones',
             __('Service Zones', 'taylor-distributor-locator'),
             [__CLASS__, 'render_service_zones_meta_box'],
-            'tdl_distributor',
+            'distributor',
             'normal',
             'high'
         );
@@ -108,36 +99,17 @@ class TDL_Meta_Boxes {
             'tdl_parent_distributor',
             __('Parent Distributor', 'taylor-distributor-locator'),
             [__CLASS__, 'render_parent_meta_box'],
-            'tdl_distributor',
+            'distributor',
             'side',
             'default'
         );
     }
     
     /**
-     * Render contact information meta box
-     */
-    public static function render_contact_meta_box($post) {
-        wp_nonce_field('tdl_save_meta_boxes', 'tdl_meta_nonce');
-        
-        $website = get_post_meta($post->ID, '_tdl_website', true);
-        $phone = get_post_meta($post->ID, '_tdl_phone_main', true);
-        $email_main = get_post_meta($post->ID, '_tdl_email_main', true);
-        $email_sales = get_post_meta($post->ID, '_tdl_email_sales', true);
-        $email_parts = get_post_meta($post->ID, '_tdl_email_parts', true);
-        $email_service = get_post_meta($post->ID, '_tdl_email_service', true);
-        $email_installs = get_post_meta($post->ID, '_tdl_email_installs', true);
-        $email_other = get_post_meta($post->ID, '_tdl_email_other', true);
-        $email_other = $email_other ? json_decode($email_other, true) : [];
-        $notes = get_post_meta($post->ID, '_tdl_service_area_notes', true);
-        
-        include TDL_PLUGIN_DIR . 'templates/admin/meta-box-contacts.php';
-    }
-    
-    /**
      * Render physical locations meta box
      */
     public static function render_locations_meta_box($post) {
+        wp_nonce_field('tdl_save_meta_boxes', 'tdl_meta_nonce');
         global $wpdb;
         
         $table = $wpdb->prefix . 'tdl_locations';
@@ -195,7 +167,7 @@ class TDL_Meta_Boxes {
         $current_parent_id = (int) get_post_meta($post->ID, '_tdl_parent_id', true);
 
         $distributors = get_posts([
-            'post_type'   => 'tdl_distributor',
+            'post_type'   => 'distributor',
             'post_status' => 'publish',
             'numberposts' => -1,
             'orderby'     => 'title',
@@ -239,9 +211,6 @@ class TDL_Meta_Boxes {
             return;
         }
         
-        // Save contact info
-        self::save_contact_info($post_id);
-        
         // Save locations
         self::save_locations($post_id);
         
@@ -258,52 +227,6 @@ class TDL_Meta_Boxes {
         
         // Clear search cache
         self::clear_search_cache();
-    }
-    
-    /**
-     * Save contact information
-     */
-    private static function save_contact_info($post_id) {
-        $fields = [
-            '_tdl_website' => 'esc_url_raw',
-            '_tdl_phone_main' => 'sanitize_text_field',
-            '_tdl_email_main' => 'sanitize_email',
-            '_tdl_email_sales' => 'sanitize_email',
-            '_tdl_email_parts' => 'sanitize_email',
-            '_tdl_email_service' => 'sanitize_email',
-            '_tdl_email_installs' => 'sanitize_email',
-            '_tdl_service_area_notes' => 'sanitize_textarea_field',
-        ];
-        
-        foreach ($fields as $key => $sanitize) {
-            if (isset($_POST[$key])) {
-                $value = call_user_func($sanitize, $_POST[$key]);
-                update_post_meta($post_id, $key, $value);
-            }
-        }
-        
-        // Handle additional emails (repeater)
-        if (isset($_POST['_tdl_email_other_label']) && is_array($_POST['_tdl_email_other_label'])) {
-            $other_emails = [];
-            $labels = $_POST['_tdl_email_other_label'];
-            $emails = $_POST['_tdl_email_other_email'] ?? [];
-            
-            foreach ($labels as $i => $label) {
-                $label = sanitize_text_field($label);
-                $email = isset($emails[$i]) ? sanitize_email($emails[$i]) : '';
-                
-                if (!empty($label) && !empty($email)) {
-                    $other_emails[] = [
-                        'label' => $label,
-                        'email' => $email,
-                    ];
-                }
-            }
-            
-            update_post_meta($post_id, '_tdl_email_other', wp_json_encode($other_emails));
-        } else {
-            update_post_meta($post_id, '_tdl_email_other', '[]');
-        }
     }
     
     /**
@@ -475,7 +398,7 @@ class TDL_Meta_Boxes {
         // Verify the referenced post is a valid published distributor
         if ($parent_id > 0) {
             $parent_post = get_post($parent_id);
-            if (!$parent_post || $parent_post->post_type !== 'tdl_distributor') {
+            if (!$parent_post || $parent_post->post_type !== 'distributor') {
                 $parent_id = 0;
             }
         }
@@ -502,7 +425,7 @@ class TDL_Meta_Boxes {
     public static function show_geocode_notices() {
         global $post;
         
-        if (!$post || $post->post_type !== 'tdl_distributor') {
+        if (!$post || $post->post_type !== 'distributor') {
             return;
         }
         

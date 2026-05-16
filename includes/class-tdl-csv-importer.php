@@ -23,7 +23,7 @@ class TDL_CSV_Importer {
      */
     public static function add_import_page() {
         add_submenu_page(
-            'edit.php?post_type=tdl_distributor',
+            'edit.php?post_type=distributor',
             __('Import CSV', 'taylor-distributor-locator'),
             __('Import CSV', 'taylor-distributor-locator'),
             'manage_options',
@@ -36,7 +36,7 @@ class TDL_CSV_Importer {
      * Enqueue scripts for import page
      */
     public static function enqueue_scripts($hook) {
-        if ($hook !== 'tdl_distributor_page_tdl-csv-import') {
+        if ($hook !== 'distributor_page_tdl-csv-import') {
             return;
         }
         
@@ -165,7 +165,7 @@ class TDL_CSV_Importer {
         
         // Check if distributor exists
         $existing = get_posts([
-            'post_type' => 'tdl_distributor',
+            'post_type' => 'distributor',
             'title' => $company_name,
             'post_status' => 'any',
             'numberposts' => 1,
@@ -183,7 +183,7 @@ class TDL_CSV_Importer {
             ]);
         } else {
             $post_id = wp_insert_post([
-                'post_type' => 'tdl_distributor',
+                'post_type' => 'distributor',
                 'post_title' => $company_name,
                 'post_status' => 'publish',
             ]);
@@ -195,14 +195,14 @@ class TDL_CSV_Importer {
         
         // Update meta fields
         $meta_fields = [
-            'phone' => '_tdl_phone_main',
-            'website' => '_tdl_website',
-            'email_main' => '_tdl_email_main',
-            'email_sales' => '_tdl_email_sales',
-            'email_parts' => '_tdl_email_parts',
-            'email_service' => '_tdl_email_service',
-            'email_installations' => '_tdl_email_installs',
-            'service_area_notes' => '_tdl_service_area_notes',
+            'phone' => 'wpcf-phone',
+            'website' => 'wpcf-website',
+            'email_main' => 'wpcf-email_main',
+            'email_sales' => 'wpcf-email_sales',
+            'email_parts' => 'wpcf-email_parts',
+            'email_service' => 'wpcf-email_service',
+            'email_installations' => 'wpcf-email_installations',
+            'service_area_notes' => 'wpcf-service_area_description',
         ];
         
         foreach ($meta_fields as $csv_col => $meta_key) {
