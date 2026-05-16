@@ -103,6 +103,15 @@ class TDL_Meta_Boxes {
             'normal',
             'high'
         );
+
+        add_meta_box(
+            'tdl_parent_distributor',
+            __('Parent Distributor', 'taylor-distributor-locator'),
+            [__CLASS__, 'render_parent_meta_box'],
+            'tdl_distributor',
+            'side',
+            'default'
+        );
     }
     
     /**
@@ -178,7 +187,39 @@ class TDL_Meta_Boxes {
         
         include TDL_PLUGIN_DIR . 'templates/admin/meta-box-service-zones.php';
     }
-    
+
+    /**
+     * Render parent distributor meta box (sidebar)
+     */
+    public static function render_parent_meta_box($post) {
+        $current_parent_id = (int) get_post_meta($post->ID, '_tdl_parent_id', true);
+
+        $distributors = get_posts([
+            'post_type'   => 'tdl_distributor',
+            'post_status' => 'publish',
+            'numberposts' => -1,
+            'orderby'     => 'title',
+            'order'       => 'ASC',
+            'exclude'     => [$post->ID],
+        ]);
+
+        echo '<p><label for="_tdl_parent_id">'
+            . esc_html__('Parent company (leave blank if top-level):', 'taylor-distributor-locator')
+            . '</label></p>';
+        echo '<select name="_tdl_parent_id" id="_tdl_parent_id" style="width:100%">';
+        echo '<option value="0">' . esc_html__('— None —', 'taylor-distributor-locator') . '</option>';
+        foreach ($distributors as $distributor) {
+            printf(
+                '<option value="%d" %s>%s</option>',
+                $distributor->ID,
+                selected($current_parent_id, $distributor->ID, false),
+                esc_html($distributor->post_title)
+            );
+        }
+        echo '</select>';
+        echo '<p class="description">' . esc_html__('Only set this for branch locations that belong to a parent company.', 'taylor-distributor-locator') . '</p>';
+    }
+
     /**
      * Save meta box data
      */
@@ -206,7 +247,10 @@ class TDL_Meta_Boxes {
         
         // Save service zones
         self::save_service_zones($post_id);
-        
+
+        // Save parent relationship
+        self::save_parent_info($post_id);
+
         // Schedule geocoding for locations missing coordinates (runs in background)
         if (!wp_next_scheduled('tdl_geocode_distributor', [$post_id])) {
             wp_schedule_single_event(time(), 'tdl_geocode_distributor', [$post_id]);
@@ -413,6 +457,32 @@ class TDL_Meta_Boxes {
         }
     }
     
+    /**
+     * Save parent distributor relationship
+     */
+    private static function save_parent_info($post_id) {
+        if (!isset($_POST['_tdl_parent_id'])) {
+            return;
+        }
+
+        $parent_id = absint($_POST['_tdl_parent_id']);
+
+        // Prevent a distributor from being its own parent
+        if ($parent_id === $post_id) {
+            $parent_id = 0;
+        }
+
+        // Verify the referenced post is a valid published distributor
+        if ($parent_id > 0) {
+            $parent_post = get_post($parent_id);
+            if (!$parent_post || $parent_post->post_type !== 'tdl_distributor') {
+                $parent_id = 0;
+            }
+        }
+
+        update_post_meta($post_id, '_tdl_parent_id', $parent_id);
+    }
+
     /**
      * Clear search result cache
      */

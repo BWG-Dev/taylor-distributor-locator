@@ -234,11 +234,14 @@ class TDL_Post_Type {
         $new_columns = [];
         foreach ($columns as $key => $title) {
             $new_columns[$key] = $title;
-            // Insert after title
             if ($key === 'title') {
+                $new_columns['tdl_city']            = __('City', 'taylor-distributor-locator');
+                $new_columns['tdl_state']           = __('State', 'taylor-distributor-locator');
+                $new_columns['tdl_country']         = __('Country', 'taylor-distributor-locator');
+                $new_columns['tdl_parent']          = __('Parent', 'taylor-distributor-locator');
                 $new_columns['tdl_locations_count'] = __('Locations', 'taylor-distributor-locator');
-                $new_columns['tdl_service_area'] = __('Service Area', 'taylor-distributor-locator');
-                $new_columns['tdl_geocode_status'] = __('Geocode Status', 'taylor-distributor-locator');
+                $new_columns['tdl_service_area']    = __('Service Area', 'taylor-distributor-locator');
+                $new_columns['tdl_geocode_status']  = __('Geocode Status', 'taylor-distributor-locator');
             }
         }
         return $new_columns;
@@ -251,6 +254,40 @@ class TDL_Post_Type {
         global $wpdb;
 
         switch ($column) {
+            case 'tdl_city':
+            case 'tdl_state':
+            case 'tdl_country':
+                static $location_cache = [];
+                if ( ! array_key_exists( $post_id, $location_cache ) ) {
+                    $location_cache[ $post_id ] = $wpdb->get_row( $wpdb->prepare(
+                        "SELECT city, state_province, country_code
+                         FROM {$wpdb->prefix}tdl_locations
+                         WHERE distributor_id = %d
+                         ORDER BY is_primary DESC, sort_order ASC
+                         LIMIT 1",
+                        $post_id
+                    ) );
+                }
+                $loc = $location_cache[ $post_id ];
+                if ( $column === 'tdl_city' ) {
+                    echo $loc && $loc->city ? esc_html( $loc->city ) : '&mdash;';
+                } elseif ( $column === 'tdl_state' ) {
+                    echo $loc && $loc->state_province ? esc_html( $loc->state_province ) : '&mdash;';
+                } else {
+                    echo $loc && $loc->country_code ? esc_html( $loc->country_code ) : '&mdash;';
+                }
+                break;
+
+            case 'tdl_parent':
+                $parent_id = (int) get_post_meta( $post_id, '_tdl_parent_id', true );
+                if ( $parent_id > 0 ) {
+                    $parent_title = get_the_title( $parent_id );
+                    echo $parent_title ? esc_html( $parent_title ) : '&mdash;';
+                } else {
+                    echo '&mdash;';
+                }
+                break;
+
             case 'tdl_locations_count':
                 $count = $wpdb->get_var($wpdb->prepare(
                     "SELECT COUNT(*) FROM {$wpdb->prefix}tdl_locations WHERE distributor_id = %d",
