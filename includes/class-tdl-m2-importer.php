@@ -14,7 +14,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TDL_M2_Importer {
 
-	const CSV_FILENAME      = 'Taylor distributors - data.csv';
 	const EXPECTED_COUNT    = 164;
 	const RESULTS_TRANSIENT = 'tdl_m2_import_results';
 
@@ -43,13 +42,10 @@ class TDL_M2_Importer {
 			return;
 		}
 
-		$csv_path   = TDL_PLUGIN_DIR . self::CSV_FILENAME;
-		$csv_exists = file_exists( $csv_path );
-
 		global $wpdb;
 		$current_count = (int) $wpdb->get_var(
 			"SELECT COUNT(*) FROM {$wpdb->posts}
-			 WHERE post_type = 'distributor' AND post_status != 'trash'"
+			 WHERE post_type = 'distributor' AND post_status = 'publish'"
 		);
 
 		$results = get_transient( self::RESULTS_TRANSIENT );
@@ -63,23 +59,11 @@ class TDL_M2_Importer {
 			<div class="notice notice-warning inline">
 				<p>
 					<strong><?php esc_html_e( 'One-time developer tool.', 'taylor-distributor-locator' ); ?></strong>
-					<?php esc_html_e( 'Imports the initial 164 records. Run once on a clean database. For ongoing self-service imports use M4 (Import CSV).', 'taylor-distributor-locator' ); ?>
+					<?php esc_html_e( 'Imports the initial distributor records. Run once on a clean database. For ongoing self-service imports use M4 (Import CSV).', 'taylor-distributor-locator' ); ?>
 				</p>
 			</div>
 
 			<table class="form-table" style="max-width:600px">
-				<tr>
-					<th><?php esc_html_e( 'CSV File', 'taylor-distributor-locator' ); ?></th>
-					<td>
-						<?php if ( $csv_exists ) : ?>
-							<span class="dashicons dashicons-yes" style="color:#46b450;"></span>
-							<code><?php echo esc_html( self::CSV_FILENAME ); ?></code>
-						<?php else : ?>
-							<span class="dashicons dashicons-no" style="color:#dc3232;"></span>
-							<?php esc_html_e( 'File not found in plugin directory.', 'taylor-distributor-locator' ); ?>
-						<?php endif; ?>
-					</td>
-				</tr>
 				<tr>
 					<th><?php esc_html_e( 'Current Distributors', 'taylor-distributor-locator' ); ?></th>
 					<td>
@@ -93,19 +77,29 @@ class TDL_M2_Importer {
 				</tr>
 			</table>
 
-			<?php if ( $csv_exists ) : ?>
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<?php wp_nonce_field( 'tdl_m2_import', 'tdl_m2_nonce' ); ?>
 				<input type="hidden" name="action" value="tdl_m2_import">
-				<p>
-					<label>
-						<input type="checkbox" name="dry_run" value="1" checked>
-						<?php esc_html_e( 'Dry run — preview only, no database changes', 'taylor-distributor-locator' ); ?>
-					</label>
-				</p>
+				<table class="form-table" style="max-width:600px">
+					<tr>
+						<th><label for="tdl_csv_file"><?php esc_html_e( 'CSV File', 'taylor-distributor-locator' ); ?></label></th>
+						<td>
+							<input type="file" name="tdl_csv_file" id="tdl_csv_file" accept=".csv" required>
+							<p class="description"><?php esc_html_e( 'Select the distributor CSV file to import.', 'taylor-distributor-locator' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th><?php esc_html_e( 'Mode', 'taylor-distributor-locator' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="dry_run" value="1" checked>
+								<?php esc_html_e( 'Dry run — preview only, no database changes', 'taylor-distributor-locator' ); ?>
+							</label>
+						</td>
+					</tr>
+				</table>
 				<?php submit_button( __( 'Run Import', 'taylor-distributor-locator' ), 'primary large' ); ?>
 			</form>
-			<?php endif; ?>
 
 			<?php if ( $results !== false ) : ?>
 				<?php self::render_results( $results ); ?>
@@ -125,12 +119,20 @@ class TDL_M2_Importer {
 
 		check_admin_referer( 'tdl_m2_import', 'tdl_m2_nonce' );
 
-		$dry_run  = ! empty( $_POST['dry_run'] );
-		$csv_path = TDL_PLUGIN_DIR . self::CSV_FILENAME;
+		$dry_run = ! empty( $_POST['dry_run'] );
 
-		if ( ! file_exists( $csv_path ) ) {
-			wp_die( esc_html__( 'CSV file not found in plugin directory.', 'taylor-distributor-locator' ) );
+		// Validate uploaded file.
+		if ( empty( $_FILES['tdl_csv_file'] ) || $_FILES['tdl_csv_file']['error'] !== UPLOAD_ERR_OK ) {
+			wp_die( esc_html__( 'No CSV file uploaded or upload error occurred.', 'taylor-distributor-locator' ) );
 		}
+
+		$uploaded = $_FILES['tdl_csv_file'];
+		$ext      = strtolower( pathinfo( $uploaded['name'], PATHINFO_EXTENSION ) );
+		if ( $ext !== 'csv' ) {
+			wp_die( esc_html__( 'Invalid file type. Please upload a .csv file.', 'taylor-distributor-locator' ) );
+		}
+
+		$csv_path = $uploaded['tmp_name'];
 
 		$rows = self::parse_csv( $csv_path );
 		if ( is_wp_error( $rows ) ) {
@@ -312,7 +314,7 @@ class TDL_M2_Importer {
 			global $wpdb;
 			$results['final_count'] = (int) $wpdb->get_var(
 				"SELECT COUNT(*) FROM {$wpdb->posts}
-				 WHERE post_type = 'distributor' AND post_status != 'trash'"
+				 WHERE post_type = 'distributor' AND post_status = 'publish'"
 			);
 		}
 
