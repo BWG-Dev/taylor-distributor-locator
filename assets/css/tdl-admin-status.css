@@ -1,0 +1,185 @@
+/**
+ * Admin Status Page Styles
+ */
+
+.tdl-status-wrap {
+    max-width: 1200px;
+}
+
+.tdl-status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.tdl-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+    padding: 20px;
+    border-radius: 4px;
+}
+
+.tdl-card h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.3em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+/* Overview Card */
+.tdl-overview-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.tdl-stat-circle {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: conic-gradient(#2271b1 var(--percent), #f0f0f1 0deg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.tdl-stat-circle::before {
+    content: "";
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #fff;
+}
+
+.tdl-stat-circle span {
+    position: relative;
+    z-index: 1;
+}
+
+.tdl-stat-circle .tdl-percent {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #2271b1;
+}
+
+.tdl-stat-circle .tdl-label {
+    font-size: 0.9em;
+    color: #646970;
+}
+
+/* Progress Bar */
+.tdl-progress-container {
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.tdl-progress-bar {
+    width: 100%;
+    height: 10px;
+    background-color: #f0f0f1;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.tdl-progress-fill {
+    height: 100%;
+    background-color: #2271b1;
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+.tdl-stat-details {
+    width: 100%;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.tdl-stat-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 1.1em;
+}
+
+.tdl-stat-value {
+    font-weight: bold;
+}
+
+.tdl-warning {
+    color: #d63638;
+}
+
+.tdl-error {
+    color: #d63638;
+}
+
+/* System Status Card */
+.tdl-status-list {
+    margin-bottom: 15px;
+}
+
+.tdl-status-row {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #f0f0f1;
+    padding: 10px 0;
+}
+
+.tdl-status-row:last-child {
+    border-bottom: none;
+}
+
+.tdl-actions {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Error Card */
+.tdl-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+}
+
+.tdl-card-header h2 {
+    margin: 0;
+    border: none;
+    padding: 0;
+}
+
+.tdl-error-table th {
+    font-weight: 600;
+}
+
+.tdl-error-msg {
+    color: #d63638;
+}
+
+.tdl-empty-state {
+    text-align: center;
+    color: #646970;
+    font-style: italic;
+    padding: 20px;
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+    .tdl-status-grid {
+        grid-template-columns: 1fr;
+    }
+}

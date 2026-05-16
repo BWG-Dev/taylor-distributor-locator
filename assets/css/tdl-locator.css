@@ -1,0 +1,458 @@
+/**
+ * Taylor Distributor Locator - Frontend Styles
+ * Uses CSS custom properties for theme integration
+ */
+
+/* Container */
+.tdl-locator {
+    --tdl-radius: 6px;
+    --tdl-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --tdl-transition: 0.2s ease;
+
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+/* Search Form */
+.tdl-search-form {
+    margin-bottom: 20px;
+}
+
+.tdl-search-input-wrap {
+    display: flex;
+    max-width: 600px;
+    position: relative;
+    /* Ensure relative positioning for dropdown */
+}
+
+.tdl-search-input {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-right: none;
+    border-radius: var(--tdl-radius) 0 0 var(--tdl-radius);
+    outline: none;
+    transition: border-color var(--tdl-transition);
+}
+
+.tdl-search-input:focus {
+    border-color: var(--tdl-primary);
+}
+
+.tdl-search-btn {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    background: var(--tdl-btn-bg);
+    color: var(--tdl-btn-text);
+    border: none;
+    border-radius: 0 var(--tdl-radius) var(--tdl-radius) 0;
+    cursor: pointer;
+    transition: opacity var(--tdl-transition);
+}
+
+.tdl-search-btn:hover {
+    opacity: 0.9;
+}
+
+/* Status */
+.tdl-status {
+    padding: 10px 0;
+    font-size: 14px;
+}
+
+.tdl-status:empty {
+    display: none;
+}
+
+.tdl-status-loading {
+    color: #666;
+}
+
+.tdl-status-success {
+    color: var(--tdl-primary);
+    font-weight: 500;
+}
+
+.tdl-status-error {
+    color: #c33;
+}
+
+/* Main Content Layout */
+.tdl-content {
+    display: block;
+}
+
+.tdl-content.tdl-split {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 20px;
+}
+
+/* Map Container */
+.tdl-map-container {
+    border-radius: var(--tdl-radius);
+    overflow: hidden;
+    box-shadow: var(--tdl-shadow);
+}
+
+.tdl-map {
+    width: 100%;
+    height: 100%;
+    background: #e5e3df;
+}
+
+/* Results Container */
+.tdl-results-container {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.tdl-results {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Result Card */
+.tdl-result-card {
+    display: flex;
+    gap: 12px;
+    background: #fff;
+    border-left: 4px solid var(--tdl-card-border);
+    border-radius: var(--tdl-radius);
+    padding: 15px 20px;
+    box-shadow: var(--tdl-shadow);
+    cursor: pointer;
+    transition: transform var(--tdl-transition), box-shadow var(--tdl-transition);
+}
+
+.tdl-result-card:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.tdl-result-card.active {
+    border-left-color: var(--tdl-card-active);
+    background: linear-gradient(to right, rgba(var(--tdl-card-active), 0.05), transparent);
+}
+
+.tdl-result-pin-number {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    background: var(--tdl-primary);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.tdl-result-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.tdl-distributor-name {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    color: var(--tdl-text);
+}
+
+.tdl-location {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.tdl-accordion-wrap {
+    margin-bottom: 10px;
+}
+
+.tdl-accordion-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tdl-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 5px;
+    transition: color var(--tdl-transition);
+}
+
+.tdl-toggle-icon {
+    font-size: 10px;
+}
+
+.tdl-accordion-content {
+    display: none;
+    padding-left: 10px;
+    border-left: 2px solid #eee;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+.tdl-accordion-content.active {
+    display: block;
+}
+
+.tdl-additional-location {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 12px;
+    line-height: 1.4;
+}
+
+.tdl-additional-location:last-child {
+    margin-bottom: 0;
+}
+
+.tdl-hours {
+    font-size: 13px;
+    color: #444;
+    background: #f9f9f9;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    border-left: 3px solid #ddd;
+}
+
+.tdl-info-hours {
+    font-size: 12px;
+    color: #444;
+    background: #f5f5f5;
+    padding: 5px 8px;
+    border-radius: 3px;
+    margin-bottom: 5px;
+}
+
+.tdl-contact {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.tdl-phone,
+.tdl-website {
+    font-size: 14px;
+    color: var(--tdl-link);
+    text-decoration: none;
+}
+
+.tdl-phone:hover,
+.tdl-website:hover {
+    text-decoration: underline;
+}
+
+/* No Results */
+.tdl-no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+/* Pagination */
+.tdl-pagination {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.tdl-page-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: var(--tdl-radius);
+    cursor: pointer;
+    transition: all var(--tdl-transition);
+}
+
+.tdl-page-btn:hover {
+    border-color: var(--tdl-primary);
+    color: var(--tdl-primary);
+}
+
+.tdl-page-btn.active {
+    background: var(--tdl-btn-bg);
+    color: var(--tdl-btn-text);
+    border-color: var(--tdl-btn-bg);
+}
+
+/* Info Window (Google Maps) */
+.tdl-info-window {
+    padding: 5px;
+    max-width: 280px;
+}
+
+.tdl-info-window h4 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.tdl-info-window p {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.tdl-info-window p:last-child {
+    margin-bottom: 0;
+}
+
+.tdl-info-window a {
+    color: var(--tdl-link, #0073aa);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .tdl-content.tdl-split {
+        grid-template-columns: 1fr;
+    }
+
+    .tdl-map-container {
+        height: 400px !important;
+    }
+
+    .tdl-results-container {
+        max-height: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .tdl-search-input-wrap {
+        flex-direction: column;
+    }
+
+    .tdl-search-input {
+        border-right: 2px solid #ddd;
+        border-radius: var(--tdl-radius);
+        margin-bottom: 10px;
+    }
+
+    .tdl-search-btn {
+        border-radius: var(--tdl-radius);
+    }
+
+    .tdl-map-container {
+        height: 300px !important;
+    }
+}
+
+/* Google Places Autocomplete Element */
+#tdl-autocomplete-element {
+    flex: 1;
+    --gmp-filled-button-container-color: var(--tdl-primary, #005696);
+    --gmp-filled-button-container-color-hover: var(--tdl-primary, #005696);
+}
+
+@media (max-width: 600px) {
+    #tdl-autocomplete-element {
+        margin-bottom: 10px;
+        width: 100%;
+    }
+}
+
+/* Print styles */
+@media print {
+
+    .tdl-search-form,
+    .tdl-map-container,
+    .tdl-pagination {
+        display: none;
+    }
+
+    .tdl-result-card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+}
+
+/* Leaflet Maps Integration */
+.leaflet-popup-content-wrapper {
+    border-radius: var(--tdl-radius);
+    box-shadow: var(--tdl-shadow);
+}
+
+.leaflet-popup-content {
+    margin: 10px;
+    line-height: 1.5;
+}
+
+/* Leaflet Custom Marker */
+.tdl-leaflet-marker {
+    background: none !important;
+    border: none !important;
+}
+
+.tdl-marker-pin {
+    background-color: #ea4335;
+    color: white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    text-align: center;
+    line-height: 26px;
+    /* box-sizing border-box handles the border subtraction if set, but here standard box model usually applies. 30px - 4px border = 26px content. */
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    font-weight: bold;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.tdl-marker-pin:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+
+/* Autocomplete Dropdown */
+.tdl-autocomplete-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 var(--tdl-radius) var(--tdl-radius);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+}
+
+.tdl-autocomplete-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    color: var(--tdl-text);
+}
+
+.tdl-autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.tdl-autocomplete-item:hover,
+.tdl-autocomplete-item.selected {
+    background-color: #f5f5f5;
+    color: var(--tdl-primary);
+}
