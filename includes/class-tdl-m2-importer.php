@@ -45,7 +45,7 @@ class TDL_M2_Importer {
 		global $wpdb;
 		$current_count = (int) $wpdb->get_var(
 			"SELECT COUNT(*) FROM {$wpdb->posts}
-			 WHERE post_type = 'distributor' AND post_status != 'trash'"
+			 WHERE post_type = 'distributor' AND post_status = 'publish'"
 		);
 
 		$results = get_transient( self::RESULTS_TRANSIENT );
@@ -314,7 +314,7 @@ class TDL_M2_Importer {
 			global $wpdb;
 			$results['final_count'] = (int) $wpdb->get_var(
 				"SELECT COUNT(*) FROM {$wpdb->posts}
-				 WHERE post_type = 'distributor' AND post_status != 'trash'"
+				 WHERE post_type = 'distributor' AND post_status = 'publish'"
 			);
 		}
 
