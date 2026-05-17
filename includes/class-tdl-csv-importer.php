@@ -577,11 +577,11 @@ class TDL_CSV_Importer {
 		$wpdb->delete( $zones_table,     [ 'distributor_id' => $post_id ] );
 
 		// !! TEMPORARY — REMOVE AFTER CLIENT DEMO !!
-		// Sentinel: if location_name is exactly '__ROLLBACK_DEMO__', simulate a DB
+		// Sentinel: if address_3 is exactly '__ROLLBACK_DEMO__', simulate a DB
 		// error at this point. At this moment the old location and zone rows have
 		// already been deleted inside the open transaction — but the new insert has
 		// not yet run. ROLLBACK restores the deleted rows as if nothing happened.
-		if ( trim( $row['location_name'] ?? '' ) === '__ROLLBACK_DEMO__' ) {
+		if ( trim( $row['address_3'] ?? '' ) === '__ROLLBACK_DEMO__' ) {
 			$wpdb->query( 'ROLLBACK' );
 			return [
 				'status' => 'error',
