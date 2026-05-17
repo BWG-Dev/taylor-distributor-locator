@@ -54,8 +54,10 @@ class TDL_CSV_Importer {
 	public static function init(): void {
 		add_action( 'admin_menu',            [ __CLASS__, 'add_import_page' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_scripts' ] );
-		add_action( 'wp_ajax_tdl_import_csv',          [ __CLASS__, 'handle_import' ] );
-		add_action( 'wp_ajax_tdl_download_sample_csv', [ __CLASS__, 'handle_download_sample' ] );
+		add_action( 'wp_ajax_tdl_import_csv',              [ __CLASS__, 'handle_import' ] );
+		add_action( 'wp_ajax_tdl_download_sample_csv',     [ __CLASS__, 'handle_download_sample' ] );
+		add_action( 'wp_ajax_tdl_migrate_titles_preview',  [ __CLASS__, 'handle_migrate_preview' ] );
+		add_action( 'wp_ajax_tdl_migrate_titles_run',      [ __CLASS__, 'handle_migrate_run' ] );
 	}
 
 	public static function add_import_page(): void {
@@ -98,8 +100,18 @@ class TDL_CSV_Importer {
 				'company'         => __( 'Distributor', 'taylor-distributor-locator' ),
 				'rows'            => __( 'Row', 'taylor-distributor-locator' ),
 				'issue'           => __( 'Issue', 'taylor-distributor-locator' ),
-			],
-		] );
+			'migPreviewing'   => __( 'Checking post titles…', 'taylor-distributor-locator' ),
+			'migRunning'      => __( 'Running migration…', 'taylor-distributor-locator' ),
+			'migNone'         => __( 'All distributor post titles are already in the correct format. No migration needed.', 'taylor-distributor-locator' ),
+			'migRequired'     => __( 'Post title migration required', 'taylor-distributor-locator' ),
+			'migCount'        => __( '%d distributor posts have titles that need to be updated to the "Company — Location" format before you use the CSV importer.', 'taylor-distributor-locator' ),
+			'migPreview'      => __( 'Preview changes', 'taylor-distributor-locator' ),
+			'migRun'          => __( 'Run migration now', 'taylor-distributor-locator' ),
+			'migComplete'     => __( 'Migration complete', 'taylor-distributor-locator' ),
+			'migUpdated'      => __( 'post titles updated.', 'taylor-distributor-locator' ),
+			'migError'        => __( 'Migration error.', 'taylor-distributor-locator' ),
+		],
+	] );
 	}
 
 	public static function render_import_page(): void {
@@ -107,6 +119,104 @@ class TDL_CSV_Importer {
 	}
 
 	// ── Migration ──────────────────────────────────────────────────────────────
+
+	/**
+	 * AJAX preview: return the list of posts that need title migration.
+	 * Read-only — no writes performed.
+	 */
+	public static function handle_migrate_preview(): void {
+		check_ajax_referer( 'tdl_csv_import', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( [ 'message' => __( 'Permission denied.', 'taylor-distributor-locator' ) ] );
+		}
+		wp_send_json_success( [ 'changes' => self::get_migration_changes() ] );
+	}
+
+	/**
+	 * AJAX run: apply title migration to all affected posts.
+	 */
+	public static function handle_migrate_run(): void {
+		check_ajax_referer( 'tdl_csv_import', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( [ 'message' => __( 'Permission denied.', 'taylor-distributor-locator' ) ] );
+		}
+
+		$changes = self::get_migration_changes();
+		$updated = 0;
+
+		foreach ( $changes as $change ) {
+			$result = wp_update_post( [
+				'ID'         => (int) $change['post_id'],
+				'post_title' => $change['new_title'],
+			] );
+			if ( ! is_wp_error( $result ) && $result ) {
+				$updated++;
+			}
+		}
+
+		wp_send_json_success( [
+			'updated' => $updated,
+			'total'   => count( $changes ),
+		] );
+	}
+
+	/**
+	 * Find distributor posts whose titles need normalisation to the
+	 * "Company — Location" format introduced by M4.
+	 *
+	 * Targets two categories:
+	 *   1. Posts with the mangled literal `xe2x80x94` in the title — from a broken
+	 *      migration run where PHP escape sequences were written as literal text
+	 *      instead of the actual em dash character.
+	 *   2. Posts whose title contains no em dash suffix at all — bare company names
+	 *      from the original M2 import that have not yet been migrated.
+	 *
+	 * @return array  Each item: ['post_id', 'old_title', 'new_title'].
+	 */
+	private static function get_migration_changes(): array {
+		global $wpdb;
+
+		$rows = $wpdb->get_results(
+			"SELECT p.ID, p.post_title,
+			        MAX(l.location_name) AS location_name,
+			        MAX(l.city)          AS city
+			 FROM {$wpdb->posts} p
+			 LEFT JOIN {$wpdb->prefix}tdl_locations l ON l.distributor_id = p.ID
+			 WHERE p.post_type   = 'distributor'
+			   AND p.post_status != 'trash'
+			   AND ( p.post_title LIKE '%xe2x80x94%' OR p.post_title NOT LIKE '% — %' )
+			 GROUP BY p.ID, p.post_title"
+		);
+
+		$changes = [];
+
+		foreach ( $rows as $row ) {
+			// Strip mangled suffix (literal 'xe2x80x94' and everything after it).
+			$base = preg_replace( '/\s+xe2x80x94\s+.*$/u', '', $row->post_title );
+			// Strip any pre-existing well-formed em dash suffix to avoid double-suffixing
+			// if this post has already been partially migrated.
+			$base = preg_replace( '/\s+—\s+.*$/u', '', $base );
+			$base = trim( $base );
+
+			$new_title = self::build_post_title(
+				$base,
+				(string) ( $row->location_name ?? '' ),
+				(string) ( $row->city          ?? '' )
+			);
+
+			if ( $new_title === $row->post_title ) {
+				continue;
+			}
+
+			$changes[] = [
+				'post_id'   => (int) $row->ID,
+				'old_title' => $row->post_title,
+				'new_title' => $new_title,
+			];
+		}
+
+		return $changes;
+	}
 
 	// ── Title builder ──────────────────────────────────────────────────────────
 
@@ -465,6 +575,20 @@ class TDL_CSV_Importer {
 		// Replace the single location row for this post.
 		$wpdb->delete( $locations_table, [ 'distributor_id' => $post_id ] );
 		$wpdb->delete( $zones_table,     [ 'distributor_id' => $post_id ] );
+
+		// !! TEMPORARY — REMOVE AFTER CLIENT DEMO !!
+		// Sentinel: if address_3 is exactly '__ROLLBACK_DEMO__', simulate a DB
+		// error at this point. At this moment the old location and zone rows have
+		// already been deleted inside the open transaction — but the new insert has
+		// not yet run. ROLLBACK restores the deleted rows as if nothing happened.
+		if ( trim( $row['address_3'] ?? '' ) === '__ROLLBACK_DEMO__' ) {
+			$wpdb->query( 'ROLLBACK' );
+			return [
+				'status' => 'error',
+				'error'  => 'Simulated database failure. At the point of failure the existing location and service zone rows for this distributor had already been deleted inside an open transaction. Because the new data could not be saved, the transaction was rolled back — the original location and zone records have been fully restored and no partial data was written to the database.',
+			];
+		}
+		// !! END TEMPORARY !!
 
 		$wpdb->insert(
 			$locations_table,
