@@ -744,16 +744,41 @@
      * Render lightweight markers on the map.
      * Unlike updateMap(), this does NOT fitBounds — the default center/zoom is preserved
      * so the user sees the full continent view rather than jumping to a single cluster.
+     * The /markers endpoint now returns all popup-required fields so createInfoWindowContent()
+     * renders the full M3 info window without an extra round-trip per click.
      */
     function updateMapFromMarkers(markerData) {
         if (!map) return;
 
         clearMarkers();
 
-        if (mapProvider === 'google') {
-            markerData.forEach(function (item) {
-                if (!item.lat || !item.lng) return;
+        markerData.forEach(function (item) {
+            if (!item.lat || !item.lng) return;
 
+            // Build the same distributor/location shape that createInfoWindowContent() expects,
+            // sourced from the enriched /markers payload.
+            const distributor = {
+                id:      item.id,
+                name:    item.name,
+                phone:   item.phone   || '',
+                website: item.website || '',
+                emails:  item.emails  || {},
+            };
+            const location = {
+                name:      item.location_name || '',
+                address:   item.address   || '',
+                address_2: item.address_2 || '',
+                address_3: item.address_3 || '',
+                city:      item.city  || '',
+                state:     item.state || '',
+                zip:       item.zip   || '',
+                phone:     item.loc_phone || '',
+                hours:     item.hours || '',
+                lat:       item.lat,
+                lng:       item.lng,
+            };
+
+            if (mapProvider === 'google') {
                 const position = { lat: item.lat, lng: item.lng };
                 const pin = new google.maps.marker.PinElement({
                     glyphColor: 'transparent',
@@ -768,11 +793,8 @@
                     content: pin,
                 });
 
-                const locationLabel = [item.city, item.state].filter(Boolean).join(', ');
                 const infoWindow = new google.maps.InfoWindow({
-                    content: '<div class="tdl-info-window"><h4>' + escapeHtml(item.name) + '</h4>' +
-                        (locationLabel ? '<p>' + escapeHtml(locationLabel) + '</p>' : '') +
-                        '</div>',
+                    content: createInfoWindowContent(distributor, location),
                 });
 
                 marker.addListener('gmp-click', function () {
@@ -782,11 +804,7 @@
 
                 marker.infoWindow = infoWindow;
                 markers.push(marker);
-            });
-        } else {
-            markerData.forEach(function (item) {
-                if (!item.lat || !item.lng) return;
-
+            } else {
                 const latLng = [item.lat, item.lng];
                 const myIcon = L.divIcon({
                     className: 'tdl-leaflet-marker',
@@ -797,12 +815,7 @@
                 });
 
                 const marker = L.marker(latLng, { icon: myIcon });
-                const locationLabel = [item.city, item.state].filter(Boolean).join(', ');
-                marker.bindPopup(
-                    '<div class="tdl-info-window"><h4>' + escapeHtml(item.name) + '</h4>' +
-                    (locationLabel ? '<p>' + escapeHtml(locationLabel) + '</p>' : '') +
-                    '</div>'
-                );
+                marker.bindPopup(createInfoWindowContent(distributor, location));
 
                 markers.push(marker);
 
@@ -811,8 +824,8 @@
                 } else {
                     marker.addTo(map);
                 }
-            });
-        }
+            }
+        });
     }
 
     /**
