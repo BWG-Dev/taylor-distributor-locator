@@ -856,7 +856,10 @@ class TDL_REST_API {
         global $wpdb;
 
         $data_version   = get_option('tdl_data_version', time());
-        $cache_key      = 'tdl_markers_' . $data_version;
+        // Cache key includes TDL_VERSION so deploys bust stale responses.
+        // Keyed v2 because the response shape now includes contact/email fields
+        // required by the M3 info window — old cached payloads must not be served.
+        $cache_key      = 'tdl_markers_v2_' . md5( $data_version . '_' . TDL_VERSION );
         $cache_duration = get_option('tdl_cache_duration', 60) * MINUTE_IN_SECONDS;
 
         if ($cache_duration > 0) {
@@ -869,8 +872,14 @@ class TDL_REST_API {
         $locations_table = $wpdb->prefix . 'tdl_locations';
 
         // Primary locations only — one pin per distributor on the default map view.
+        // Fetch all location fields needed by the M3 info window so the popup can
+        // render without a second round-trip fetch on every pin click.
         $rows = $wpdb->get_results(
-            "SELECT l.distributor_id, p.post_title, l.latitude, l.longitude, l.city, l.state_province
+            "SELECT l.distributor_id, p.post_title,
+                    l.latitude, l.longitude,
+                    l.location_name, l.street_address, l.address_2, l.address_3,
+                    l.city, l.state_province, l.zip_postal,
+                    l.phone AS loc_phone, l.hours_operation
              FROM {$locations_table} l
              JOIN {$wpdb->posts} p ON l.distributor_id = p.ID
              WHERE p.post_type = 'distributor' AND p.post_status = 'publish'
@@ -880,15 +889,42 @@ class TDL_REST_API {
              ORDER BY p.post_title ASC"
         );
 
+        // Prime the post meta cache for all distributor IDs in one query.
+        // This prevents N+1 when we call get_post_meta() below.
+        $dist_ids = array_map( 'intval', array_column( (array) $rows, 'distributor_id' ) );
+        if ( ! empty( $dist_ids ) ) {
+            update_postmeta_cache( $dist_ids );
+        }
+
         $markers = [];
         foreach ($rows as $row) {
+            $id = (int) $row->distributor_id;
             $markers[] = [
-                'id'    => (int) $row->distributor_id,
-                'name'  => $row->post_title,
-                'lat'   => (float) $row->latitude,
-                'lng'   => (float) $row->longitude,
-                'city'  => $row->city,
-                'state' => $row->state_province,
+                'id'            => $id,
+                'name'          => $row->post_title,
+                'lat'           => (float) $row->latitude,
+                'lng'           => (float) $row->longitude,
+                // Location fields for the popup address block.
+                'location_name' => $row->location_name ?: '',
+                'address'       => $row->street_address ?: '',
+                'address_2'     => $row->address_2 ?: '',
+                'address_3'     => $row->address_3 ?: '',
+                'city'          => $row->city ?: '',
+                'state'         => $row->state_province ?: '',
+                'zip'           => $row->zip_postal ?: '',
+                'hours'         => $row->hours_operation ?: '',
+                // Location-level phone; JS falls back to distributor phone when empty.
+                'loc_phone'     => $row->loc_phone ?: '',
+                // Distributor-level contact fields (meta cache is warm — no extra queries).
+                'phone'         => get_post_meta( $id, 'wpcf-phone', true ) ?: '',
+                'website'       => get_post_meta( $id, 'wpcf-website', true ) ?: '',
+                'emails'        => [
+                    'main'          => get_post_meta( $id, 'wpcf-email_main', true ) ?: '',
+                    'sales'         => get_post_meta( $id, 'wpcf-email_sales', true ) ?: '',
+                    'parts'         => get_post_meta( $id, 'wpcf-email_parts', true ) ?: '',
+                    'service'       => get_post_meta( $id, 'wpcf-email_service', true ) ?: '',
+                    'installations' => get_post_meta( $id, 'wpcf-email_installations', true ) ?: '',
+                ],
             ];
         }
 
