@@ -583,9 +583,12 @@ class TDL_CSV_Importer {
 		// not yet run. ROLLBACK restores the deleted rows as if nothing happened.
 		if ( trim( $row['address_3'] ?? '' ) === '__ROLLBACK_DEMO__' ) {
 			$wpdb->query( 'ROLLBACK' );
+			if ( ! $is_update ) {
+				wp_delete_post( $post_id, true );
+			}
 			return [
 				'status' => 'error',
-				'error'  => 'Simulated database failure. At the point of failure the existing location and service zone rows for this distributor had already been deleted inside an open transaction. Because the new data could not be saved, the transaction was rolled back — the original location and zone records have been fully restored and no partial data was written to the database.',
+				'error'  => 'Simulated database failure. The transaction was rolled back — location and service zone data was not written. For this new distributor, the WordPress post was also deleted, leaving the database completely clean.',
 			];
 		}
 		// !! END TEMPORARY !!
@@ -615,6 +618,9 @@ class TDL_CSV_Importer {
 
 		if ( $wpdb->last_error ) {
 			$wpdb->query( 'ROLLBACK' );
+			if ( ! $is_update ) {
+				wp_delete_post( $post_id, true );
+			}
 			return [
 				'status' => 'error',
 				/* translators: DB error string */
@@ -628,6 +634,9 @@ class TDL_CSV_Importer {
 		$zone_error = self::insert_service_zones( $post_id, $row, $zones_table );
 		if ( $zone_error !== null ) {
 			$wpdb->query( 'ROLLBACK' );
+			if ( ! $is_update ) {
+				wp_delete_post( $post_id, true );
+			}
 			return [
 				'status' => 'error',
 				/* translators: DB error string */
