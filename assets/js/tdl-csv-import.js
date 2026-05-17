@@ -6,6 +6,7 @@
 
 	$( document ).ready( function () {
 		initCsvImport();
+		initMigration();
 	} );
 
 	// ── CSV import ────────────────────────────────────────────────────────────
@@ -176,6 +177,90 @@
 		function showFatal( message ) {
 			$result.addClass( 'tdl-fatal' ).text( message ).show();
 		}
+	}
+
+	// ── Title migration ───────────────────────────────────────────────────────
+
+	function initMigration() {
+		const $card = $( '#tdl-migration-card' );
+		if ( ! $card.length ) return;
+
+		const i18n = tdlCsvImport.i18n;
+
+		// Auto-preview on load: check how many posts need migration.
+		$.post(
+			tdlCsvImport.ajaxUrl,
+			{ action: 'tdl_migrate_titles_preview', nonce: tdlCsvImport.nonce },
+			function ( r ) {
+				if ( ! r.success ) {
+					$card.html(
+						'<div class="notice notice-error inline" style="margin:0;"><p>' +
+						esc( r.data && r.data.message ? r.data.message : i18n.migError ) +
+						'</p></div>'
+					);
+					return;
+				}
+
+				const changes = r.data.changes || [];
+
+				if ( changes.length === 0 ) {
+					$card.html(
+						'<div class="notice notice-success inline" style="margin:0;"><p>' +
+						esc( i18n.migNone ) +
+						'</p></div>'
+					);
+					return;
+				}
+
+				// Build preview list of old → new titles.
+				let listHtml = '';
+				changes.forEach( function ( c ) {
+					listHtml +=
+						'<li><code>' + esc( c.old_title ) + '</code> &rarr; ' +
+						'<code>' + esc( c.new_title ) + '</code></li>';
+				} );
+
+				$card.html(
+					'<div class="notice notice-warning inline" style="margin:0;">' +
+					'<p><strong>' + esc( i18n.migRequired ) + ':</strong> ' +
+					esc( i18n.migCount.replace( '%d', changes.length ) ) + '</p>' +
+					'<details style="margin:8px 0 12px;">' +
+					'<summary style="cursor:pointer;">' + esc( i18n.migPreview ) + '</summary>' +
+					'<ul style="margin:8px 0 0 8px;font-size:12px;max-height:200px;overflow-y:auto;">' +
+					listHtml + '</ul></details>' +
+					'<button id="tdl-mig-run-btn" class="button button-primary" style="margin-bottom:12px;">' +
+					esc( i18n.migRun ) + '</button>' +
+					'<span id="tdl-mig-status" style="margin-left:10px;font-size:13px;color:#666;"></span>' +
+					'</div>'
+				);
+
+				$( '#tdl-mig-run-btn' ).on( 'click', function () {
+					const $btn    = $( this );
+					const $status = $( '#tdl-mig-status' );
+
+					$btn.prop( 'disabled', true );
+					$status.text( i18n.migRunning );
+
+					$.post(
+						tdlCsvImport.ajaxUrl,
+						{ action: 'tdl_migrate_titles_run', nonce: tdlCsvImport.nonce },
+						function ( res ) {
+							if ( res.success ) {
+								$card.html(
+									'<div class="notice notice-success inline" style="margin:0;">' +
+									'<p><strong>' + esc( i18n.migComplete ) + ':</strong> ' +
+									parseInt( res.data.updated, 10 ) + ' ' + esc( i18n.migUpdated ) +
+									'</p></div>'
+								);
+							} else {
+								$status.text( i18n.migError );
+								$btn.prop( 'disabled', false );
+							}
+						}
+					);
+				} );
+			}
+		);
 	}
 
 	/** Minimal HTML escaping for dynamic content inserted via innerHTML. */

@@ -1,0 +1,2 @@
+company_name,phone,website,email_main,email_sales,email_parts,email_service,email_installations,service_area_notes,location_name,street_address,address_2,address_3,city,state_province,zip_postal,country_code,location_phone,hours_operation,is_primary,zip_codes_served,states_served,countries_served
+TDL QA Alpha Corp,999-999-9999,https://www.this-should-not-save.test,demo@rollback.test,,,,,,__ROLLBACK_DEMO__,999 Should Not Save St,,,Dallas,TX,75201,US,,Mon-Fri 9am-5pm,1,75201,TX,US

@@ -16,6 +16,13 @@ $sample_url = wp_nonce_url(
 <div class="wrap">
 	<h1><?php esc_html_e( 'Import Distributors from CSV', 'taylor-distributor-locator' ); ?></h1>
 
+	<!-- ── Title migration card (populated by initMigration() in tdl-csv-import.js) -->
+	<div id="tdl-migration-card" style="margin-top:16px;">
+		<div class="notice notice-info inline" style="margin:0;">
+			<p><?php esc_html_e( 'Checking distributor post titles…', 'taylor-distributor-locator' ); ?></p>
+		</div>
+	</div>
+
 	<div class="notice notice-warning inline" style="margin-top:16px;">
 		<p>
 			<strong><?php esc_html_e( 'Update behavior:', 'taylor-distributor-locator' ); ?></strong>
