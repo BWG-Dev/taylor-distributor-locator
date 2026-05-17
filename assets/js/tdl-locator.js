@@ -13,6 +13,9 @@
     let currentPage = 1;
     let mapsReady = false; // Only used for Google Maps callback
     let mapProvider = 'google'; // 'google' or 'openstreetmap'
+    let clusterGroup = null; // Leaflet.markercluster group
+    let isDefaultView = true; // true on initial page load; false once a search is performed
+    let mapSearchToken = 0;  // incremented on each new search to discard stale async responses
 
     // Autocomplete state
     let debounceTimer = null;
@@ -28,6 +31,38 @@
         mapProvider = config.mapProvider || 'google';
 
         initSearch();
+        loadDefault();
+
+        // Delegated listener for Request Quote stub buttons (cards + map info windows).
+        // M7 replaces showQuoteStub() with a real modal by listening for 'tdl:quote-requested'.
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.tdl-request-quote');
+            if (!btn) return;
+            e.stopPropagation();
+            const distributorId = parseInt(btn.dataset.distributorId, 10);
+            const event = new CustomEvent('tdl:quote-requested', {
+                bubbles: false,
+                detail: { distributorId: distributorId }
+            });
+            document.dispatchEvent(event);
+            showQuoteStub(btn);
+        });
+
+        // M3 stub: show a temporary notice where the button is.
+        // Removed in M7 when the real modal is wired.
+        function showQuoteStub(triggerBtn) {
+            const existing = document.getElementById('tdl-quote-stub');
+            if (existing) existing.remove();
+
+            const notice = document.createElement('div');
+            notice.id = 'tdl-quote-stub';
+            notice.className = 'tdl-quote-stub';
+            notice.textContent = config.i18n.quoteStub || 'Quote request coming soon — use the contact details above to get in touch.';
+
+            triggerBtn.insertAdjacentElement('afterend', notice);
+
+            setTimeout(function () { notice.remove(); }, 4000);
+        }
 
         if (mapProvider === 'google') {
             // Check if map is already ready (race condition fix)
@@ -50,13 +85,13 @@
         }
     };
 
-    // Search state
-    let searchComponents = {
-        city: '',
-        state: '',
-        zip: '',
-        country: ''
-    };
+    // Autocomplete-parsed components for the current input value
+    let searchComponents = { city: '', state: '', zip: '', country: '' };
+
+    // Last-executed search state — used by fetchPage() to re-run the same
+    // search on a different page without re-reading the input.
+    let savedQuery = '';
+    let savedComponents = {};
 
     /**
      * Initialize search functionality
@@ -87,11 +122,6 @@
             }
         });
 
-        // If default country is set, search on load
-        if (config.defaultCountry) {
-            input.value = config.defaultCountry;
-            performSearch();
-        }
     }
 
     /**
@@ -150,7 +180,9 @@
         if (!resultsContainer) {
             resultsContainer = document.createElement('div');
             resultsContainer.className = 'tdl-autocomplete-results';
-            input.parentNode.appendChild(resultsContainer);
+            // Append to the form (not the overflow:hidden input wrap) so the
+            // dropdown isn't clipped. CSS positions it via top:100% on the form.
+            (input.closest('.tdl-search-form') || input.parentNode).appendChild(resultsContainer);
         }
 
         input.addEventListener('input', function () {
@@ -302,6 +334,34 @@
 
         // Re-init search to attach Autocomplete if it wasn't ready before
         initSearch();
+
+        if (isDefaultView) {
+            fetchAllMarkers();
+        }
+    }
+
+    /**
+     * Build a Leaflet marker cluster group with the shared custom icon options.
+     * Extracted so both initLeafletMap() and clearMarkers() use identical config,
+     * preventing the cluster style regression that occurred when clearMarkers()
+     * called L.markerClusterGroup() without options.
+     */
+    function createClusterGroup() {
+        return L.markerClusterGroup({
+            iconCreateFunction: function (cluster) {
+                const n = cluster.getChildCount();
+                const size = n < 10 ? 32 : n < 100 ? 38 : 44;
+                return L.divIcon({
+                    html: '<div class="tdl-cluster"><span>' + n + '</span></div>',
+                    className: 'tdl-cluster-icon',
+                    iconSize: L.point(size, size),
+                });
+            },
+            maxClusterRadius: 50,
+            showCoverageOnHover: false,
+            spiderfyOnMaxZoom: true,
+            zoomToBoundsOnClick: true,
+        });
     }
 
     /**
@@ -315,39 +375,65 @@
 
         map = L.map(mapEl).setView([config.centerLat, config.centerLng], config.zoom);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        // CartoDB Positron — neutral, minimal tile layer that doesn't compete with the UI
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19,
         }).addTo(map);
+
+        if (typeof L.markerClusterGroup === 'function') {
+            clusterGroup = createClusterGroup();
+            map.addLayer(clusterGroup);
+        }
+
+        if (isDefaultView) {
+            fetchAllMarkers();
+        }
     }
 
     /**
-     * Perform search
+     * Start a new search from the current input value.
+     * Always resets to page 1 and saves search state for pagination reuse.
      */
-    function performSearch(queryOverride) {
-        let query = '';
-
-        if (typeof queryOverride === 'string') {
-            query = queryOverride;
-        } else {
-            const input = document.getElementById('tdl-search-input');
-            if (input) query = input.value.trim();
-        }
-
-        if (!query) return;
-
-        showStatus(config.i18n.searching, 'loading');
+    function performSearch() {
+        isDefaultView = false;
+        const input = document.getElementById('tdl-search-input');
+        savedQuery = input ? input.value.trim() : '';
+        savedComponents = Object.assign({}, searchComponents);
         currentPage = 1;
+        fetchPage(1);        // list (paginated)
+        fetchMapForSearch(); // map (all matching results, independent of pagination)
+    }
 
-        // Build query string
-        let url = config.restUrl + 'search?q=' + encodeURIComponent(query) + '&page=' + currentPage + '&per_page=' + config.resultsPerPage;
+    /**
+     * Load all distributors — used as the default page-load state.
+     * The map is populated separately via fetchAllMarkers() once the map initialises.
+     */
+    function loadDefault() {
+        isDefaultView = true;
+        savedQuery = '';
+        savedComponents = {};
+        currentPage = 1;
+        fetchPage(1);
+    }
 
-        // Add structured data if available
-        if (searchComponents.city || searchComponents.state || searchComponents.zip || searchComponents.country) {
-            if (searchComponents.city) url += '&city=' + encodeURIComponent(searchComponents.city);
-            if (searchComponents.state) url += '&state=' + encodeURIComponent(searchComponents.state);
-            if (searchComponents.zip) url += '&zip=' + encodeURIComponent(searchComponents.zip);
-            if (searchComponents.country) url += '&country=' + encodeURIComponent(searchComponents.country);
+    /**
+     * Execute the saved search for a given page number.
+     * Pagination calls this directly so it never resets to page 1.
+     */
+    function fetchPage(page) {
+        currentPage = page;
+        showStatus(config.i18n.searching, 'loading');
+
+        let url = config.restUrl + 'search?page=' + page + '&per_page=' + config.resultsPerPage;
+        if (savedQuery) {
+            url += '&q=' + encodeURIComponent(savedQuery);
         }
+        if (savedComponents.city)    url += '&city='    + encodeURIComponent(savedComponents.city);
+        if (savedComponents.state)   url += '&state='   + encodeURIComponent(savedComponents.state);
+        if (savedComponents.zip)     url += '&zip='     + encodeURIComponent(savedComponents.zip);
+        if (savedComponents.country) url += '&country=' + encodeURIComponent(savedComponents.country);
 
         fetch(url)
             .then(function (response) { return response.json(); })
@@ -356,7 +442,9 @@
                     currentResults = data.results;
                     showStatus(config.i18n.distributorsFound.replace('%d', data.total), 'success');
                     renderResults(data);
-                    updateMap(data.results);
+                    // Map is driven independently:
+                    //   default view → fetchAllMarkers() called from map init
+                    //   search view  → fetchMapForSearch() called from performSearch()
                 } else {
                     showStatus(data.message || config.i18n.noResults, 'error');
                     clearResults();
@@ -401,8 +489,8 @@
         // Add click handlers
         container.querySelectorAll('.tdl-result-card').forEach(function (card) {
             card.addEventListener('click', function (e) {
-                // Don't trigger if clicking accordion toggle
                 if (e.target.closest('.tdl-accordion-toggle')) return;
+                if (e.target.closest('.tdl-request-quote')) return;
 
                 const idx = parseInt(this.dataset.index, 10);
                 highlightCard(idx);
@@ -552,6 +640,11 @@
             '<div class="tdl-contact">' + contactHtml + '</div>' +
             serviceAreaHtml +
             additionalLocationsHtml +
+            '<div class="tdl-card-actions">' +
+            '<button class="tdl-request-quote" data-distributor-id="' + distributor.id + '">' +
+            (config.i18n.requestQuote || 'Request Quote') +
+            '</button>' +
+            '</div>' +
             '</div>' +
             '</div>';
     }
@@ -579,8 +672,7 @@
 
         container.querySelectorAll('.tdl-page-btn').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                currentPage = parseInt(this.dataset.page, 10);
-                performSearch();
+                fetchPage(parseInt(this.dataset.page, 10));
             });
         });
     }
@@ -596,6 +688,131 @@
         if (pagination) pagination.innerHTML = '';
 
         clearMarkers();
+    }
+
+    /**
+     * Fetch ALL distributors matching the current saved search and render them on the
+     * map. Called once per search (not per page-turn) so the map always shows the full
+     * result set regardless of how the list is paginated.
+     */
+    function fetchMapForSearch() {
+        if (!map) return;
+
+        const token = ++mapSearchToken;
+
+        // per_page=500 covers the full distributor catalogue; server cap allows this.
+        let url = config.restUrl + 'search?page=1&per_page=500';
+        if (savedQuery)              url += '&q='       + encodeURIComponent(savedQuery);
+        if (savedComponents.city)    url += '&city='    + encodeURIComponent(savedComponents.city);
+        if (savedComponents.state)   url += '&state='   + encodeURIComponent(savedComponents.state);
+        if (savedComponents.zip)     url += '&zip='     + encodeURIComponent(savedComponents.zip);
+        if (savedComponents.country) url += '&country=' + encodeURIComponent(savedComponents.country);
+
+        fetch(url)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (token !== mapSearchToken) return; // superseded by a newer search
+                if (data.success) {
+                    updateMap(data.results);
+                }
+            })
+            .catch(function (err) {
+                console.error('fetchMapForSearch error:', err);
+            });
+    }
+
+    /**
+     * Fetch lightweight pin data for all distributors and render them on the map.
+     * Only called during the default view — not triggered by search results.
+     */
+    function fetchAllMarkers() {
+        if (!map) return;
+
+        fetch(config.restUrl + 'markers')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success && data.markers) {
+                    updateMapFromMarkers(data.markers);
+                }
+            })
+            .catch(function (err) {
+                console.error('fetchAllMarkers error:', err);
+            });
+    }
+
+    /**
+     * Render lightweight markers on the map.
+     * Unlike updateMap(), this does NOT fitBounds — the default center/zoom is preserved
+     * so the user sees the full continent view rather than jumping to a single cluster.
+     */
+    function updateMapFromMarkers(markerData) {
+        if (!map) return;
+
+        clearMarkers();
+
+        if (mapProvider === 'google') {
+            markerData.forEach(function (item) {
+                if (!item.lat || !item.lng) return;
+
+                const position = { lat: item.lat, lng: item.lng };
+                const pin = new google.maps.marker.PinElement({
+                    glyphColor: 'transparent',
+                    background: '#111827',
+                    borderColor: '#374151',
+                    scale: 0.75,
+                });
+                const marker = new google.maps.marker.AdvancedMarkerElement({
+                    position: position,
+                    map: map,
+                    title: item.name,
+                    content: pin,
+                });
+
+                const locationLabel = [item.city, item.state].filter(Boolean).join(', ');
+                const infoWindow = new google.maps.InfoWindow({
+                    content: '<div class="tdl-info-window"><h4>' + escapeHtml(item.name) + '</h4>' +
+                        (locationLabel ? '<p>' + escapeHtml(locationLabel) + '</p>' : '') +
+                        '</div>',
+                });
+
+                marker.addListener('gmp-click', function () {
+                    closeAllInfoWindows();
+                    infoWindow.open(map, marker);
+                });
+
+                marker.infoWindow = infoWindow;
+                markers.push(marker);
+            });
+        } else {
+            markerData.forEach(function (item) {
+                if (!item.lat || !item.lng) return;
+
+                const latLng = [item.lat, item.lng];
+                const myIcon = L.divIcon({
+                    className: 'tdl-leaflet-marker',
+                    html: '<div class="tdl-marker-pin"></div>',
+                    iconSize: [14, 14],
+                    iconAnchor: [7, 7],
+                    popupAnchor: [0, -10],
+                });
+
+                const marker = L.marker(latLng, { icon: myIcon });
+                const locationLabel = [item.city, item.state].filter(Boolean).join(', ');
+                marker.bindPopup(
+                    '<div class="tdl-info-window"><h4>' + escapeHtml(item.name) + '</h4>' +
+                    (locationLabel ? '<p>' + escapeHtml(locationLabel) + '</p>' : '') +
+                    '</div>'
+                );
+
+                markers.push(marker);
+
+                if (clusterGroup) {
+                    clusterGroup.addLayer(marker);
+                } else {
+                    marker.addTo(map);
+                }
+            });
+        }
     }
 
     /**
@@ -629,8 +846,8 @@
                     const pin = new google.maps.marker.PinElement({
                         glyphText: String(index + 1),
                         glyphColor: '#ffffff',
-                        background: '#ea4335',
-                        borderColor: '#c5221f',
+                        background: '#111827',
+                        borderColor: '#374151',
                     });
 
                     const marker = new google.maps.marker.AdvancedMarkerElement({
@@ -686,16 +903,15 @@
                 if (location.lat && location.lng) {
                     const latLng = [location.lat, location.lng];
 
-                    // Custom icon with number
                     const myIcon = L.divIcon({
                         className: 'tdl-leaflet-marker',
-                        html: '<div class="tdl-marker-pin">' + (index + 1) + '</div>',
-                        iconSize: [30, 30],
-                        iconAnchor: [15, 15],
-                        popupAnchor: [0, -15]
+                        html: '<div class="tdl-marker-pin"></div>',
+                        iconSize: [14, 14],
+                        iconAnchor: [7, 7],
+                        popupAnchor: [0, -10]
                     });
 
-                    const marker = L.marker(latLng, { icon: myIcon }).addTo(map);
+                    const marker = L.marker(latLng, { icon: myIcon });
 
                     const infoContent = createInfoWindowContent(distributor, location);
                     marker.bindPopup(infoContent);
@@ -706,6 +922,12 @@
 
                     marker.distributorIndex = index;
                     markers.push(marker);
+
+                    if (clusterGroup) {
+                        clusterGroup.addLayer(marker);
+                    } else {
+                        marker.addTo(map);
+                    }
 
                     bounds.extend(latLng);
                     hasValidCoords = true;
@@ -724,7 +946,10 @@
     }
 
     /**
-     * Create info window content (Shared)
+     * Create info window content (Shared — Google popup / Leaflet bindPopup).
+     * Shows all M3-required fields: name, location name, address, hours,
+     * phone (location-level preferred, falls back to distributor-level),
+     * website, get directions, and request quote stub.
      */
     function createInfoWindowContent(distributor, location) {
         const address = [
@@ -736,24 +961,53 @@
             location.zip
         ].filter(Boolean).join(', ');
 
+        // Prefer the location's own phone number; fall back to the distributor-level phone.
+        const phone = location.phone || distributor.phone;
+
         let html = '<div class="tdl-info-window">';
+
+        // ── Header: distributor name + optional location name ──────────────
+        html += '<div class="tdl-iw-header">';
         html += '<h4>' + escapeHtml(distributor.name) + '</h4>';
         if (location.name) {
-            html += '<p><strong>' + escapeHtml(location.name) + '</strong></p>';
-        }
-        html += '<p>' + escapeHtml(address) + '</p>';
-        if (location.hours) {
-            html += '<div class="tdl-info-hours"><strong>' + config.i18n.hours + ':</strong> ' + escapeHtml(location.hours).replace(/\n/g, '<br>') + '</div>';
-        }
-        if (distributor.phone) {
-            html += '<p><a href="tel:' + escapeHtml(distributor.phone) + '">' + escapeHtml(distributor.phone) + '</a></p>';
-        }
-        if (location.lat && location.lng) {
-            const directionsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + location.lat + ',' + location.lng;
-            html += '<p><a href="' + directionsUrl + '" target="_blank" rel="noopener">' + config.i18n.getDirections + '</a></p>';
+            html += '<p class="tdl-iw-sublabel">' + escapeHtml(location.name) + '</p>';
         }
         html += '</div>';
 
+        // ── Address + Hours ────────────────────────────────────────────────
+        html += '<div class="tdl-iw-section">';
+        html += '<p class="tdl-iw-address">' + escapeHtml(address) + '</p>';
+        if (location.hours) {
+            html += '<p class="tdl-iw-hours">' + escapeHtml(location.hours).replace(/\n/g, '<br>') + '</p>';
+        }
+        html += '</div>';
+
+        // ── Contact: phone + website ───────────────────────────────────────
+        if (phone || distributor.website) {
+            html += '<div class="tdl-iw-section">';
+            if (phone) {
+                html += '<p><a href="tel:' + escapeHtml(phone) + '">' + escapeHtml(phone) + '</a></p>';
+            }
+            if (distributor.website) {
+                html += '<p><a href="' + escapeHtml(distributor.website) + '" target="_blank" rel="noopener">' +
+                    escapeHtml(config.i18n.visitWebsite || 'Visit Website') + '</a></p>';
+            }
+            html += '</div>';
+        }
+
+        // ── Actions: directions + request quote ────────────────────────────
+        html += '<div class="tdl-iw-actions">';
+        if (location.lat && location.lng) {
+            const directionsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + location.lat + ',' + location.lng;
+            html += '<a href="' + directionsUrl + '" target="_blank" rel="noopener" class="tdl-iw-directions">' +
+                escapeHtml(config.i18n.getDirections) + '</a>';
+        }
+        html += '<button class="tdl-request-quote tdl-request-quote--infowindow" data-distributor-id="' + distributor.id + '">' +
+            escapeHtml(config.i18n.requestQuote || 'Request Quote') +
+            '</button>';
+        html += '</div>';
+
+        html += '</div>';
         return html;
     }
 
@@ -762,13 +1016,16 @@
      */
     function clearMarkers() {
         if (mapProvider === 'google') {
-            markers.forEach(function (marker) {
-                marker.map = null;
-            });
+            markers.forEach(function (marker) { marker.map = null; });
         } else {
-            markers.forEach(function (marker) {
-                map.removeLayer(marker);
-            });
+            if (clusterGroup) {
+                // Remove and recreate the group to guarantee no stale cluster icons
+                map.removeLayer(clusterGroup);
+                clusterGroup = createClusterGroup();
+                map.addLayer(clusterGroup);
+            } else {
+                markers.forEach(function (marker) { map.removeLayer(marker); });
+            }
         }
         markers = [];
     }

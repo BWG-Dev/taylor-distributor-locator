@@ -69,6 +69,8 @@ class TDL_Shortcode {
                 'getDirections' => __('Get Directions', 'taylor-distributor-locator'),
                 'additionalLocations' => __('%d additional location(s)', 'taylor-distributor-locator'),
                 'error' => __('An error occurred. Please try again.', 'taylor-distributor-locator'),
+                'requestQuote' => __('Request Quote', 'taylor-distributor-locator'),
+                'quoteStub' => __('Quote request coming soon — use the contact details above to get in touch.', 'taylor-distributor-locator'),
                 'serviceArea' => __('Service Area', 'taylor-distributor-locator'),
                 'emailMain' => __('Main', 'taylor-distributor-locator'),
                 'emailSales' => __('Sales', 'taylor-distributor-locator'),
@@ -134,7 +136,28 @@ class TDL_Shortcode {
                 '1.9.4',
                 true
             );
+            // Leaflet MarkerCluster
+            wp_enqueue_style(
+                'leaflet-markercluster',
+                'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css',
+                ['leaflet'],
+                '1.5.3'
+            );
+            wp_enqueue_style(
+                'leaflet-markercluster-default',
+                'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css',
+                ['leaflet-markercluster'],
+                '1.5.3'
+            );
+            wp_enqueue_script(
+                'leaflet-markercluster',
+                'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js',
+                ['leaflet'],
+                '1.5.3',
+                true
+            );
             $script_deps[] = 'leaflet';
+            $script_deps[] = 'leaflet-markercluster';
         }
 
         // Plugin JS
@@ -145,7 +168,7 @@ class TDL_Shortcode {
             TDL_VERSION,
             true
         );
-        
+
         // Google Maps API - must load after our script with callback
         if ($map_provider === 'google' && !empty($api_key)) {
             wp_enqueue_script(
