@@ -995,6 +995,39 @@
             html += '</div>';
         }
 
+        // ── Emails ────────────────────────────────────────────────────────
+        if (distributor.emails) {
+            const emailLabels = {
+                'main':          config.i18n.emailMain          || 'Main',
+                'sales':         config.i18n.emailSales         || 'Sales',
+                'parts':         config.i18n.emailParts         || 'Parts',
+                'service':       config.i18n.emailService       || 'Service',
+                'installations': config.i18n.emailInstalls      || 'Installations',
+            };
+            let emailHtml = '';
+            Object.keys(emailLabels).forEach(function (key) {
+                if (distributor.emails[key]) {
+                    emailHtml += '<p class="tdl-iw-email">' +
+                        '<span class="tdl-iw-email-label">' + emailLabels[key] + ':</span> ' +
+                        '<a href="mailto:' + escapeHtml(distributor.emails[key]) + '">' +
+                        escapeHtml(distributor.emails[key]) + '</a></p>';
+                }
+            });
+            if (distributor.emails.other && Array.isArray(distributor.emails.other)) {
+                distributor.emails.other.forEach(function (item) {
+                    if (item.email && item.label) {
+                        emailHtml += '<p class="tdl-iw-email">' +
+                            '<span class="tdl-iw-email-label">' + escapeHtml(item.label) + ':</span> ' +
+                            '<a href="mailto:' + escapeHtml(item.email) + '">' +
+                            escapeHtml(item.email) + '</a></p>';
+                    }
+                });
+            }
+            if (emailHtml) {
+                html += '<div class="tdl-iw-section">' + emailHtml + '</div>';
+            }
+        }
+
         // ── Actions: directions + request quote ────────────────────────────
         html += '<div class="tdl-iw-actions">';
         if (location.lat && location.lng) {
