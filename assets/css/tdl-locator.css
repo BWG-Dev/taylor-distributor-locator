@@ -590,7 +590,7 @@
     }
 
     .tdl-map-container {
-        height: 620px !important;
+        height: 520px !important;
         position: static;
         /* overflow:hidden clips Leaflet popups taller than the map on mobile.
            The border still renders rounded; only the tile corners are unclipped. */
@@ -703,7 +703,7 @@
     }
 
     .tdl-map-container {
-        height: 520px !important;
+        height: 420px !important;
         overflow: visible;
     }
 
@@ -745,7 +745,7 @@
 /* On short mobile maps: cap the popup, let it scroll, and tighten spacing. */
 @media (max-width: 960px) {
     .leaflet-popup-content-wrapper {
-        max-height: 260px;
+        max-height: 460px;
         overflow-y: auto;
     }
 
