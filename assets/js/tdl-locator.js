@@ -17,6 +17,11 @@
     let isDefaultView = true; // true on initial page load; false once a search is performed
     let mapSearchToken = 0;  // incremented on each new search to discard stale async responses
 
+    // Guards the Leaflet map background-click handler from the browser's synthetic
+    // click (~300-500ms after touchend) that follows a marker tap on mobile.
+    let leafletMarkerTapped = false;
+    let leafletTapTimer = null;
+
     // Autocomplete state
     let debounceTimer = null;
 
@@ -304,6 +309,33 @@
     }
 
     /**
+     * Pan the Leaflet map so the given LatLng lands centered horizontally and
+     * near the bottom of the map viewport (≈85% down). This gives the popup —
+     * which Leaflet anchors above the marker — the most visible vertical space
+     * without requiring the user to manually drag the map on mobile.
+     * Only called on mobile (≤960px) where the map height is constrained.
+     */
+    function panMarkerToBottom(latlng) {
+        if (!map) return;
+        const size     = map.getSize();
+        const markerPx = map.latLngToContainerPoint(latlng);
+        const targetPx = L.point(size.x / 2, size.y * 0.88);
+        map.panBy(markerPx.subtract(targetPx), { animate: true, duration: 0.25 });
+    }
+
+    /**
+     * Mark that a Leaflet marker was just tapped so the map background-click
+     * handler ignores the browser's synthetic click that follows on mobile.
+     */
+    function flagLeafletMarkerTap() {
+        leafletMarkerTapped = true;
+        clearTimeout(leafletTapTimer);
+        leafletTapTimer = setTimeout(function () {
+            leafletMarkerTapped = false;
+        }, 600);
+    }
+
+    /**
      * Mobile map/list toggle — button clicks and swipe gestures.
      * Only rendered in the DOM when both map and list are shown (split view).
      * On desktop the toggle buttons are hidden via CSS; the panel classes are
@@ -326,6 +358,13 @@
             btnList.classList.remove('active');
             btnMap.setAttribute('aria-pressed', 'true');
             btnList.setAttribute('aria-pressed', 'false');
+
+            // Scroll the locator into view so the map is visible after switching
+            // from a list that the user may have scrolled down to read.
+            const locator = document.getElementById('tdl-locator');
+            if (locator) {
+                locator.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
 
             // Leaflet must recalculate its size after the container is un-hidden.
             if (map && mapProvider === 'openstreetmap') {
@@ -458,9 +497,12 @@
             maxZoom: 19,
         }).addTo(map);
 
-        // Explicit background-tap close: marker clicks use stopPropagation so
-        // only genuine background taps reach this handler.
+        // Close popup on genuine background taps. The leafletMarkerTapped flag
+        // blocks this handler for 600ms after a marker tap so the browser's
+        // synthetic click (~300-500ms post-touchend) doesn't immediately close
+        // the popup that the marker tap just opened.
         map.on('click', function () {
+            if (leafletMarkerTapped) return;
             map.closePopup();
         });
 
@@ -900,12 +942,23 @@
                 });
 
                 const marker = L.marker(latLng, { icon: myIcon });
-                marker.bindPopup(createInfoWindowContent(distributor, location));
+                marker.bindPopup(createInfoWindowContent(distributor, location), {
+                    // On mobile the map is short — autopan can move the popup
+                    // partially out of view. Disable it; overflow:visible on the
+                    // container and the max-height scroll cap handle visibility.
+                    autoPan: window.innerWidth > 960,
+                    autoPanPadding: [10, 10],
+                });
 
-                // Stop the tap from reaching the map's background click handler,
-                // which would immediately close the popup on mobile.
+                // Stop the tap from reaching the map's background click handler.
+                // flagLeafletMarkerTap() guards against the browser's synthetic
+                // click (~300-500ms post-touch) that bypasses stopPropagation.
                 marker.on('click', function (e) {
+                    flagLeafletMarkerTap();
                     L.DomEvent.stopPropagation(e);
+                    if (window.innerWidth <= 960) {
+                        panMarkerToBottom(marker.getLatLng());
+                    }
                 });
 
                 markers.push(marker);
@@ -1019,11 +1072,18 @@
                     const marker = L.marker(latLng, { icon: myIcon });
 
                     const infoContent = createInfoWindowContent(distributor, location);
-                    marker.bindPopup(infoContent);
+                    marker.bindPopup(infoContent, {
+                        autoPan: window.innerWidth > 960,
+                        autoPanPadding: [10, 10],
+                    });
 
                     marker.on('click', function (e) {
+                        flagLeafletMarkerTap();
                         L.DomEvent.stopPropagation(e);
                         highlightCard(index);
+                        if (window.innerWidth <= 960) {
+                            panMarkerToBottom(marker.getLatLng());
+                        }
                     });
 
                     marker.distributorIndex = index;
@@ -1053,9 +1113,10 @@
 
     /**
      * Create info window content (Shared — Google popup / Leaflet bindPopup).
-     * Shows all M3-required fields: name, location name, address, hours,
-     * phone (location-level preferred, falls back to distributor-level),
-     * website, get directions, and request quote stub.
+     * All M3 fields are preserved; layout is condensed to minimise popup height:
+     *   - phone + website share one inline row
+     *   - section padding is reduced
+     *   - email rows use a compact single-line format
      */
     function createInfoWindowContent(distributor, location) {
         const address = [
@@ -1067,12 +1128,12 @@
             location.zip
         ].filter(Boolean).join(', ');
 
-        // Prefer the location's own phone number; fall back to the distributor-level phone.
+        // Prefer location-level phone; fall back to distributor-level.
         const phone = location.phone || distributor.phone;
 
         let html = '<div class="tdl-info-window">';
 
-        // ── Header: distributor name + optional location name ──────────────
+        // ── Header ─────────────────────────────────────────────────────────
         html += '<div class="tdl-iw-header">';
         html += '<h4>' + escapeHtml(distributor.name) + '</h4>';
         if (location.name) {
@@ -1088,15 +1149,19 @@
         }
         html += '</div>';
 
-        // ── Contact: phone + website ───────────────────────────────────────
+        // ── Phone + Website — single inline row ────────────────────────────
         if (phone || distributor.website) {
-            html += '<div class="tdl-iw-section">';
+            html += '<div class="tdl-iw-section tdl-iw-contact-row">';
             if (phone) {
-                html += '<p><a href="tel:' + escapeHtml(phone) + '">' + escapeHtml(phone) + '</a></p>';
+                html += '<a href="tel:' + escapeHtml(phone) + '" class="tdl-iw-contact-item">' +
+                    escapeHtml(phone) + '</a>';
+            }
+            if (phone && distributor.website) {
+                html += '<span class="tdl-iw-sep" aria-hidden="true">·</span>';
             }
             if (distributor.website) {
-                html += '<p><a href="' + escapeHtml(distributor.website) + '" target="_blank" rel="noopener">' +
-                    escapeHtml(config.i18n.visitWebsite || 'Visit Website') + '</a></p>';
+                html += '<a href="' + escapeHtml(distributor.website) + '" target="_blank" rel="noopener" class="tdl-iw-contact-item">' +
+                    escapeHtml(config.i18n.visitWebsite || 'Visit Website') + '</a>';
             }
             html += '</div>';
         }
@@ -1104,11 +1169,11 @@
         // ── Emails ────────────────────────────────────────────────────────
         if (distributor.emails) {
             const emailLabels = {
-                'main':          config.i18n.emailMain          || 'Main',
-                'sales':         config.i18n.emailSales         || 'Sales',
-                'parts':         config.i18n.emailParts         || 'Parts',
-                'service':       config.i18n.emailService       || 'Service',
-                'installations': config.i18n.emailInstalls      || 'Installations',
+                'main':          config.i18n.emailMain     || 'Main',
+                'sales':         config.i18n.emailSales    || 'Sales',
+                'parts':         config.i18n.emailParts    || 'Parts',
+                'service':       config.i18n.emailService  || 'Service',
+                'installations': config.i18n.emailInstalls || 'Installations',
             };
             let emailHtml = '';
             Object.keys(emailLabels).forEach(function (key) {

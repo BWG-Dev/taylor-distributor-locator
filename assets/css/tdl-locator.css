@@ -537,6 +537,30 @@
     text-decoration: none;
 }
 
+/* Phone + website on one inline row */
+.tdl-iw-contact-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+}
+
+.tdl-iw-contact-item {
+    font-size: 13px;
+    color: #374151;
+    text-decoration: none;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.tdl-iw-contact-item:hover { text-decoration: underline; }
+
+.tdl-iw-sep {
+    color: #d1d5db;
+    font-size: 12px;
+    line-height: 1;
+}
+
 /* Email rows inside popup */
 .tdl-iw-email {
     font-size: 12px;
@@ -566,8 +590,11 @@
     }
 
     .tdl-map-container {
-        height: 420px !important;
+        height: 620px !important;
         position: static;
+        /* overflow:hidden clips Leaflet popups taller than the map on mobile.
+           The border still renders rounded; only the tile corners are unclipped. */
+        overflow: visible;
     }
 
     .tdl-results-container {
@@ -676,7 +703,8 @@
     }
 
     .tdl-map-container {
-        height: 320px !important;
+        height: 520px !important;
+        overflow: visible;
     }
 
     /* Info window: full-width on very small screens */
@@ -712,6 +740,39 @@
 .leaflet-popup-content {
     margin: 12px 14px !important;
     line-height: 1.5;
+}
+
+/* On short mobile maps: cap the popup, let it scroll, and tighten spacing. */
+@media (max-width: 960px) {
+    .leaflet-popup-content-wrapper {
+        max-height: 260px;
+        overflow-y: auto;
+    }
+
+    /* Tighter section padding so more content fits before needing to scroll */
+    .tdl-info-window .tdl-iw-section {
+        margin-bottom: 7px;
+        padding-bottom: 7px;
+    }
+
+    .tdl-info-window .tdl-iw-header {
+        margin-bottom: 7px;
+    }
+
+    .tdl-info-window h4 {
+        font-size: 13px;
+    }
+
+    .tdl-info-window p,
+    .tdl-iw-address,
+    .tdl-iw-email {
+        font-size: 12px;
+    }
+
+    .tdl-iw-actions {
+        margin-top: 7px;
+        padding-top: 7px;
+    }
 }
 
 /* ── Leaflet dot marker ─────────────────────────────────────────────────── */
