@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Select-String -Path \"C:\\\\wamp64\\\\www\\\\TaylorCo\\\\wp-content\\\\plugins\\\\taylor-distributor-locator\\\\assets\\\\js\\\\tdl-locator.js\" -Pattern \"stopPropagation|closePopupOnClick|initMobileToggle|swipe\")",
+      "Bash(Select-Object LineNumber, Line)"
+    ]
+  }
+}

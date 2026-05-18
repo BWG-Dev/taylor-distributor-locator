@@ -31,6 +31,7 @@
         mapProvider = config.mapProvider || 'google';
 
         initSearch();
+        initMobileToggle();
         loadDefault();
 
         // Delegated listener for Request Quote stub buttons (cards + map info windows).
@@ -303,6 +304,79 @@
     }
 
     /**
+     * Mobile map/list toggle — button clicks and swipe gestures.
+     * Only rendered in the DOM when both map and list are shown (split view).
+     * On desktop the toggle buttons are hidden via CSS; the panel classes are
+     * harmless because the desktop grid ignores them.
+     */
+    function initMobileToggle() {
+        const btnMap  = document.getElementById('tdl-toggle-map');
+        const btnList = document.getElementById('tdl-toggle-list');
+        const content = document.querySelector('.tdl-content.tdl-split');
+
+        if (!btnMap || !btnList || !content) return;
+
+        // Start in map-visible state.
+        content.classList.add('tdl-show-map');
+
+        function showMap() {
+            content.classList.replace('tdl-show-list', 'tdl-show-map') ||
+                content.classList.add('tdl-show-map');
+            btnMap.classList.add('active');
+            btnList.classList.remove('active');
+            btnMap.setAttribute('aria-pressed', 'true');
+            btnList.setAttribute('aria-pressed', 'false');
+
+            // Leaflet must recalculate its size after the container is un-hidden.
+            if (map && mapProvider === 'openstreetmap') {
+                setTimeout(function () { map.invalidateSize(); }, 50);
+            } else if (map && mapProvider === 'google' && typeof google !== 'undefined') {
+                google.maps.event.trigger(map, 'resize');
+            }
+        }
+
+        function showList() {
+            content.classList.replace('tdl-show-map', 'tdl-show-list') ||
+                content.classList.add('tdl-show-list');
+            btnList.classList.add('active');
+            btnMap.classList.remove('active');
+            btnList.setAttribute('aria-pressed', 'true');
+            btnMap.setAttribute('aria-pressed', 'false');
+        }
+
+        btnMap.addEventListener('click', showMap);
+        btnList.addEventListener('click', showList);
+
+        // Swipe gesture on the content area: horizontal swipe > 50px toggles panels.
+        var swipeStartX = null;
+        var swipeStartY = null;
+
+        content.addEventListener('touchstart', function (e) {
+            swipeStartX = e.touches[0].clientX;
+            swipeStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        content.addEventListener('touchend', function (e) {
+            if (swipeStartX === null) return;
+
+            var dx = e.changedTouches[0].clientX - swipeStartX;
+            var dy = e.changedTouches[0].clientY - swipeStartY;
+
+            // Only act on primarily horizontal swipes (avoids interfering with scroll).
+            if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                if (dx < 0) {
+                    showList(); // swipe left → list
+                } else {
+                    showMap();  // swipe right → map
+                }
+            }
+
+            swipeStartX = null;
+            swipeStartY = null;
+        }, { passive: true });
+    }
+
+    /**
      * Initialize Map (Dispatcher)
      */
     function initMap() {
@@ -373,7 +447,9 @@
             return;
         }
 
-        map = L.map(mapEl).setView([config.centerLat, config.centerLng], config.zoom);
+        // closePopupOnClick:false prevents Leaflet's map click handler from
+        // immediately dismissing a popup that a marker tap just opened on mobile.
+        map = L.map(mapEl, { closePopupOnClick: false }).setView([config.centerLat, config.centerLng], config.zoom);
 
         // CartoDB Positron — neutral, minimal tile layer that doesn't compete with the UI
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -381,6 +457,12 @@
             subdomains: 'abcd',
             maxZoom: 19,
         }).addTo(map);
+
+        // Explicit background-tap close: marker clicks use stopPropagation so
+        // only genuine background taps reach this handler.
+        map.on('click', function () {
+            map.closePopup();
+        });
 
         if (typeof L.markerClusterGroup === 'function') {
             clusterGroup = createClusterGroup();
@@ -797,9 +879,12 @@
                     content: createInfoWindowContent(distributor, location),
                 });
 
-                marker.addListener('gmp-click', function () {
+                marker.addListener('gmp-click', function (e) {
                     closeAllInfoWindows();
                     infoWindow.open(map, marker);
+                    // Prevent the underlying DOM touch/click from bubbling past
+                    // the marker element on mobile, which can close the window.
+                    if (e && e.domEvent) e.domEvent.stopPropagation();
                 });
 
                 marker.infoWindow = infoWindow;
@@ -816,6 +901,12 @@
 
                 const marker = L.marker(latLng, { icon: myIcon });
                 marker.bindPopup(createInfoWindowContent(distributor, location));
+
+                // Stop the tap from reaching the map's background click handler,
+                // which would immediately close the popup on mobile.
+                marker.on('click', function (e) {
+                    L.DomEvent.stopPropagation(e);
+                });
 
                 markers.push(marker);
 
@@ -876,10 +967,11 @@
                         content: infoContent,
                     });
 
-                    marker.addListener('gmp-click', function () {
+                    marker.addListener('gmp-click', function (e) {
                         closeAllInfoWindows();
                         infoWindow.open(map, marker);
                         highlightCard(index);
+                        if (e && e.domEvent) e.domEvent.stopPropagation();
                     });
 
                     marker.infoWindow = infoWindow;
@@ -929,7 +1021,8 @@
                     const infoContent = createInfoWindowContent(distributor, location);
                     marker.bindPopup(infoContent);
 
-                    marker.on('click', function () {
+                    marker.on('click', function (e) {
+                        L.DomEvent.stopPropagation(e);
                         highlightCard(index);
                     });
 

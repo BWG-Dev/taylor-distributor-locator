@@ -160,7 +160,9 @@ class TDL_Shortcode {
             $script_deps[] = 'leaflet-markercluster';
         }
 
-        // Plugin JS
+        // Plugin JS — in_footer:true keeps it non-render-blocking.
+        // Google Maps API already uses loading=async in its URL; Leaflet tiles
+        // load lazily by default. No additional defer needed here.
         wp_enqueue_script(
             'tdl-locator',
             TDL_PLUGIN_URL . 'assets/js/tdl-locator.js',
