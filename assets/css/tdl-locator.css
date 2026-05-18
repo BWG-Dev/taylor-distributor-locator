@@ -553,6 +553,11 @@
     font-weight: 500;
 }
 
+/* ── Mobile Map/List Toggle ─────────────────────────────────────────────── */
+.tdl-mobile-toggle {
+    display: none; /* desktop: always hidden */
+}
+
 /* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 960px) {
     .tdl-content.tdl-split {
@@ -567,6 +572,69 @@
 
     .tdl-results-container {
         max-height: none;
+    }
+
+    /* Toggle bar — visible on mobile only */
+    .tdl-mobile-toggle {
+        display: flex;
+        margin-bottom: 12px;
+        border: 1.5px solid var(--tdl-border);
+        border-radius: var(--tdl-radius);
+        overflow: hidden;
+        background: var(--tdl-white);
+        box-shadow: var(--tdl-shadow-xs);
+    }
+
+    .tdl-toggle-btn {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 44px; /* WCAG 2.5.5 minimum touch target */
+        padding: 10px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: inherit;
+        border: none;
+        background: transparent;
+        color: var(--tdl-ink-sm);
+        cursor: pointer;
+        transition: background var(--tdl-transition), color var(--tdl-transition);
+    }
+
+    .tdl-toggle-btn + .tdl-toggle-btn {
+        border-left: 1.5px solid var(--tdl-border);
+    }
+
+    .tdl-toggle-btn.active,
+    .tdl-toggle-btn[aria-pressed="true"] {
+        background: var(--tdl-ink-xl);
+        color: #fff;
+    }
+
+    /* Panel visibility driven by JS-applied classes */
+    .tdl-content.tdl-split.tdl-show-map .tdl-results-container {
+        display: none;
+    }
+
+    .tdl-content.tdl-split.tdl-show-list .tdl-map-container {
+        display: none;
+    }
+
+    /* 44px touch targets for interactive elements */
+    .tdl-request-quote {
+        min-height: 44px;
+        padding: 11px 18px;
+    }
+
+    .tdl-page-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .tdl-accordion-toggle {
+        min-height: 44px;
     }
 }
 
@@ -591,6 +659,7 @@
         background: var(--tdl-white);
         padding: 13px 16px;
         box-shadow: var(--tdl-shadow-sm);
+        min-height: 44px;
     }
 
     .tdl-search-input-wrap:focus-within .tdl-search-input {
@@ -603,10 +672,17 @@
         padding: 13px 22px;
         width: 100%;
         text-align: center;
+        min-height: 44px;
     }
 
     .tdl-map-container {
         height: 320px !important;
+    }
+
+    /* Info window: full-width on very small screens */
+    .tdl-info-window {
+        max-width: 100%;
+        min-width: 0;
     }
 }
 
@@ -654,10 +730,25 @@
     box-sizing: border-box;
     transition: transform 0.15s ease;
     cursor: pointer;
+    position: relative;
 }
 
 .tdl-marker-pin:hover {
     transform: scale(1.5);
+}
+
+/* Transparent tap-area halo — expands the touch target to ~44px without
+   changing the visual pin size. The ::before sits inside the Leaflet icon
+   container which has overflow:visible so it extends beyond the 14×14 box. */
+.tdl-marker-pin::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
 }
 
 /* ── Custom cluster icons ───────────────────────────────────────────────── */

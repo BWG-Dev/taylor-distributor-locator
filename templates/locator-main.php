@@ -36,7 +36,21 @@ if (!defined('ABSPATH')) {
     
     <!-- Status/Message Area -->
     <div id="tdl-status" class="tdl-status" role="status" aria-live="polite"></div>
-    
+
+    <?php if ($atts['show_map'] && $atts['show_list']): ?>
+    <!-- Mobile Map/List Toggle — hidden on desktop via CSS, visible on ≤960px -->
+    <div class="tdl-mobile-toggle" id="tdl-mobile-toggle" role="group" aria-label="<?php esc_attr_e('Toggle map or list view', 'taylor-distributor-locator'); ?>">
+        <button class="tdl-toggle-btn tdl-toggle-map active" id="tdl-toggle-map" type="button" aria-pressed="true">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M1 3.5L5 2L9 3.5L13 2V11.5L9 13L5 11.5L1 13V3.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><line x1="5" y1="2" x2="5" y2="11.5" stroke="currentColor" stroke-width="1.3"/><line x1="9" y1="3.5" x2="9" y2="13" stroke="currentColor" stroke-width="1.3"/></svg>
+            <?php esc_html_e('Map', 'taylor-distributor-locator'); ?>
+        </button>
+        <button class="tdl-toggle-btn tdl-toggle-list" id="tdl-toggle-list" type="button" aria-pressed="false">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><line x1="1" y1="3" x2="13" y2="3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="1" y1="7" x2="13" y2="7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="1" y1="11" x2="13" y2="11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            <?php esc_html_e('List', 'taylor-distributor-locator'); ?>
+        </button>
+    </div>
+    <?php endif; ?>
+
     <!-- Main Content Area -->
     <div class="tdl-content <?php echo esc_attr($atts['show_map'] && $atts['show_list'] ? 'tdl-split' : ''); ?>">
         
