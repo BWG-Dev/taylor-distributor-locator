@@ -30,9 +30,13 @@ After coding:
 
 ## Current Module
 
-Current module needs to be verified from git branch, recent commits, and the developer’s current task.
+**M6 — Mobile Enhancements** (complete, pending device QA)
 
-Claude should not assume the active module.
+Branch: `feature/m4-csv-service-tool`
+
+M4 (Admin CSV Upload Tool) and M6 (Mobile Enhancements) are both complete on this branch and ready to merge to `master` after device QA sign-off.
+
+Next module: **M7 — Gravity Forms Quote Modal** (unblocked, M3 is complete).
 
 ## Known Project Architecture
 

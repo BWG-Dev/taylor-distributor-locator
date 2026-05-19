@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(Select-String -Path \"C:\\\\wamp64\\\\www\\\\TaylorCo\\\\wp-content\\\\plugins\\\\taylor-distributor-locator\\\\assets\\\\js\\\\tdl-locator.js\" -Pattern \"stopPropagation|closePopupOnClick|initMobileToggle|swipe\")",
-      "Bash(Select-Object LineNumber, Line)"
+      "Bash(Select-Object LineNumber, Line)",
+      "PowerShell(cd \"C:\\\\wamp64\\\\www\\\\TaylorCo\"; php -r \"error_reporting\\(0\\); $pdo = new PDO\\('mysql:host=localhost;dbname=taylorco', 'root', ''\\); $forms = $pdo->query\\('SELECT id, title FROM wp_gf_form ORDER BY id'\\)->fetchAll\\(PDO::FETCH_ASSOC\\); foreach\\($forms as $f\\) { echo $f['id'] . ' | ' . $f['title'] . PHP_EOL; }\" 2>&1)"
     ]
   }
 }

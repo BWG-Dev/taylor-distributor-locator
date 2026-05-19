@@ -37,38 +37,23 @@
 
         initSearch();
         initMobileToggle();
+        initQuoteModal();
         loadDefault();
 
-        // Delegated listener for Request Quote stub buttons (cards + map info windows).
-        // M7 replaces showQuoteStub() with a real modal by listening for 'tdl:quote-requested'.
+        // Wire "Request Quote" buttons to the quote modal.
+        // tdl:quote-requested is still dispatched so M8/M9 can hook into it downstream.
         document.addEventListener('click', function (e) {
             const btn = e.target.closest('.tdl-request-quote');
             if (!btn) return;
             e.stopPropagation();
-            const distributorId = parseInt(btn.dataset.distributorId, 10);
-            const event = new CustomEvent('tdl:quote-requested', {
+            const distributorId   = parseInt(btn.dataset.distributorId, 10);
+            const distributorName = btn.dataset.distributorName || '';
+            document.dispatchEvent(new CustomEvent('tdl:quote-requested', {
                 bubbles: false,
                 detail: { distributorId: distributorId }
-            });
-            document.dispatchEvent(event);
-            showQuoteStub(btn);
+            }));
+            openQuoteModal(distributorId, distributorName);
         });
-
-        // M3 stub: show a temporary notice where the button is.
-        // Removed in M7 when the real modal is wired.
-        function showQuoteStub(triggerBtn) {
-            const existing = document.getElementById('tdl-quote-stub');
-            if (existing) existing.remove();
-
-            const notice = document.createElement('div');
-            notice.id = 'tdl-quote-stub';
-            notice.className = 'tdl-quote-stub';
-            notice.textContent = config.i18n.quoteStub || 'Quote request coming soon — use the contact details above to get in touch.';
-
-            triggerBtn.insertAdjacentElement('afterend', notice);
-
-            setTimeout(function () { notice.remove(); }, 4000);
-        }
 
         if (mapProvider === 'google') {
             // Check if map is already ready (race condition fix)
@@ -765,7 +750,7 @@
             serviceAreaHtml +
             additionalLocationsHtml +
             '<div class="tdl-card-actions">' +
-            '<button class="tdl-request-quote" data-distributor-id="' + distributor.id + '">' +
+            '<button class="tdl-request-quote" data-distributor-id="' + distributor.id + '" data-distributor-name="' + escapeAttr(distributor.name) + '">' +
             (config.i18n.requestQuote || 'Request Quote') +
             '</button>' +
             '</div>' +
@@ -1206,7 +1191,7 @@
             html += '<a href="' + directionsUrl + '" target="_blank" rel="noopener" class="tdl-iw-directions">' +
                 escapeHtml(config.i18n.getDirections) + '</a>';
         }
-        html += '<button class="tdl-request-quote tdl-request-quote--infowindow" data-distributor-id="' + distributor.id + '">' +
+        html += '<button class="tdl-request-quote tdl-request-quote--infowindow" data-distributor-id="' + distributor.id + '" data-distributor-name="' + escapeAttr(distributor.name) + '">' +
             escapeHtml(config.i18n.requestQuote || 'Request Quote') +
             '</button>';
         html += '</div>';
@@ -1295,7 +1280,7 @@
     }
 
     /**
-     * Escape HTML entities
+     * Escape HTML entities for text content
      */
     function escapeHtml(text) {
         if (!text) return '';
@@ -1303,5 +1288,111 @@
         div.textContent = text;
         return div.innerHTML;
     }
+
+    /**
+     * Escape a string for safe use in an HTML attribute value (double-quote delimited).
+     * Handles chars that would break the attribute or the surrounding HTML.
+     */
+    function escapeAttr(text) {
+        if (!text) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    // ── Quote Request Modal ──────────────────────────────────────────────────
+
+    /**
+     * Set up modal close handlers, focus trap, and GF confirmation observer.
+     * Called once on DOMContentLoaded; does nothing if the modal isn't present.
+     */
+    function initQuoteModal() {
+        const modal = document.getElementById('tdl-quote-modal');
+        if (!modal) return;
+
+        modal.querySelector('.tdl-modal-backdrop').addEventListener('click', closeQuoteModal);
+        modal.querySelector('.tdl-modal-close').addEventListener('click', closeQuoteModal);
+
+        // Close on Escape
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && !modal.hasAttribute('hidden')) {
+                closeQuoteModal();
+            }
+        });
+
+        // Trap Tab focus inside the dialog
+        modal.addEventListener('keydown', function (e) {
+            if (e.key !== 'Tab') return;
+            const focusable = Array.from(modal.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), ' +
+                'select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            ));
+            if (focusable.length === 0) return;
+            const first = focusable[0];
+            const last  = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        });
+
+        // Auto-close 2.5 s after GF replaces the form with its AJAX confirmation.
+        // GF adds id="gform_confirmation_wrapper_{formId}" when the submission succeeds.
+        const modalBody = modal.querySelector('.tdl-modal-body');
+        if (modalBody && config.gfFormId) {
+            new MutationObserver(function (mutations, obs) {
+                if (document.getElementById('gform_confirmation_wrapper_' + config.gfFormId)) {
+                    setTimeout(closeQuoteModal, 2500);
+                    obs.disconnect();
+                }
+            }).observe(modalBody, { childList: true, subtree: true });
+        }
+    }
+
+    /**
+     * Open the quote modal and populate the hidden distributor context fields.
+     *
+     * @param {number} distributorId
+     * @param {string} distributorName
+     */
+    function openQuoteModal(distributorId, distributorName) {
+        const modal = document.getElementById('tdl-quote-modal');
+        if (!modal) return;
+
+        // Populate hidden GF fields before the form is shown
+        if (config.gfFormId) {
+            const fid = config.gfFormId;
+            if (config.gfDistributorFieldId) {
+                const idInput = document.getElementById('input_' + fid + '_' + config.gfDistributorFieldId);
+                if (idInput) idInput.value = distributorId;
+            }
+            if (config.gfDistributorNameFieldId) {
+                const nameInput = document.getElementById('input_' + fid + '_' + config.gfDistributorNameFieldId);
+                if (nameInput) nameInput.value = distributorName || '';
+            }
+        }
+
+        modal.removeAttribute('hidden');
+        document.body.classList.add('tdl-modal-open');
+
+        // Move focus to the close button for keyboard/screen-reader users
+        const closeBtn = modal.querySelector('.tdl-modal-close');
+        if (closeBtn) closeBtn.focus();
+    }
+
+    function closeQuoteModal() {
+        const modal = document.getElementById('tdl-quote-modal');
+        if (!modal) return;
+        modal.setAttribute('hidden', '');
+        document.body.classList.remove('tdl-modal-open');
+    }
+
+    // Exposed globally so any external script can trigger a close if needed.
+    window.tdlCloseQuoteModal = closeQuoteModal;
 
 })();

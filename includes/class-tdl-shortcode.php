@@ -58,7 +58,10 @@ class TDL_Shortcode {
             'zoom' => $atts['zoom'],
             'centerLat' => $atts['center_lat'],
             'centerLng' => $atts['center_lng'],
-            'mapId' => get_option('tdl_google_maps_map_id', ''),
+            'mapId'                => get_option('tdl_google_maps_map_id', ''),
+            'gfFormId'                 => TDL_GF_Integration::get_form_id(),
+            'gfDistributorFieldId'     => TDL_GF_Integration::get_distributor_field_id(),
+            'gfDistributorNameFieldId' => TDL_GF_Integration::get_distributor_name_field_id(),
             'i18n' => [
                 'searchPlaceholder' => __('Enter ZIP code, city, state, or country...', 'taylor-distributor-locator'),
                 'search' => __('Search', 'taylor-distributor-locator'),
@@ -70,7 +73,6 @@ class TDL_Shortcode {
                 'additionalLocations' => __('%d additional location(s)', 'taylor-distributor-locator'),
                 'error' => __('An error occurred. Please try again.', 'taylor-distributor-locator'),
                 'requestQuote' => __('Request Quote', 'taylor-distributor-locator'),
-                'quoteStub' => __('Quote request coming soon — use the contact details above to get in touch.', 'taylor-distributor-locator'),
                 'serviceArea' => __('Service Area', 'taylor-distributor-locator'),
                 'emailMain' => __('Main', 'taylor-distributor-locator'),
                 'emailSales' => __('Sales', 'taylor-distributor-locator'),
@@ -81,6 +83,14 @@ class TDL_Shortcode {
             ],
         ];
         
+        // Render the GF quote form HTML (also enqueues GF scripts).
+        // gravity_form() with $ajax=true uses GF's built-in AJAX submission — no page reload.
+        // $echo=false returns HTML so we can embed it in the modal template.
+        $gf_form_html = '';
+        if ( class_exists( 'GFForms' ) && $config['gfFormId'] > 0 ) {
+            $gf_form_html = gravity_form( $config['gfFormId'], false, false, false, null, true, 0, false );
+        }
+
         // Start output buffering
         ob_start();
         

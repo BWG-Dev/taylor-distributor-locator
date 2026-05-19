@@ -53,23 +53,50 @@ if (!defined('ABSPATH')) {
 
     <!-- Main Content Area -->
     <div class="tdl-content <?php echo esc_attr($atts['show_map'] && $atts['show_list'] ? 'tdl-split' : ''); ?>">
-        
+
         <?php if ($atts['show_map']): ?>
         <!-- Map Container -->
         <div class="tdl-map-container" style="height: <?php echo esc_attr($atts['map_height']); ?>">
             <div id="tdl-map" class="tdl-map"></div>
         </div>
         <?php endif; ?>
-        
+
         <?php if ($atts['show_list']): ?>
         <!-- Results List -->
         <div class="tdl-results-container">
             <div id="tdl-results" class="tdl-results"></div>
-            
+
             <!-- Pagination -->
             <div id="tdl-pagination" class="tdl-pagination"></div>
         </div>
         <?php endif; ?>
-        
+
     </div>
+
+    <?php if (!empty($gf_form_html)): ?>
+    <!-- Quote Request Modal — opened when a "Request Quote" button is clicked -->
+    <div id="tdl-quote-modal" class="tdl-modal" role="dialog" aria-modal="true" aria-labelledby="tdl-modal-title" hidden>
+        <div class="tdl-modal-backdrop" aria-hidden="true"></div>
+        <div class="tdl-modal-dialog">
+            <div class="tdl-modal-header">
+                <h2 id="tdl-modal-title" class="tdl-modal-title">
+                    <?php esc_html_e('Request a Quote', 'taylor-distributor-locator'); ?>
+                </h2>
+                <button type="button" class="tdl-modal-close" aria-label="<?php esc_attr_e('Close', 'taylor-distributor-locator'); ?>">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                        <line x1="2" y1="2" x2="16" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="16" y1="2" x2="2" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="tdl-modal-body">
+                <?php
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- gravity_form() output is trusted GF HTML
+                echo $gf_form_html;
+                ?>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
 </div>

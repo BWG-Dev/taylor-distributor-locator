@@ -31,6 +31,7 @@ require_once TDL_PLUGIN_DIR . 'includes/class-tdl-geocoder.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-meta-boxes.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-rest-api.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-shortcode.php';
+require_once TDL_PLUGIN_DIR . 'includes/class-tdl-gf-integration.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-csv-importer.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-csv-exporter.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-m2-importer.php';
@@ -54,6 +55,7 @@ function tdl_init() {
     TDL_Meta_Boxes::init();
     TDL_REST_API::init();
     TDL_Shortcode::init();
+    TDL_GF_Integration::init();
     TDL_CSV_Importer::init();
     TDL_CSV_Exporter::init();
     TDL_M2_Importer::init();
