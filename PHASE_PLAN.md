@@ -115,14 +115,40 @@ Suggested commit:
 
 ## M6 — Mobile Enhancements
 
-Status: Blocked until M3 complete
+Status: **Complete** (2026-05-18) — pending device QA sign-off on iOS Safari and Android Chrome
 
-Focus:
-- Mobile UX improvements
-- Preserve desktop behavior
+Branch: `feature/m4-csv-service-tool`
+
+### What was delivered
+
+- **Popup fix:** Leaflet pin bubble no longer disappears on tap. Three-layer fix: `overflow: visible` on map container, `leafletMarkerTapped` flag blocking synthetic click, `autoPan: false` on mobile.
+- **Map/List toggle:** Button bar at ≤960px with swipe gesture support (left = list, right = map). `aria-pressed` state. `scrollIntoView` on return to map.
+- **Pan-to-bottom:** Tapping a pin pans the map so the pin sits at 88% from top, giving the popup full visible space above it.
+- **Touch targets:** All interactive elements ≥44px on mobile. Marker tap zone expanded to 44×44px via `::before` pseudo-element.
+- **Info window condensed:** Phone + website inline on one row. Tighter section padding. `max-height: 460px` with scroll.
+- **Map heights:** 520px at ≤960px, 420px at ≤600px.
+- **Performance:** Google Maps API already uses `loading=async`. Leaflet tiles lazy by default. Plugin JS in footer (non-render-blocking).
+
+### Files changed
+
+- `assets/js/tdl-locator.js`
+- `assets/css/tdl-locator.css`
+- `templates/locator-main.php`
+- `includes/class-tdl-shortcode.php`
+
+### Device QA required before merge
+
+- [ ] iOS Safari — tap pin, popup stays open, pan-to-bottom works
+- [ ] Android Chrome — same
+- [ ] Swipe left/right switches panels correctly
+- [ ] Desktop layout unaffected
+
+### Known edge case
+
+Pin very near the top map edge on mobile may have popup tip slightly clipped. User can drag map. Not a blocking issue.
 
 Suggested commit:
-`Add mobile enhancements for distributor locator`
+`feat(m6): mobile enhancements — pin popup fix, map/list toggle, swipe, pan-to-bottom, 44px tap targets`
 
 ---
 
