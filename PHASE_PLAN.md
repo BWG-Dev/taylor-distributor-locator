@@ -154,16 +154,49 @@ Suggested commit:
 
 ## M7 — Gravity Forms Quote Modal
 
-Status: Blocked until M3 complete
+Status: **Complete** (2026-05-19) — pending QA sign-off
 
-Focus:
-- Gravity Forms quote form
-- Modal behavior
-- Hidden distributor ID capture
-- Server-side distributor validation
+Branch: `feature/m7-gravity-form-and-modal`
+
+### What was delivered
+
+- **GF Form**: Form 1 ("Request Quote") with fields: Name (advanced), Email, Phone, Company, Message/Needs. All required except phone.
+- **Hidden distributor ID field**: Field 7 added programmatically via `GFAPI::update_form()`. Stored in option `tdl_gf_distributor_field_id`. Populated via JS at modal open time.
+- **Server-side validation**: `gform_validation` hook rejects submissions with missing or invalid distributor IDs before GF saves the entry.
+- **Modal**: Fixed overlay, backdrop blur, slide-up animation, X button + backdrop click + Escape key close, Tab focus trap, aria attributes, `role="dialog" aria-modal="true"`.
+- **AJAX submission**: `gravity_form()` called with `$ajax=true` — form submits without page reload. GF shows confirmation inside the modal; MutationObserver auto-closes the modal 2.5 s after confirmation appears.
+- **Mobile**: Bottom-sheet modal layout at ≤600px.
+- **GF styles**: CSS overrides for GF fields inside the modal — uses plugin CSS vars (`--tdl-btn-bg`, `--tdl-primary`, etc.) for consistent branding.
+
+### Files changed
+
+- `includes/class-tdl-gf-integration.php` (new)
+- `taylor-distributor-locator.php`
+- `includes/class-tdl-shortcode.php`
+- `templates/locator-main.php`
+- `assets/js/tdl-locator.js`
+- `assets/css/tdl-locator.css`
+
+### Manual step required before merge
+
+Configure reCAPTCHA v3 in GF Admin → Settings → reCAPTCHA (site key + secret), then enable on Form 1 under Form Settings → Personal Data.
+
+### QA required before merge
+
+- [ ] Modal opens on "Request Quote" click (cards + map info window)
+- [ ] `#input_1_7` contains the correct distributor ID (devtools check)
+- [ ] GF form renders with all 5 visible fields
+- [ ] Form submits via AJAX (no page reload)
+- [ ] GF entry saved with correct distributor ID in field 7
+- [ ] Confirmation shows, modal auto-closes after ~2.5 s
+- [ ] X / backdrop / Escape all close the modal
+- [ ] Tab focus trapped inside modal
+- [ ] Mobile: modal appears as bottom sheet
+- [ ] No PHP errors in debug log
+- [ ] All M1–M6 features unaffected
 
 Suggested commit:
-`Add Gravity Forms quote request modal`
+`feat(m7): Gravity Forms quote modal — hidden distributor ID field, modal open/close, focus trap, AJAX submission`
 
 ---
 

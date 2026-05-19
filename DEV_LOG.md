@@ -1,5 +1,63 @@
 # Dev Log — Taylor Distributor Locator
 
+## 2026-05-19 — M7 Gravity Forms Quote Modal
+
+### Completed
+
+M7 is functionally complete on branch `feature/m7-gravity-form-and-modal`.
+
+#### GF Integration class (`includes/class-tdl-gf-integration.php`)
+
+New class added. Responsibilities:
+- `ensure_distributor_field()`: Adds a hidden "Distributor ID" field (adminLabel: `distributor_id`) to Form 1 on first page load via `GFAPI::update_form()`. Idempotent — skips if `tdl_gf_distributor_field_id` option is already set. Field becomes field ID 7 (nextFieldId was 7 in the form JSON).
+- `validate_distributor_id()`: Hooks `gform_validation`. Rejects the submission (sets `is_valid = false`) if the posted distributor ID is zero, missing, or doesn't map to a published `distributor` post. Logs a warning. M8 downstream routing relies on this field being valid.
+
+#### Shortcode (`includes/class-tdl-shortcode.php`)
+
+- Added `gfFormId` and `gfDistributorFieldId` to the `$config` JS object.
+- Added `gravity_form($id, false, false, false, null, true, 0, false)` call before `ob_start()` to render the GF form with AJAX mode and return HTML for embedding. GF also enqueues its scripts here.
+- Removed unused `quoteStub` i18n string (stub was removed in M7).
+
+#### Template (`templates/locator-main.php`)
+
+Added modal markup after `.tdl-content`, inside `.tdl-locator`. Conditionally rendered only when GF form HTML is available. Structure: `.tdl-modal` (fixed overlay, role=dialog, aria-modal, hidden) → `.tdl-modal-backdrop` → `.tdl-modal-dialog` → `.tdl-modal-header` (title + close button) → `.tdl-modal-body` (GF form output).
+
+#### JS (`assets/js/tdl-locator.js`)
+
+- Replaced `showQuoteStub()` call in click handler with `openQuoteModal(distributorId)`. Removed `showQuoteStub` function entirely.
+- Added `initQuoteModal()`: wires backdrop click, X button click, Escape key, Tab focus trap, and a MutationObserver that auto-closes the modal 2.5 s after GF inserts `#gform_confirmation_wrapper_1` (its AJAX success state).
+- Added `openQuoteModal(distributorId)`: removes `hidden` attr, adds `tdl-modal-open` class to body, sets `#input_1_7` value, focuses close button.
+- Added `closeQuoteModal()`: restores `hidden` attr, removes body class.
+- Exposed `window.tdlCloseQuoteModal` as a global for any external trigger.
+
+#### CSS (`assets/css/tdl-locator.css`)
+
+Added modal styles: fade + slide-up animations, backdrop blur, dialog shadow, close button hover, GF form field overrides (borders, focus rings, submit button using `--tdl-btn-bg`/`--tdl-btn-text` CSS vars), mobile bottom-sheet layout at ≤600px.
+
+### Files Changed
+
+| File | Changes |
+|---|---|
+| `includes/class-tdl-gf-integration.php` | **New file** — GF integration class |
+| `taylor-distributor-locator.php` | require + init TDL_GF_Integration |
+| `includes/class-tdl-shortcode.php` | Add GF config to JS, render form, remove quoteStub i18n |
+| `templates/locator-main.php` | Add quote modal markup |
+| `assets/js/tdl-locator.js` | Replace stub with modal open/close/focus-trap |
+| `assets/css/tdl-locator.css` | Modal styles |
+
+### Manual Steps Required
+
+reCAPTCHA v3 must be configured manually:
+1. GF Admin → Settings → reCAPTCHA — enter v3 Site Key and Secret Key
+2. Form 1 → Settings → Personal Data — enable reCAPTCHA v3
+
+### Known Notes
+
+- After a successful GF AJAX submission the modal auto-closes after 2.5 s. If the user re-opens the modal before the page is reloaded, the GF confirmation message may still be shown (form submission replaced the form element). This is acceptable for a quote form; repeat same-session submissions without reload are not expected.
+- The MutationObserver on `.tdl-modal-body` fires once, then disconnects.
+
+---
+
 ## 2026-05-18 — M6 Mobile Enhancements
 
 ### Completed

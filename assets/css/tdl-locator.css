@@ -877,6 +877,218 @@
     color: var(--tdl-ink-xl);
 }
 
+/* ── Quote Request Modal ────────────────────────────────────────────────── */
+
+@keyframes tdl-modal-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes tdl-modal-slide {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.tdl-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: tdl-modal-fade 0.15s ease;
+}
+
+.tdl-modal[hidden] {
+    display: none;
+}
+
+.tdl-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+
+.tdl-modal-dialog {
+    position: relative;
+    z-index: 1;
+    background: var(--tdl-white, #fff);
+    border-radius: var(--tdl-radius-lg, 14px);
+    width: 100%;
+    max-width: 540px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.08);
+    animation: tdl-modal-slide 0.2s ease;
+}
+
+.tdl-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 24px 0;
+    gap: 12px;
+}
+
+.tdl-modal-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--tdl-ink-xl, #111827);
+}
+
+.tdl-modal-close {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    background: none;
+    border: none;
+    border-radius: var(--tdl-radius-sm, 6px);
+    cursor: pointer;
+    color: var(--tdl-ink-sm, #6b7280);
+    transition: background var(--tdl-transition, 0.15s ease), color var(--tdl-transition, 0.15s ease);
+    padding: 0;
+}
+
+.tdl-modal-close:hover {
+    background: var(--tdl-bg, #f8f9fa);
+    color: var(--tdl-ink-xl, #111827);
+}
+
+.tdl-modal-close:focus-visible {
+    outline: 2px solid var(--tdl-primary, #0073aa);
+    outline-offset: 2px;
+}
+
+.tdl-modal-body {
+    padding: 20px 24px 28px;
+}
+
+/* Prevent body scroll while modal is open */
+body.tdl-modal-open {
+    overflow: hidden;
+}
+
+/* ── GF form overrides inside the modal ─────────────────────────────────── */
+
+.tdl-modal-body .gform_wrapper {
+    margin: 0 !important;
+}
+
+.tdl-modal-body .gform_body {
+    padding: 0;
+}
+
+.tdl-modal-body .gfield {
+    margin-bottom: 14px !important;
+}
+
+.tdl-modal-body .gfield_label {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: var(--tdl-ink-lg, #374151) !important;
+    margin-bottom: 5px !important;
+}
+
+.tdl-modal-body .ginput_container input,
+.tdl-modal-body .ginput_container textarea,
+.tdl-modal-body .ginput_container select {
+    width: 100% !important;
+    border: 1.5px solid var(--tdl-border, #e8eaed) !important;
+    border-radius: var(--tdl-radius-sm, 6px) !important;
+    padding: 9px 12px !important;
+    font-size: 14px !important;
+    color: var(--tdl-ink-xl, #111827) !important;
+    background: var(--tdl-white, #fff) !important;
+    box-shadow: var(--tdl-shadow-xs, 0 1px 2px rgba(0,0,0,0.05)) !important;
+    transition: border-color 0.15s ease !important;
+    box-sizing: border-box !important;
+}
+
+.tdl-modal-body .ginput_container input:focus,
+.tdl-modal-body .ginput_container textarea:focus,
+.tdl-modal-body .ginput_container select:focus {
+    outline: none !important;
+    border-color: var(--tdl-primary, #0073aa) !important;
+    box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.12) !important;
+}
+
+.tdl-modal-body .ginput_container textarea {
+    min-height: 100px !important;
+    resize: vertical !important;
+}
+
+.tdl-modal-body .gform_footer,
+.tdl-modal-body .gform_page_footer {
+    margin: 8px 0 0 !important;
+    padding: 0 !important;
+}
+
+.tdl-modal-body .gform_footer input[type="submit"],
+.tdl-modal-body .gform_page_footer input[type="submit"] {
+    background: var(--tdl-btn-bg, var(--tdl-primary, #0073aa)) !important;
+    color: var(--tdl-btn-text, #fff) !important;
+    border: none !important;
+    border-radius: var(--tdl-radius-sm, 6px) !important;
+    padding: 11px 24px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: opacity 0.15s ease !important;
+    width: 100% !important;
+}
+
+.tdl-modal-body .gform_footer input[type="submit"]:hover,
+.tdl-modal-body .gform_page_footer input[type="submit"]:hover {
+    opacity: 0.88 !important;
+}
+
+.tdl-modal-body .gform_confirmation_wrapper,
+.tdl-modal-body .gform_confirmation_message {
+    text-align: center;
+    padding: 24px 0 8px;
+    font-size: 15px;
+    color: var(--tdl-ink-lg, #374151);
+    line-height: 1.6;
+}
+
+.tdl-modal-body .validation_error {
+    border-left: 3px solid #dc2626;
+    background: #fef2f2;
+    padding: 10px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #991b1b;
+    margin-bottom: 12px !important;
+}
+
+/* Name field sub-labels (first/last) */
+.tdl-modal-body .name_first,
+.tdl-modal-body .name_last {
+    width: 48% !important;
+}
+
+/* ── Modal — Mobile ─────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+    .tdl-modal {
+        align-items: flex-end;
+    }
+
+    .tdl-modal-dialog {
+        max-width: 100%;
+        max-height: 92dvh;
+        border-radius: var(--tdl-radius-lg, 14px) var(--tdl-radius-lg, 14px) 0 0;
+    }
+}
+
 /* ── Print ──────────────────────────────────────────────────────────────── */
 @media print {
     .tdl-search-form,
