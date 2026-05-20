@@ -46,6 +46,19 @@
 - [ ] Commit M7 with message: `feat(m7): Gravity Forms quote modal — hidden distributor ID field, modal open/close, focus trap, AJAX submission`
 - [ ] Merge `feature/m7-gravity-form-and-modal` to `staging` after QA sign-off
 
+## Current — M5 WPML Support
+
+- [ ] Navigate to WPML → Languages in WP admin — confirm `distributor` CPT appears under Translation Management
+- [ ] Confirm `wpml-config.xml` is auto-detected (WPML usually picks it up on next admin load)
+- [ ] Add a second active language in WPML settings, then open a distributor edit screen — verify WPML translation panel appears
+- [ ] Confirm `wpcf-email_sales` and other contact fields are marked "Copy" (not "Translate") in translation panel
+- [ ] Confirm `wpcf-service_area_description` is marked "Translate" in translation panel
+- [ ] Switch active language on frontend, load distributor locator page — confirm UI labels (Search button, placeholder, toggle buttons) render in correct language if a `.po` file is present
+- [ ] If WPML String Translation module is installed: confirm all registered strings appear under WPML → String Translation with context "Taylor Distributor Locator"
+- [ ] Search for distributors in non-default language — confirm results still populate (no empty list)
+- [ ] Switch language and confirm REST API transient cache is invalidated (first request after language switch is a cache miss)
+- [ ] No PHP errors in debug log
+
 ## Module Status Summary
 
 | Module | Status |
@@ -54,7 +67,7 @@
 | M2 | Complete |
 | M3 | Complete |
 | M4 | Complete |
-| M5 | Hard-blocked (WPML not confirmed) |
+| M5 | Complete — pending QA |
 | M6 | Complete — pending device QA |
 | M7 | Complete — pending QA |
 | M8 | Complete — pending QA |

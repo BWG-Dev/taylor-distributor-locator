@@ -1,5 +1,48 @@
 # Dev Log — Taylor Distributor Locator
 
+## 2026-05-20 — M5 WPML Support
+
+### Completed
+
+M5 is functionally complete on branch `feature/m5-translation-support`. WPML 4.9.3 (core) confirmed installed.
+
+#### `wpml-config.xml` (new — plugin root)
+
+Declarative WPML config. Registers `distributor` CPT as translatable (`translate="1"`). Defines copy/translate actions for all custom fields:
+- Contact/email fields (`wpcf-phone`, `wpcf-website`, `wpcf-email_main`, `wpcf-email_sales`, `wpcf-email_parts`, `wpcf-email_service`, `wpcf-email_installations`) → `copy` (language-independent data)
+- `_tdl_parent_id`, `_tdl_has_geocode_errors` → `copy` (structural/internal)
+- `wpcf-service_area_description` → `translate` (user-facing text)
+
+Registers `tdl_locator` shortcode so WPML's page/string scanner recognises it and its attributes.
+
+#### `includes/class-tdl-wpml.php` (new)
+
+Guards all hooks behind `ICL_SITEPRESS_VERSION`. Two responsibilities:
+- `bust_search_cache()`: bumps `tdl_data_version` on `wpml_language_has_switched`, busting all REST API transient cache keys
+- `register_strings()`: fires `wpml_register_single_string` for every frontend UI string (safe no-op if WPML String Translation module not installed)
+
+#### `taylor-distributor-locator.php` (modified)
+
+`require_once` for new class. `TDL_WPML::init()` added as first call in `tdl_init()`.
+
+### Client Note
+
+WPML String Translation (separate add-on) not installed. `register_strings()` will be a no-op until ST is added. All strings already use `__()` and are translatable via standard `.po`/`.mo` files.
+
+### Files Changed
+
+| File | Changes |
+|---|---|
+| `wpml-config.xml` | **New file** — CPT + field copy/translate rules, shortcode registration |
+| `includes/class-tdl-wpml.php` | **New file** — cache bust on language switch, WPML ST string registration |
+| `taylor-distributor-locator.php` | require + init TDL_WPML |
+
+### QA Steps
+
+See PHASE_PLAN.md M5 QA checklist.
+
+---
+
 ## 2026-05-20 — M8 Dynamic Email Routing
 
 ### Completed
