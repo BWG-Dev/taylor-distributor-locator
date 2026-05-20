@@ -180,6 +180,43 @@ class TDL_Admin_Settings {
             'tdl_general_section'
         );
         
+        // Email Routing section — M8 settings.
+        add_settings_section(
+            'tdl_email_section',
+            __('Email Routing', 'taylor-distributor-locator'),
+            [__CLASS__, 'render_email_section_description'],
+            'tdl-settings'
+        );
+
+        // CC Email — awaiting client confirmation; empty by default.
+        register_setting('tdl_settings', 'tdl_cc_email', [
+            'type'              => 'string',
+            'sanitize_callback' => 'sanitize_email',
+            'default'           => '',
+        ]);
+        add_settings_field(
+            'tdl_cc_email',
+            __('CC Email (optional)', 'taylor-distributor-locator'),
+            [__CLASS__, 'render_cc_email_field'],
+            'tdl-settings',
+            'tdl_email_section'
+        );
+
+        // GF Quote Form ID — configurable in case the form is recreated.
+        register_setting('tdl_settings', 'tdl_gf_quote_form_id', [
+            'type'              => 'integer',
+            'sanitize_callback' => 'absint',
+            'default'           => 1,
+        ]);
+        add_settings_field(
+            'tdl_gf_quote_form_id',
+            __('Quote Form ID', 'taylor-distributor-locator'),
+            [__CLASS__, 'render_number_field'],
+            'tdl-settings',
+            'tdl_email_section',
+            ['name' => 'tdl_gf_quote_form_id', 'min' => 1, 'max' => 9999]
+        );
+
         // Colors settings section
         add_settings_section(
             'tdl_colors_section',
@@ -237,6 +274,26 @@ class TDL_Admin_Settings {
         <?php
     }
     
+    /**
+     * Render email routing section description
+     */
+    public static function render_email_section_description() {
+        echo '<p>' . esc_html__( 'Configure email routing for the distributor quote form. Quote requests are routed to each distributor\'s Sales Email field, with fallback to Main Email.', 'taylor-distributor-locator' ) . '</p>';
+    }
+
+    /**
+     * Render the CC email field
+     */
+    public static function render_cc_email_field() {
+        $value = get_option( 'tdl_cc_email', '' );
+        printf(
+            '<input type="email" name="tdl_cc_email" value="%s" class="regular-text" placeholder="%s" />',
+            esc_attr( $value ),
+            esc_attr__( 'e.g. team@taylorcompany.com', 'taylor-distributor-locator' )
+        );
+        echo '<p class="description">' . esc_html__( 'Optional. When set, all routed quote emails also CC this address. Leave blank until the client confirms the address.', 'taylor-distributor-locator' ) . '</p>';
+    }
+
     /**
      * Render colors section description
      */

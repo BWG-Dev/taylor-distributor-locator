@@ -10,7 +10,21 @@
 - [ ] Verify desktop layout is completely unaffected (both panels always visible, no toggle)
 - [ ] Verify Google Maps provider (if used) — popup stays open on tap
 
-## Current — M7 Gravity Forms Quote Modal
+## Current — M8 Dynamic Email Routing
+
+- [ ] Submit a quote for a distributor with `wpcf-email_sales` populated → email routes to email_sales, log shows INFO
+- [ ] Submit a quote for a distributor with only `wpcf-email_main` → email routes to email_main, log shows WARNING
+- [ ] Test distributor with neither email → no email sent, log shows ERROR, no silent failure
+- [ ] Verify HTML email renders in Gmail, Outlook, Apple Mail
+- [ ] Confirm GF admin notification (if any) is suppressed — no double-send
+- [ ] Confirm customer confirmation email (if configured) still sends
+- [ ] Verify Distributors → Routing Log page loads and shows events
+- [ ] Verify severity colour-coding (info=blue, warning=orange, error=red) and GF entry links
+- [ ] Set `tdl_cc_email` to a test address in Settings → Email Routing, confirm CC arrives
+- [ ] Confirm all M1–M7 features still work
+- [ ] No PHP errors in debug log
+
+## Pending — M7 QA (complete before merging to staging)
 
 - [ ] **Manual step**: Configure reCAPTCHA v3 in GF Admin → Settings → reCAPTCHA (enter site key + secret, then enable v3 on Form 1 under Form Settings → Personal Data)
 - [ ] Load the distributor locator page and confirm the modal appears on "Request Quote" click
@@ -43,7 +57,7 @@
 | M5 | Hard-blocked (WPML not confirmed) |
 | M6 | Complete — pending device QA |
 | M7 | Complete — pending QA |
-| M8 | Blocked until M7 |
+| M8 | Complete — pending QA |
 | M9 | Blocked until M7 + M8 |
 | M10 | Blocked until M1–M9 |
 
