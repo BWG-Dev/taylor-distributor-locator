@@ -202,16 +202,46 @@ Suggested commit:
 
 ## M8 — Dynamic Email Routing
 
-Status: Blocked until M7 complete
+Status: **Complete** (2026-05-20) — pending QA sign-off
 
-Focus:
-- Route Gravity Forms submissions to `email_sales`
-- Fallback to `email_main`
-- Warning logging
-- Email delivery independent from HubSpot
+Branch: `feature/m8-email-routing`
+
+### What was delivered
+
+- **`class-tdl-email-router.php`** (new): Hooks `gform_after_submission_{form_id}`. Resolves routing email via `wpcf-email_sales` → `wpcf-email_main` fallback → error log. Sends HTML email via `wp_mail()`. Suppresses GF's static-address admin notification (`gform_disable_notification_{form_id}`) to prevent double-sending; customer confirmation emails unaffected. CC support via WP option `tdl_cc_email` (empty by default).
+- **`class-tdl-routing-log.php`** (new): DB-backed log table (`{prefix}_tdl_routing_log`). `log()`, `get_entries()`, `get_total()`. All DB errors caught and `error_log()`-ed; logging never breaks form submission.
+- **`class-tdl-admin-log.php`** (new): Admin submenu "Routing Log" under Distributors. Paginated table of routing events.
+- **`templates/email/quote-request.php`** (new): Table-based HTML email, inline styles, email-client compatible. Sections: customer info, message, reply CTA, submission details, footer.
+- **`templates/admin/email-routing-log.php`** (new): WP admin table with severity colour-coding, distributor links, GF entry links.
+- **`class-tdl-activator.php`** (modified): Adds `tdl_routing_log` table via `dbDelta()` on fresh activation.
+- **`class-tdl-admin-settings.php`** (modified): New "Email Routing" settings section — CC Email field (optional, pending client confirmation) + Quote Form ID field.
+- **`taylor-distributor-locator.php`** (modified): require + init for new classes; version bumped to 0.5.0.
+
+### DB changes
+
+New table `{prefix}_tdl_routing_log`. Created via `dbDelta()` in activator (new installs) and via `TDL_Routing_Log::maybe_create_table()` on first init after update (existing installs). Version tracked in option `tdl_routing_log_db_version`.
+
+### Client dependency
+
+CC email address — not yet confirmed by client. Set WP option `tdl_cc_email` once confirmed. Field is in Settings page under "Email Routing".
+
+### QA required before merge
+
+- [ ] Submit a quote for a distributor with `wpcf-email_sales` populated → email arrives at email_sales, routing log shows INFO
+- [ ] Submit a quote for a distributor without email_sales but with `wpcf-email_main` → email arrives at email_main, routing log shows WARNING
+- [ ] Test with a distributor with neither email → no email sent, routing log shows ERROR
+- [ ] Verify HTML email renders correctly in Gmail, Outlook, Apple Mail
+- [ ] Confirm GF admin notification (if any) is suppressed — no double-send
+- [ ] Confirm customer confirmation email (if configured) still sends
+- [ ] Verify routing log page loads under Distributors → Routing Log
+- [ ] Verify severity colour-coding and GF entry links in log page
+- [ ] Verify pagination at 25+ entries
+- [ ] Set `tdl_cc_email` option to a test address, confirm CC arrives
+- [ ] Confirm all M1–M7 features unaffected
+- [ ] No PHP fatal errors or warnings in debug log
 
 Suggested commit:
-`Add dynamic distributor email routing`
+`feat(m8): dynamic email routing with HTML template, fallback logic, and admin routing log`
 
 ---
 

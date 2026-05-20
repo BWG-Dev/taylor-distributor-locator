@@ -1,5 +1,70 @@
 # Dev Log — Taylor Distributor Locator
 
+## 2026-05-20 — M8 Dynamic Email Routing
+
+### Completed
+
+M8 is functionally complete on branch `feature/m8-email-routing`.
+
+#### Email Router (`includes/class-tdl-email-router.php`)
+
+New class. Hooks `gform_after_submission_{form_id}` to run after GF saves the entry. Reads distributor ID from the hidden GF field (option `tdl_gf_distributor_field_id`). Resolves routing email: `wpcf-email_sales` → `wpcf-email_main` → error. Sends HTML email via `wp_mail()` with inline template. Logs every routing decision via `TDL_Routing_Log`.
+
+Also hooks `gform_disable_notification_{form_id}` to suppress GF's static-address (`toType=email`) notifications, preventing double-send. Customer confirmation notifications (`toType=field`) are not suppressed.
+
+CC support via WP option `tdl_cc_email` (empty by default, configurable in Settings page).
+
+#### Routing Log (`includes/class-tdl-routing-log.php`)
+
+New class. Manages `{prefix}_tdl_routing_log` DB table. `log()`, `get_entries()`, `get_total()`. Version-guarded via `tdl_routing_log_db_version` option so `dbDelta()` only runs once per activation/update. All DB errors caught silently — logging never throws or breaks form submission.
+
+#### Admin Log (`includes/class-tdl-admin-log.php`)
+
+New class. Adds "Routing Log" submenu under Distributors. Renders paginated log table (25 per page).
+
+#### Email Template (`templates/email/quote-request.php`)
+
+New HTML email. Table-based, inline styles, MSO conditional comments for Outlook. Sections: header, intro, customer info table, message block with left-border, reply CTA button, submission details, footer.
+
+#### Admin Log Template (`templates/admin/email-routing-log.php`)
+
+New admin template. WP `widefat striped` table. Colour-coded severity pills. Distributor edit links. GF entry links. Pagination.
+
+#### Settings page (`includes/class-tdl-admin-settings.php`)
+
+Added "Email Routing" section with: CC Email field (optional, pending client confirmation) and Quote Form ID field.
+
+#### Activator (`includes/class-tdl-activator.php`)
+
+Added `tdl_routing_log` table to `dbDelta()` batch. Sets `tdl_routing_log_db_version` on activation so `maybe_create_table()` skips on subsequent page loads.
+
+#### Bootstrap (`taylor-distributor-locator.php`)
+
+Added `require_once` for three new classes. Added `TDL_Routing_Log::maybe_create_table()`, `TDL_Email_Router::init()`, `TDL_Admin_Log::init()` to `tdl_init()`. Version bumped to 0.5.0.
+
+### Files Changed
+
+| File | Changes |
+|---|---|
+| `includes/class-tdl-email-router.php` | **New file** — routing logic, GF hook, wp_mail(), notification suppression |
+| `includes/class-tdl-routing-log.php` | **New file** — DB log class |
+| `includes/class-tdl-admin-log.php` | **New file** — admin log page |
+| `templates/email/quote-request.php` | **New file** — HTML email template |
+| `templates/admin/email-routing-log.php` | **New file** — admin log table template |
+| `includes/class-tdl-activator.php` | Add routing_log table to dbDelta() + version option |
+| `includes/class-tdl-admin-settings.php` | Add Email Routing section + CC Email + Quote Form ID fields |
+| `taylor-distributor-locator.php` | require + init 3 new classes; version 0.5.0 |
+
+### Client Dependency
+
+CC email address pending client confirmation. Once confirmed, add to Settings → Email Routing → CC Email. Not hardcoded.
+
+### QA Steps
+
+See PHASE_PLAN.md M8 QA checklist.
+
+---
+
 ## 2026-05-19 — M7 Gravity Forms Quote Modal
 
 ### Completed

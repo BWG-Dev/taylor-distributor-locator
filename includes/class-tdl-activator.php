@@ -73,10 +73,30 @@ class TDL_Activator {
             INDEX idx_zip_range (zone_type, range_start, range_end),
             INDEX idx_country (zone_type, country_context)
         ) {$charset_collate};";
-        
+
+        // M8 — email routing event log.
+        $routing_log_table = $wpdb->prefix . 'tdl_routing_log';
+        $routing_log_sql = "CREATE TABLE {$routing_log_table} (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            severity ENUM('info','warning','error') NOT NULL DEFAULT 'info',
+            distributor_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            distributor_name VARCHAR(255) NOT NULL DEFAULT '',
+            recipient_email VARCHAR(255) NOT NULL DEFAULT '',
+            routing_source ENUM('email_sales','email_main','none') NOT NULL DEFAULT 'none',
+            gf_entry_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            message VARCHAR(500) NOT NULL DEFAULT '',
+            INDEX idx_created (created_at),
+            INDEX idx_severity (severity)
+        ) {$charset_collate};";
+
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta($locations_sql);
         dbDelta($zones_sql);
+        dbDelta($routing_log_sql);
+
+        // Mark routing log table version so maybe_create_table() skips on init.
+        update_option( TDL_Routing_Log::DB_VERSION_OPTION, TDL_Routing_Log::DB_VERSION );
     }
     
     /**
