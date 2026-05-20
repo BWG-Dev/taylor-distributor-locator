@@ -3,7 +3,12 @@
     "allow": [
       "Bash(Select-String -Path \"C:\\\\wamp64\\\\www\\\\TaylorCo\\\\wp-content\\\\plugins\\\\taylor-distributor-locator\\\\assets\\\\js\\\\tdl-locator.js\" -Pattern \"stopPropagation|closePopupOnClick|initMobileToggle|swipe\")",
       "Bash(Select-Object LineNumber, Line)",
-      "PowerShell(cd \"C:\\\\wamp64\\\\www\\\\TaylorCo\"; php -r \"error_reporting\\(0\\); $pdo = new PDO\\('mysql:host=localhost;dbname=taylorco', 'root', ''\\); $forms = $pdo->query\\('SELECT id, title FROM wp_gf_form ORDER BY id'\\)->fetchAll\\(PDO::FETCH_ASSOC\\); foreach\\($forms as $f\\) { echo $f['id'] . ' | ' . $f['title'] . PHP_EOL; }\" 2>&1)"
+      "PowerShell(cd \"C:\\\\wamp64\\\\www\\\\TaylorCo\"; php -r \"error_reporting\\(0\\); $pdo = new PDO\\('mysql:host=localhost;dbname=taylorco', 'root', ''\\); $forms = $pdo->query\\('SELECT id, title FROM wp_gf_form ORDER BY id'\\)->fetchAll\\(PDO::FETCH_ASSOC\\); foreach\\($forms as $f\\) { echo $f['id'] . ' | ' . $f['title'] . PHP_EOL; }\" 2>&1)",
+      "Bash(Get-ChildItem \"C:\\\\wamp64\\\\www\\\\TaylorCo\\\\wp-content\\\\plugins\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(Sort-Object Name)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\wamp64\\\\www\\\\TaylorCo\\\\wp-content\\\\plugins\" -ErrorAction Stop | ForEach-Object { $_.Name })",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\wamp64\\\\www\\\\TaylorCo\\\\wp-content\\\\plugins\\\\sitepress-multilingual-cms\" -Filter \"wpml-config.xml\" -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })"
     ]
   }
 }

@@ -30,13 +30,13 @@ After coding:
 
 ## Current Module
 
-**M6 — Mobile Enhancements** (complete, pending device QA)
+**M5 — WPML Support** (complete, pending QA)
 
-Branch: `feature/m4-csv-service-tool`
+Branch: `feature/m5-translation-support`
 
-M4 (Admin CSV Upload Tool) and M6 (Mobile Enhancements) are both complete on this branch and ready to merge to `master` after device QA sign-off.
+M5 is functionally complete. WPML 4.9.3 (core) confirmed installed.
 
-Next module: **M7 — Gravity Forms Quote Modal** (unblocked, M3 is complete).
+Next module: **M9 — HubSpot Webhook** (blocked until M7 + M8 QA sign-off).
 
 ## Known Project Architecture
 

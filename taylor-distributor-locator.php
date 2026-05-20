@@ -31,6 +31,7 @@ require_once TDL_PLUGIN_DIR . 'includes/class-tdl-geocoder.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-meta-boxes.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-rest-api.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-shortcode.php';
+require_once TDL_PLUGIN_DIR . 'includes/class-tdl-wpml.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-gf-integration.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-routing-log.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-email-router.php';
@@ -51,6 +52,7 @@ function tdl_init() {
     TDL_i18n::load_textdomain();
     
     // Initialize components
+    TDL_WPML::init();
     TDL_Post_Type::init();
     TDL_Admin_Settings::init();
     TDL_Admin_Status::init();

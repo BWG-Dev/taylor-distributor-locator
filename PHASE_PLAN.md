@@ -101,15 +101,41 @@ Suggested commit:
 
 ## M5 — WPML Support
 
-Status: Hard-blocked
+Status: **Complete** (2026-05-20) — pending QA
 
-Blocked until:
-- WPML is confirmed purchased.
-- WPML is active.
-- WPML is compatible.
+Branch: `feature/m5-translation-support`
+
+WPML version: 4.9.3 (core — `sitepress-multilingual-cms`). WPML String Translation add-on not installed; string registration is a no-op until ST is added.
+
+### What was delivered
+
+- **`wpml-config.xml`** (new): Declares `distributor` CPT as translatable. Sets field actions: contact/email/phone/website → `copy`; `wpcf-service_area_description` → `translate`; `_tdl_parent_id` / `_tdl_has_geocode_errors` → `copy`. Registers `tdl_locator` shortcode attributes for WPML's scanner.
+- **`class-tdl-wpml.php`** (new): Guards all hooks behind `ICL_SITEPRESS_VERSION`. Bumps `tdl_data_version` on `wpml_language_has_switched` to bust REST API transient cache. Registers frontend UI strings via `wpml_register_single_string` action.
+- **`taylor-distributor-locator.php`**: require + init `TDL_WPML`.
+
+### Files changed
+
+- `wpml-config.xml` (new)
+- `includes/class-tdl-wpml.php` (new)
+- `taylor-distributor-locator.php`
+
+### Known limitation
+
+If the client creates translated versions of distributor posts and the site's active language is non-default, `get_distributors_data()` in the REST API calls `get_posts(['post__in' => $ids])` which WPML may filter to the current language. Since `tdl_locations` and `tdl_service_zones` reference original-language post IDs, translated post IDs would return empty location data. This edge case only surfaces if translated distributor posts actually exist. Address in a follow-up if needed.
+
+### QA required before merge
+
+- [ ] `distributor` CPT appears in WPML → Translation Management
+- [ ] `wpml-config.xml` auto-detected (field actions visible in translation panel)
+- [ ] `wpcf-email_sales` shows as "Copy" in translation panel — not "Translate"
+- [ ] `wpcf-service_area_description` shows as "Translate"
+- [ ] Frontend UI labels render in correct language
+- [ ] Search results populate in non-default language
+- [ ] Cache invalidated on language switch
+- [ ] No PHP errors in debug log
 
 Suggested commit:
-`Add WPML support for distributor locator`
+`feat(m5): WPML support — CPT translation config, field rules, cache invalidation, string registration`
 
 ---
 

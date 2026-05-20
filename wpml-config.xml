@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wpml-config>
+
+    <custom-types>
+        <custom-type translate="1">distributor</custom-type>
+    </custom-types>
+
+    <custom-fields>
+        <custom-field action="copy">wpcf-phone</custom-field>
+        <custom-field action="copy">wpcf-website</custom-field>
+        <custom-field action="copy">wpcf-email_main</custom-field>
+        <custom-field action="copy">wpcf-email_sales</custom-field>
+        <custom-field action="copy">wpcf-email_parts</custom-field>
+        <custom-field action="copy">wpcf-email_service</custom-field>
+        <custom-field action="copy">wpcf-email_installations</custom-field>
+        <custom-field action="copy">_tdl_parent_id</custom-field>
+        <custom-field action="copy">_tdl_has_geocode_errors</custom-field>
+        <custom-field action="translate">wpcf-service_area_description</custom-field>
+    </custom-fields>
+
+    <shortcodes>
+        <shortcode>
+            <tag>tdl_locator</tag>
+            <attributes>
+                <attribute encoding="none">default_country</attribute>
+                <attribute encoding="none">map_height</attribute>
+                <attribute encoding="none">show_map</attribute>
+                <attribute encoding="none">show_list</attribute>
+                <attribute encoding="none">results_per_page</attribute>
+                <attribute encoding="none">zoom</attribute>
+                <attribute encoding="none">center_lat</attribute>
+                <attribute encoding="none">center_lng</attribute>
+            </attributes>
+        </shortcode>
+    </shortcodes>
+
+</wpml-config>
