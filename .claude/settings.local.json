@@ -8,7 +8,10 @@
       "Bash(Select-Object Name)",
       "Bash(Sort-Object Name)",
       "PowerShell(Get-ChildItem -Path \"C:\\\\wamp64\\\\www\\\\TaylorCo\\\\wp-content\\\\plugins\" -ErrorAction Stop | ForEach-Object { $_.Name })",
-      "PowerShell(Get-ChildItem -Path \"C:\\\\wamp64\\\\www\\\\TaylorCo\\\\wp-content\\\\plugins\\\\sitepress-multilingual-cms\" -Filter \"wpml-config.xml\" -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })"
+      "PowerShell(Get-ChildItem -Path \"C:\\\\wamp64\\\\www\\\\TaylorCo\\\\wp-content\\\\plugins\\\\sitepress-multilingual-cms\" -Filter \"wpml-config.xml\" -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })",
+      "PowerShell(wp *)",
+      "PowerShell(php --version 2>&1)",
+      "PowerShell(php \"C:\\\\wamp64\\\\www\\\\TaylorCo\\\\check-wpml-langs.php\")"
     ]
   }
 }
