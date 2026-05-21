@@ -647,9 +647,6 @@
             ].filter(Boolean).join(', ');
 
             primaryLocationHtml = '<div class="tdl-location">';
-            if (primaryLocation.name) {
-                primaryLocationHtml += '<strong>' + escapeHtml(primaryLocation.name) + '</strong><br>';
-            }
             primaryLocationHtml += escapeHtml(address);
             if (primaryLocation.hours) {
                 primaryLocationHtml += '<div class="tdl-hours"><strong>' + config.i18n.hours + ':</strong> ' + escapeHtml(primaryLocation.hours).replace(/\n/g, '<br>') + '</div>';
@@ -727,9 +724,6 @@
                 ].filter(Boolean).join(', ');
 
                 additionalLocationsHtml += '<div class="tdl-additional-location">';
-                if (loc.name) {
-                    additionalLocationsHtml += '<strong>' + escapeHtml(loc.name) + '</strong><br>';
-                }
                 additionalLocationsHtml += escapeHtml(locAddress);
                 if (loc.hours) {
                     additionalLocationsHtml += '<div class="tdl-hours"><strong>' + config.i18n.hours + ':</strong> ' + escapeHtml(loc.hours).replace(/\n/g, '<br>') + '</div>';
@@ -1121,9 +1115,6 @@
         // ── Header ─────────────────────────────────────────────────────────
         html += '<div class="tdl-iw-header">';
         html += '<h4>' + escapeHtml(distributor.name) + '</h4>';
-        if (location.name) {
-            html += '<p class="tdl-iw-sublabel">' + escapeHtml(location.name) + '</p>';
-        }
         html += '</div>';
 
         // ── Address + Hours ────────────────────────────────────────────────
