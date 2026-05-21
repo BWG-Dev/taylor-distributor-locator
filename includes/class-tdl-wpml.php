@@ -37,6 +37,24 @@ class TDL_WPML {
     }
 
     /**
+     * Translate a registered string via WPML String Translation if active,
+     * falling back to the standard WP gettext value otherwise.
+     *
+     * Safe to call when WPML is not installed — apply_filters() returns
+     * $default unchanged when no handler is attached to the filter.
+     *
+     * Usage: TDL_WPML::translate( 'registration_name', __( 'English', 'textdomain' ) )
+     * Keep the __() literal so WP-CLI make-pot and WPML's PHP scanner find it.
+     *
+     * @param string $name    Registration name — must match a key in register_strings().
+     * @param string $default Pre-translated fallback; pass the __() result here.
+     * @return string
+     */
+    public static function translate( string $name, string $default ): string {
+        return (string) apply_filters( 'wpml_translate_single_string', $default, 'Taylor Distributor Locator', $name );
+    }
+
+    /**
      * Register frontend UI strings with WPML String Translation.
      *
      * wpml_register_single_string is an action provided by the WPML ST module.

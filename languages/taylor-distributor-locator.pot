@@ -1,0 +1,1226 @@
+﻿# Taylor Distributor Locator
+# Copyright (C) 2026 Well Dressed Walrus
+# This file is distributed under the same license as the Taylor Distributor Locator plugin.
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Taylor Distributor Locator 0.5.0\n"
+"Report-Msgid-Bugs-To: https://welldressedwalrus.com\n"
+"POT-Creation-Date: 2026-05-20 13:59-04:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Taylor Distributor Locator\n"
+"X-Domain: taylor-distributor-locator\n"
+
+#: includes/class-tdl-meta-boxes.php
+msgid "— None —"
+msgstr ""
+
+#: includes/class-tdl-shortcode.php
+msgid "%d additional location(s)"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "%d distributor posts have titles that need to be updated to the \"Company — Location\" format before you use the CSV importer."
+msgstr ""
+
+#: includes/class-tdl-shortcode.php
+msgid "%d distributor(s) found"
+msgstr ""
+
+#: templates/admin/email-routing-log.php
+msgid "%d total entries"
+msgstr ""
+
+#: includes/class-tdl-post-type.php
+msgid "%d/%d Geocoded"
+msgstr ""
+
+#: templates/email/quote-request.php
+msgid "(no message provided)"
+msgstr ""
+
+#: includes/class-tdl-email-router.php
+msgid "(not provided)"
+msgstr ""
+
+#: templates/email/quote-request.php
+msgid "(view in admin)"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "1 = headquarters / parent post. 0 = branch / child post."
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "2-letter ISO code: US, CA, MX, etc."
+msgstr ""
+
+#: templates/email/quote-request.php
+msgid "A new quote request has been submitted for %s."
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "A walkthrough of the CSV import tool will be added here before launch."
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Accent Color"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Active Card Highlight"
+msgstr ""
+
+#: templates/admin/meta-box-contacts.php
+msgid "Add Email"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Add Location"
+msgstr ""
+
+#: templates/admin/meta-box-contacts.php
+msgid "Additional Emails"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Address"
+msgstr ""
+
+#: includes/class-tdl-geocoder.php
+msgid "Address is required"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Address Line 2"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Address Line 3"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "All distributor post titles are already in the correct format. No migration needed."
+msgstr ""
+
+#: includes/class-tdl-post-type.php
+msgid "All Geocode Statuses"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "An error occurred during import."
+msgstr ""
+
+#: includes/class-tdl-shortcode.php
+msgid "An error occurred. Please try again."
+msgstr ""
+
+#: includes/class-tdl-meta-boxes.php
+msgid "Are you sure you want to remove this item?"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Button Background"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Button Text"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Cache Duration (minutes)"
+msgstr ""
+
+#: templates/admin/meta-box-service-zones.php
+msgid "Canadian Provinces"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Cancel"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Cancelling geocoding..."
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Card Border"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "CC Email (optional)"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Checking distributor post titles…"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Checking post titles…"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Children (%d)"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "City"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "City — used in post title if location_name is blank"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Clear Cache Now"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Clear Log"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Clear Search Cache"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Click to force clear all cached search results immediately."
+msgstr ""
+
+#: templates/locator-main.php
+msgid "Close"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Color Settings"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Column"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Company"
+msgstr ""
+
+#: includes/class-tdl-post-type.php
+msgid "Completed"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Configure email routing for the distributor quote form. Quote requests are routed to each distributor\\'s Sales Email field, with fallback to Main Email."
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Could not open CSV file."
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Could not read the uploaded file."
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "count mismatch, check errors"
+msgstr ""
+
+#: templates/admin/meta-box-service-zones.php
+msgid "Countries"
+msgstr ""
+
+#: includes/class-tdl-post-type.php
+msgid "Country"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "country_code must be a 2-letter ISO code, got \"%s\""
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Created"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "CSV File"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "CSV file is empty."
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "CSV Format"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "CSV must contain a \"company_name\" column."
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Current Distributors"
+msgstr ""
+
+#: templates/email/quote-request.php
+msgid "Customer Information"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Database error inserting location: %s"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Database error inserting service zone: %s"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Date"
+msgstr ""
+
+#: templates/admin/email-routing-log.php
+msgid "Date / Time (UTC)"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Default Map Center Latitude"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Default Map Center Longitude"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Default Map Zoom"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Description"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Distributor"
+msgstr ""
+
+#: includes/class-tdl-rest-api.php
+msgid "Distributor not found"
+msgstr ""
+
+#: templates/admin/csv-export-page.php
+msgid "Download CSV"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Download Sample CSV"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Download the sample template to get started. Only company_name is required; all other columns are optional."
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Dry run — preview only, no database changes"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Dry Run Preview"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "e.g. \"Headquarters\" or \"West Branch\" — used in post title and map popup"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "e.g. \"Mon–Fri 8am–5pm\""
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "e.g. team@taylorcompany.com"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Each CSV row is one distributor post (one physical location). If a post title matches an existing post, its location data and service zones will be fully replaced by this CSV. This cannot be undone — export a backup first if needed."
+msgstr ""
+
+#: templates/admin/meta-box-contacts.php
+msgid "Email"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Email Routing"
+msgstr ""
+
+#: includes/class-tdl-admin-log.php
+msgid "Email Routing Log"
+msgstr ""
+
+#: includes/class-tdl-shortcode.php
+msgid "Enter ZIP code, city, state, or country..."
+msgstr ""
+
+#: templates/admin/meta-box-service-zones.php
+msgid "Enter ZIP codes and ranges, one per line. Use format: 75001 (single) or 75000-75999 (range)"
+msgstr ""
+
+#: templates/admin/email-routing-log.php
+msgid "Entry"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Error"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Error log cleared."
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Error starting geocoding"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Errored (skipped)"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Errors"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Expected count reached"
+msgstr ""
+
+#: templates/admin/csv-export-page.php
+msgid "Export all distributors, locations, and service zones to a CSV file. The format is compatible with the Import feature."
+msgstr ""
+
+#: includes/class-tdl-csv-exporter.php
+msgid "Export CSV"
+msgstr ""
+
+#: templates/admin/csv-export-page.php
+msgid "Export Distributors"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Free-text description of service area"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Full URL including https://"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "General Settings"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Geocode"
+msgstr ""
+
+#: includes/class-tdl-post-type.php
+msgid "Geocode Status"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Geocoded"
+msgstr ""
+
+#: includes/class-tdl-meta-boxes.php
+msgid "Geocoded successfully!"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Geocoding Complete"
+msgstr ""
+
+#: includes/class-tdl-geocoder.php
+msgid "Geocoding failed"
+msgstr ""
+
+#: includes/class-tdl-geocoder.php
+msgid "Geocoding failed: No results found via Nominatim"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Geocoding Initiated"
+msgstr ""
+
+#: includes/class-tdl-meta-boxes.php
+msgid "Geocoding Issues:"
+msgstr ""
+
+#: includes/class-tdl-geocoder.php
+msgid "Geocoding returned empty coordinates"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Geocoding Running..."
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Geocoding started in background."
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Geocoding Status"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Geocoding System Status"
+msgstr ""
+
+#: includes/class-tdl-meta-boxes.php
+msgid "Geocoding..."
+msgstr ""
+
+#: includes/class-tdl-shortcode.php
+msgid "Get Directions"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Google Map ID (Required for Advanced Markers)"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Google Maps"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Google Maps API Key"
+msgstr ""
+
+#: includes/class-tdl-geocoder.php
+msgid "Google Maps API Key is missing"
+msgstr ""
+
+#: includes/class-tdl-post-type.php
+msgid "Has Errors"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Headquarters"
+msgstr ""
+
+#: includes/class-tdl-shortcode.php
+msgid "Hours of Operation"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "How-to video"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "How-to Video"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "How-to video coming soon"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Idle"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Import"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Import complete"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Import CSV"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Import Distributors from CSV"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Import Results"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Imports the initial distributor records. Run once on a clean database. For ongoing self-service imports use M4 (Import CSV)."
+msgstr ""
+
+#: includes/class-tdl-shortcode.php
+msgid "Installations"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Installations email"
+msgstr ""
+
+#: templates/admin/meta-box-contacts.php
+msgid "Installations Email"
+msgstr ""
+
+#: templates/admin/meta-box-contacts.php
+msgid "Internal notes about service areas (not displayed publicly)"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Invalid email in %1$s: \"%2$s\""
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Invalid file type. Please upload a .csv file."
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Invalid file type. Please upload a CSV file."
+msgstr ""
+
+#: includes/class-tdl-post-type.php
+msgid "Invalid ID"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Invalid website URL: \"%s\""
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "is_primary must be 0 or 1."
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Issue"
+msgstr ""
+
+#: templates/admin/meta-box-contacts.php
+msgid "Label"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Last Activity:"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Latitude"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Leave colors blank to inherit from your theme (Kadence CSS variables). Set a color to override."
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Link Color"
+msgstr ""
+
+#: templates/locator-main.php
+msgid "List"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Location"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Location ID"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Location Name"
+msgstr ""
+
+#: includes/class-tdl-post-type.php
+msgid "Locations"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Log saved:"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Longitude"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "M2 — Initial Distributor Import"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "M2 Initial Import"
+msgstr ""
+
+#: includes/class-tdl-shortcode.php
+msgid "Main"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Main contact email"
+msgstr ""
+
+#: templates/admin/meta-box-contacts.php
+msgid "Main Email"
+msgstr ""
+
+#: templates/admin/meta-box-contacts.php
+msgid "Main Phone"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Main phone number"
+msgstr ""
+
+#: templates/locator-main.php
+msgid "Map"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Map Provider"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Message"
+msgstr ""
+
+#: templates/email/quote-request.php
+msgid "Message / Needs"
+msgstr ""
+
+#: templates/admin/meta-box-service-zones.php
+msgid "Mexican States"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Migration complete"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Migration error."
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Mode"
+msgstr ""
+
+#: includes/class-tdl-post-type.php
+msgid "More..."
+msgstr ""
+
+#: includes/class-tdl-post-type.php
+msgid "N/A"
+msgstr ""
+
+#: templates/email/quote-request.php
+msgid "Name"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Never"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "New Location"
+msgstr ""
+
+#: templates/email/quote-request.php
+msgid "New Quote Request"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "No CSV file uploaded or upload error occurred."
+msgstr ""
+
+#: includes/class-tdl-shortcode.php
+msgid "No distributors found."
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "No errors logged recently."
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "No file uploaded."
+msgstr ""
+
+#: includes/class-tdl-post-type.php
+msgid "No Locations"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "No locations added yet. Click \"Add Location\" to add one."
+msgstr ""
+
+#: templates/admin/email-routing-log.php
+msgid "No routing events have been recorded yet."
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "No valid data rows found in the CSV."
+msgstr ""
+
+#: includes/class-tdl-post-type.php
+msgid "Not Done"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "One row = one distributor post (one physical location)."
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "One-time developer tool."
+msgstr ""
+
+#: includes/class-tdl-meta-boxes.php
+msgid "Only set this for branch locations that belong to a parent company."
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "OpenStreetMap (Leaflet)"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Optional override"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Optional. When set, all routed quote emails also CC this address. Leave blank until the client confirms the address."
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Override Install Email"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Override Parts Email"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Override Sales Email"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Override Service Email"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Overview"
+msgstr ""
+
+#: includes/class-tdl-post-type.php
+msgid "Parent"
+msgstr ""
+
+#: includes/class-tdl-meta-boxes.php
+msgid "Parent company (leave blank if top-level):"
+msgstr ""
+
+#: includes/class-tdl-meta-boxes.php
+msgid "Parent Distributor"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Parent ID"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Parent record not found — child imported without parent link."
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Parents (%d)"
+msgstr ""
+
+#: includes/class-tdl-shortcode.php
+msgid "Parts"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Parts email"
+msgstr ""
+
+#: templates/admin/meta-box-contacts.php
+msgid "Parts Email"
+msgstr ""
+
+#: includes/class-tdl-post-type.php
+msgid "Pending / Partial"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Pending Geocoding"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Permission denied"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Permission denied."
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Phone"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Phone number for this specific location (overrides company phone in popup)"
+msgstr ""
+
+#: includes/class-tdl-meta-boxes.php
+msgid "Physical Locations"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Physical street address"
+msgstr ""
+
+#: includes/class-tdl-meta-boxes.php
+msgid "Please verify the addresses and try geocoding again."
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Post title migration required"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "post titles updated."
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Preview changes"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Primary Color"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Primary Location"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Processing…"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Quote Form ID"
+msgstr ""
+
+#: includes/class-tdl-email-router.php
+msgid "Quote Request — %s"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Reason"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Recent Geocoding Errors"
+msgstr ""
+
+#: templates/admin/email-routing-log.php
+msgid "Recipient Email"
+msgstr ""
+
+#: templates/admin/email-routing-log.php
+msgid "Records every email routing decision made when a quote request form is submitted. Times are UTC."
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Re-geocode All (incl. errors)"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Remove"
+msgstr ""
+
+#: templates/email/quote-request.php
+msgid "Reply to %s"
+msgstr ""
+
+#: templates/locator-main.php
+msgid "Request a Quote"
+msgstr ""
+
+#: includes/class-tdl-shortcode.php
+msgid "Request Quote"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Required. Exact company name — used for parent/child linking and post title."
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Results Per Page"
+msgstr ""
+
+#: includes/class-tdl-admin-log.php
+msgid "Routing Log"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Row"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Row warnings"
+msgstr ""
+
+#: includes/class-tdl-post-type.php
+msgid "Run Geocode"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Run Geocoding"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Run Import"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Run migration now"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Running"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Running migration…"
+msgstr ""
+
+#: includes/class-tdl-shortcode.php
+msgid "Sales"
+msgstr ""
+
+#: templates/admin/meta-box-contacts.php
+msgid "Sales Email"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Sales email (used for lead routing in M8)"
+msgstr ""
+
+#: includes/class-tdl-shortcode.php
+msgid "Search"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Search cache cleared successfully."
+msgstr ""
+
+#: templates/locator-main.php
+msgid "Search for distributors"
+msgstr ""
+
+#: includes/class-tdl-shortcode.php
+msgid "Searching distributors..."
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Secondary Color"
+msgstr ""
+
+#: includes/class-tdl-csv-exporter.php
+msgid "Security check failed"
+msgstr ""
+
+#: templates/admin/meta-box-service-zones.php
+msgid "Select All"
+msgstr ""
+
+#: templates/admin/meta-box-service-zones.php
+msgid "Select countries this distributor serves (not where they are located). Checking a country means the distributor serves the entire country. Use the States tab to limit coverage to specific states or provinces."
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Select CSV file:"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Select the distributor CSV file to import."
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Semicolon-separated ISO country codes: US;CA"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Semicolon-separated state/province codes: TX;OK;NM"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Semicolon-separated ZIPs or ranges: 75001;75002;75100-75199"
+msgstr ""
+
+#: templates/email/quote-request.php
+msgid "Sent automatically by the Distributor Locator on %1$s"
+msgstr ""
+
+#: includes/class-tdl-shortcode.php
+msgid "Service"
+msgstr ""
+
+#: includes/class-tdl-post-type.php
+msgid "Service Area"
+msgstr ""
+
+#: templates/admin/meta-box-contacts.php
+msgid "Service Area Notes"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Service email"
+msgstr ""
+
+#: templates/admin/meta-box-contacts.php
+msgid "Service Email"
+msgstr ""
+
+#: includes/class-tdl-meta-boxes.php
+msgid "Service Zones"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Settings"
+msgstr ""
+
+#: templates/admin/email-routing-log.php
+msgid "Severity"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Skipped"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Skipped — duplicates (%d)"
+msgstr ""
+
+#: templates/admin/email-routing-log.php
+msgid "Source Used"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "State"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "State or province code (TX, ON, etc.)"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "State/Province"
+msgstr ""
+
+#: templates/admin/meta-box-service-zones.php
+msgid "States/Provinces"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Status:"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Stopping..."
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Street Address"
+msgstr ""
+
+#: templates/email/quote-request.php
+msgid "Submission Details"
+msgstr ""
+
+#: templates/email/quote-request.php
+msgid "Submitted (UTC)"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "Suite, Unit, Building, etc."
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "System Status"
+msgstr ""
+
+#: includes/class-tdl-admin-settings.php
+msgid "Text Color"
+msgstr ""
+
+#: templates/locator-main.php
+msgid "Toggle map or list view"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Total Locations"
+msgstr ""
+
+#: includes/class-tdl-m2-importer.php
+msgid "Total now"
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Triggers a background process. You can navigate away from this page."
+msgstr ""
+
+#: includes/class-tdl-admin-status.php
+msgid "Unknown"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Unknown import error."
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Update behavior:"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Updated"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Upload CSV"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "Uploading…"
+msgstr ""
+
+#: templates/admin/meta-box-service-zones.php
+msgid "US States"
+msgstr ""
+
+#: templates/admin/meta-box-service-zones.php
+msgid "US ZIP Codes"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Use is_primary=1 for a company\\'s headquarters (parent post) and is_primary=0 for branch locations (child posts). The post title is built automatically as \"Company — Location\" using location_name or city."
+msgstr ""
+
+#: includes/class-tdl-shortcode.php
+msgid "Visit Website"
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "Watch how-to video"
+msgstr ""
+
+#: templates/admin/meta-box-contacts.php
+msgid "Website"
+msgstr ""
+
+#: includes/class-tdl-csv-importer.php
+msgid "wp_insert_post returned 0."
+msgstr ""
+
+#: templates/admin/csv-import-page.php
+msgid "ZIP or postal code"
+msgstr ""
+
+#: templates/admin/meta-box-locations.php
+msgid "ZIP/Postal Code"
+msgstr ""
