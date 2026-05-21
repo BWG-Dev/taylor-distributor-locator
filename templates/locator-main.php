@@ -25,7 +25,7 @@ if (!defined('ABSPATH')) {
                 id="tdl-search-input"
                 class="tdl-search-input"
                 placeholder="<?php echo esc_attr($config['i18n']['searchPlaceholder']); ?>"
-                aria-label="<?php esc_attr_e('Search for distributors', 'taylor-distributor-locator'); ?>"
+                aria-label="<?php echo esc_attr( TDL_WPML::translate( 'search_aria_label', __( 'Search for distributors', 'taylor-distributor-locator' ) ) ); ?>"
                 autocomplete="off"
             />
             <button type="button" id="tdl-search-btn" class="tdl-search-btn">
@@ -39,14 +39,14 @@ if (!defined('ABSPATH')) {
 
     <?php if ($atts['show_map'] && $atts['show_list']): ?>
     <!-- Mobile Map/List Toggle — hidden on desktop via CSS, visible on ≤960px -->
-    <div class="tdl-mobile-toggle" id="tdl-mobile-toggle" role="group" aria-label="<?php esc_attr_e('Toggle map or list view', 'taylor-distributor-locator'); ?>">
+    <div class="tdl-mobile-toggle" id="tdl-mobile-toggle" role="group" aria-label="<?php echo esc_attr( TDL_WPML::translate( 'toggle_aria_label', __( 'Toggle map or list view', 'taylor-distributor-locator' ) ) ); ?>">
         <button class="tdl-toggle-btn tdl-toggle-map active" id="tdl-toggle-map" type="button" aria-pressed="true">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M1 3.5L5 2L9 3.5L13 2V11.5L9 13L5 11.5L1 13V3.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><line x1="5" y1="2" x2="5" y2="11.5" stroke="currentColor" stroke-width="1.3"/><line x1="9" y1="3.5" x2="9" y2="13" stroke="currentColor" stroke-width="1.3"/></svg>
-            <?php esc_html_e('Map', 'taylor-distributor-locator'); ?>
+            <?php echo esc_html( TDL_WPML::translate( 'map_toggle_label', __( 'Map', 'taylor-distributor-locator' ) ) ); ?>
         </button>
         <button class="tdl-toggle-btn tdl-toggle-list" id="tdl-toggle-list" type="button" aria-pressed="false">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><line x1="1" y1="3" x2="13" y2="3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="1" y1="7" x2="13" y2="7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="1" y1="11" x2="13" y2="11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-            <?php esc_html_e('List', 'taylor-distributor-locator'); ?>
+            <?php echo esc_html( TDL_WPML::translate( 'list_toggle_label', __( 'List', 'taylor-distributor-locator' ) ) ); ?>
         </button>
     </div>
     <?php endif; ?>
@@ -80,9 +80,9 @@ if (!defined('ABSPATH')) {
         <div class="tdl-modal-dialog">
             <div class="tdl-modal-header">
                 <h2 id="tdl-modal-title" class="tdl-modal-title">
-                    <?php esc_html_e('Request a Quote', 'taylor-distributor-locator'); ?>
+                    <?php echo esc_html( TDL_WPML::translate( 'quote_modal_title', __( 'Request a Quote', 'taylor-distributor-locator' ) ) ); ?>
                 </h2>
-                <button type="button" class="tdl-modal-close" aria-label="<?php esc_attr_e('Close', 'taylor-distributor-locator'); ?>">
+                <button type="button" class="tdl-modal-close" aria-label="<?php echo esc_attr( TDL_WPML::translate( 'close_modal_label', __( 'Close', 'taylor-distributor-locator' ) ) ); ?>">
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
                         <line x1="2" y1="2" x2="16" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                         <line x1="16" y1="2" x2="2" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
