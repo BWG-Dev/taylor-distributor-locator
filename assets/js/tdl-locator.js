@@ -22,8 +22,11 @@
     let leafletMarkerTapped = false;
     let leafletTapTimer = null;
 
-    // Autocomplete state
-    let debounceTimer = null;
+    // Active search tab mode — set by tab clicks, read by performSearch().
+    let activeSearchMode = 'zip';
+    // Lazy-load flags for dropdowns — populated once on first tab activation.
+    let statesLoaded = false;
+    let countriesLoaded = false;
 
     /**
      * Initialize on DOM ready
@@ -35,7 +38,7 @@
         config = JSON.parse(configEl.textContent);
         mapProvider = config.mapProvider || 'google';
 
-        initSearch();
+        initSearchTabs();
         initMobileToggle();
         initQuoteModal();
         loadDefault();
@@ -76,221 +79,125 @@
         }
     };
 
-    // Autocomplete-parsed components for the current input value
-    let searchComponents = { city: '', state: '', zip: '', country: '' };
-
     // Last-executed search state — used by fetchPage() to re-run the same
     // search on a different page without re-reading the input.
     let savedQuery = '';
     let savedComponents = {};
 
     /**
-     * Initialize search functionality
+     * Wire up the four search-mode tabs and their inputs/dropdowns.
+     * Replaces the previous single text input + autocomplete approach.
      */
-    function initSearch() {
-        const input = document.getElementById('tdl-search-input');
+    function initSearchTabs() {
         const btn = document.getElementById('tdl-search-btn');
+        if (!btn) return;
 
-        if (!input || !btn) return;
-
-        // Initialize Autocomplete
-        if (mapProvider === 'google') {
-            initGoogleAutocomplete(input);
-        } else {
-            initNominatimAutocomplete(input);
-        }
-
-        btn.addEventListener('click', function () {
-            // Close autocomplete results if open
-            closeAutocomplete();
-            performSearch();
+        // Tab clicks
+        document.querySelectorAll('.tdl-search-tab').forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                switchSearchTab(tab.dataset.mode);
+            });
         });
 
-        input.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                closeAutocomplete();
-                performSearch();
-            }
-        });
+        // Search button
+        btn.addEventListener('click', performSearch);
 
+        // Enter key on text inputs
+        ['tdl-zip-input', 'tdl-city-input'].forEach(function (id) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') performSearch();
+            });
+        });
     }
 
     /**
-     * Initialize Google Autocomplete
+     * Activate the given search tab, lazy-loading its dropdown if needed.
      */
-    function initGoogleAutocomplete(input) {
-        if (typeof google === 'undefined' || !google.maps || !google.maps.places || !google.maps.places.Autocomplete) {
-            return;
-        }
+    function switchSearchTab(mode) {
+        activeSearchMode = mode;
 
-        const autocomplete = new google.maps.places.Autocomplete(input, {
-            fields: ['address_components', 'geometry', 'name'],
-            types: ['(cities)'],
+        document.querySelectorAll('.tdl-search-tab').forEach(function (tab) {
+            const active = tab.dataset.mode === mode;
+            tab.classList.toggle('active', active);
+            tab.setAttribute('aria-selected', active ? 'true' : 'false');
         });
 
-        autocomplete.addListener('place_changed', function () {
-            const place = autocomplete.getPlace();
+        document.querySelectorAll('.tdl-tab-panel').forEach(function (panel) {
+            const active = panel.id === 'tdl-panel-' + mode;
+            panel.hidden = !active;
+            panel.classList.toggle('active', active);
+        });
 
-            // Reset components
-            searchComponents = { city: '', state: '', zip: '', country: '' };
+        if (mode === 'state' && !statesLoaded) loadStatesDropdown();
+        if (mode === 'country' && !countriesLoaded) loadCountriesDropdown();
 
-            if (place.address_components) {
-                place.address_components.forEach(function (component) {
-                    const types = component.types;
-                    if (types.includes('locality')) {
-                        searchComponents.city = component.long_name;
-                    }
-                    if (types.includes('administrative_area_level_1')) {
-                        searchComponents.state = component.short_name;
-                    }
-                    if (types.includes('postal_code')) {
-                        searchComponents.zip = component.long_name;
-                    }
-                    if (types.includes('country')) {
-                        searchComponents.country = component.short_name;
-                    }
+        const focusEl = document.querySelector('#tdl-panel-' + mode + ' input, #tdl-panel-' + mode + ' select');
+        if (focusEl) focusEl.focus();
+    }
+
+    /**
+     * Populate the State/Province dropdown from /states for US, CA, MX in parallel.
+     * Only states that have actual service-zone coverage are returned.
+     */
+    function loadStatesDropdown() {
+        const select = document.getElementById('tdl-state-select');
+        if (!select) return;
+
+        const base = config.restUrl + 'states?country=';
+        Promise.all([
+            fetch(base + 'US').then(function (r) { return r.json(); }),
+            fetch(base + 'CA').then(function (r) { return r.json(); }),
+            fetch(base + 'MX').then(function (r) { return r.json(); }),
+        ]).then(function (results) {
+            const groups = [
+                { label: 'United States', states: results[0].states || [] },
+                { label: 'Canada',        states: results[1].states || [] },
+                { label: 'Mexico',        states: results[2].states || [] },
+            ];
+
+            select.innerHTML = '<option value="">' + (config.i18n.selectState || 'Select a state or province...') + '</option>';
+
+            groups.forEach(function (group) {
+                if (!group.states.length) return;
+                const og = document.createElement('optgroup');
+                og.label = group.label;
+                group.states.forEach(function (s) {
+                    const opt = document.createElement('option');
+                    opt.value = s.code;
+                    opt.textContent = s.name;
+                    og.appendChild(opt);
                 });
-            }
+                select.appendChild(og);
+            });
 
-            // Auto-search on selection
-            performSearch();
-        });
-
-        // Clear structured data on manual input change to fallback to text search
-        input.addEventListener('input', function () {
-            // We don't clear immediately to allow minor edits
+            statesLoaded = true;
+        }).catch(function () {
+            select.innerHTML = '<option value="">Error loading states</option>';
         });
     }
 
     /**
-     * Initialize Nominatim (OSM) Autocomplete
+     * Populate the Country dropdown from /countries — only countries with coverage.
      */
-    function initNominatimAutocomplete(input) {
-        // Create results container
-        let resultsContainer = document.querySelector('.tdl-autocomplete-results');
-        if (!resultsContainer) {
-            resultsContainer = document.createElement('div');
-            resultsContainer.className = 'tdl-autocomplete-results';
-            // Append to the form (not the overflow:hidden input wrap) so the
-            // dropdown isn't clipped. CSS positions it via top:100% on the form.
-            (input.closest('.tdl-search-form') || input.parentNode).appendChild(resultsContainer);
-        }
+    function loadCountriesDropdown() {
+        const select = document.getElementById('tdl-country-select');
+        if (!select) return;
 
-        input.addEventListener('input', function () {
-            const query = this.value.trim();
-
-            // Clear structured data on manual input change to fallback to text search
-            searchComponents = { city: '', state: '', zip: '', country: '' };
-
-            if (query.length < 3) {
-                resultsContainer.style.display = 'none';
-                return;
-            }
-
-            // Skip autocomplete for numeric input (zipcodes)
-            // Only offer suggestions when user starts typing a city or state name
-            if (/^\d/.test(query)) {
-                resultsContainer.style.display = 'none';
-                return;
-            }
-
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(function () {
-                fetchNominatimSuggestions(query, resultsContainer, input);
-            }, 300);
-        });
-
-        // Hide results on outside click
-        document.addEventListener('click', function (e) {
-            if (e.target !== input && e.target !== resultsContainer) {
-                resultsContainer.style.display = 'none';
-            }
-        });
-    }
-
-    /**
-     * Fetch suggestions from Nominatim
-     */
-    function fetchNominatimSuggestions(query, container, input) {
-        const url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&addressdetails=1&limit=5';
-
-        fetch(url, {
-            headers: {
-                'Accept': 'application/json'
-            }
-        })
-            .then(function (response) { return response.json(); })
+        fetch(config.restUrl + 'countries')
+            .then(function (r) { return r.json(); })
             .then(function (data) {
-                renderNominatimSuggestions(data, container, input);
-            })
-            .catch(function (err) {
-                console.error('Autocomplete error:', err);
+                select.innerHTML = '<option value="">' + (config.i18n.selectCountry || 'Select a country...') + '</option>';
+                (data.countries || []).forEach(function (c) {
+                    const opt = document.createElement('option');
+                    opt.value = c.code;
+                    opt.textContent = c.name;
+                    select.appendChild(opt);
+                });
+                countriesLoaded = true;
+            }).catch(function () {
+                select.innerHTML = '<option value="">Error loading countries</option>';
             });
-    }
-
-    /**
-     * Render Nominatim suggestions
-     */
-    function renderNominatimSuggestions(data, container, input) {
-        if (!data || data.length === 0) {
-            container.style.display = 'none';
-            return;
-        }
-
-        container.innerHTML = '';
-        container.style.display = 'block';
-
-        data.forEach(function (item) {
-            const addr = item.address || {};
-            const city = addr.city || addr.town || addr.village || addr.suburb || addr.municipality || '';
-            const state = addr.state || '';
-            const country = addr.country || '';
-
-            // Reconstruct display name without county
-            let displayParts = [];
-            if (city) displayParts.push(city);
-            if (state) displayParts.push(state);
-            if (country) displayParts.push(country);
-
-            const cleanDisplay = displayParts.join(', ') || item.display_name;
-
-            const div = document.createElement('div');
-            div.className = 'tdl-autocomplete-item';
-            div.textContent = cleanDisplay;
-
-            div.addEventListener('click', function () {
-                input.value = cleanDisplay;
-                container.style.display = 'none';
-
-                // Parse address details
-                searchComponents = { city: '', state: '', zip: '', country: '' };
-
-                if (item.address) {
-                    searchComponents.city = city;
-                    searchComponents.state = state;
-                    if (item.address.postcode) {
-                        searchComponents.zip = item.address.postcode;
-                    }
-                    if (item.address.country_code) {
-                        searchComponents.country = item.address.country_code.toUpperCase();
-                    }
-                }
-
-                performSearch();
-            });
-
-            container.appendChild(div);
-        });
-    }
-
-    /**
-     * Close autocomplete
-     */
-    function closeAutocomplete() {
-        const container = document.querySelector('.tdl-autocomplete-results');
-        if (container) {
-            container.style.display = 'none';
-        }
     }
 
     /**
@@ -430,9 +337,6 @@
             streetViewControl: false,
         });
 
-        // Re-init search to attach Autocomplete if it wasn't ready before
-        initSearch();
-
         if (isDefaultView) {
             fetchAllMarkers();
         }
@@ -502,17 +406,60 @@
     }
 
     /**
-     * Start a new search from the current input value.
-     * Always resets to page 1 and saves search state for pagination reuse.
+     * Start a new search from the active tab's input or select.
+     * Sends explicit REST params (?zip=, ?state=, ?country=, ?city=) instead of
+     * the free-text ?q= param, so the server routes directly to the correct
+     * search method without heuristic detection.
      */
     function performSearch() {
         isDefaultView = false;
-        const input = document.getElementById('tdl-search-input');
-        savedQuery = input ? input.value.trim() : '';
-        savedComponents = Object.assign({}, searchComponents);
+
+        // Reset — never send ?q= from tab-mode searches.
+        savedQuery = '';
+        savedComponents = { city: '', state: '', zip: '', country: '' };
+
+        switch (activeSearchMode) {
+            case 'zip': {
+                const val = (document.getElementById('tdl-zip-input') || {}).value.trim();
+                if (!/^\d{5}$/.test(val)) {
+                    showStatus('Please enter a valid 5-digit ZIP code.', 'error');
+                    return;
+                }
+                savedComponents.zip = val;
+                break;
+            }
+            case 'state': {
+                const val = (document.getElementById('tdl-state-select') || {}).value || '';
+                if (!val) {
+                    showStatus('Please select a state or province.', 'error');
+                    return;
+                }
+                savedComponents.state = val;
+                break;
+            }
+            case 'country': {
+                const val = (document.getElementById('tdl-country-select') || {}).value || '';
+                if (!val) {
+                    showStatus('Please select a country.', 'error');
+                    return;
+                }
+                savedComponents.country = val;
+                break;
+            }
+            case 'city': {
+                const val = (document.getElementById('tdl-city-input') || {}).value.trim();
+                if (!val) {
+                    showStatus('Please enter a city or region.', 'error');
+                    return;
+                }
+                savedComponents.city = val;
+                break;
+            }
+        }
+
         currentPage = 1;
-        fetchPage(1);        // list (paginated)
-        fetchMapForSearch(); // map (all matching results, independent of pagination)
+        fetchPage(1);
+        fetchMapForSearch();
     }
 
     /**

@@ -162,7 +162,11 @@ class TDL_REST_API {
         $data_version   = get_option('tdl_data_version', time());
         $cache_duration = get_option('tdl_cache_duration', 60) * MINUTE_IN_SECONDS;
 
-        if (empty($query)) {
+        // Only return all distributors when no search criteria are present at all.
+        // Previously this checked only $query, which caused explicit params like
+        // ?zip=, ?state=, ?country=, ?city= to be ignored — returning all 164
+        // distributors regardless of the filter the frontend sent.
+        if ( empty( $query ) && empty( $city ) && empty( $state ) && empty( $zip ) && empty( $country ) ) {
             $cache_key = 'tdl_all_' . md5($page . '_' . $per_page . '_' . $data_version . '_' . TDL_VERSION);
             if ($cache_duration > 0) {
                 $cached = get_transient($cache_key);
@@ -216,19 +220,28 @@ class TDL_REST_API {
         $parts = [];
         $params = [];
 
-        // Normalize state to code for location matching
-        $state_match = self::match_state($state);
-        $state_code = $state_match ? $state_match['code'] : $state;
-        $state_name = $state_match ? $state_match['name'] : $state;
+        // Normalize state to code for location matching.
+        // Also infer the country from the state when no explicit country is provided —
+        // without this, 'CO' matches both US-Colorado and any MX zone stored as 'CO'
+        // (e.g. Coahuila abbreviation collisions from the CSV import).
+        $state_match    = self::match_state($state);
+        $state_code     = $state_match ? $state_match['code']    : $state;
+        $state_name     = $state_match ? $state_match['name']    : $state;
+        $state_country  = $state_match ? $state_match['country'] : '';
+        // Explicit $country takes precedence; fall back to state-inferred country.
+        $effective_country = ! empty( $country ) ? $country : $state_country;
 
-        // 0. Match by Name (Always a good fallback)
-        $parts[] = "post_title LIKE %s";
-        $params[] = '%' . $wpdb->esc_like($query) . '%';
+        // Name match only when a text query is present. An empty query produces
+        // LIKE '%%' which matches every post and would swamp the zone conditions.
+        if ( ! empty( $query ) ) {
+            $parts[] = 'post_title LIKE %s';
+            $params[] = '%' . $wpdb->esc_like( $query ) . '%';
+        }
 
         // 1. Match by City (Physical Location)
         if (!empty($city)) {
             $parts[] = "ID IN (
-                SELECT DISTINCT distributor_id FROM {$locations_table} 
+                SELECT DISTINCT distributor_id FROM {$locations_table}
                 WHERE city LIKE %s
                 " . ($state ? " AND state_province = %s" : "") . "
             )";
@@ -237,22 +250,25 @@ class TDL_REST_API {
         }
 
         // 2. Match by State — service zone first, physical location as fallback.
-        // Distributors that only have ZIP ranges in service_zones (no explicit state zone)
-        // still appear when their physical address is in the searched state.
+        // country_context is always applied (inferred from the state when not explicit)
+        // to prevent abbreviation collisions across US/CA/MX (e.g. 'CO' = Colorado or
+        // a Mexican state shorthand).
         if (!empty($state)) {
             $parts[] = "(ID IN (
                 SELECT DISTINCT distributor_id FROM {$zones_table}
                 WHERE zone_type = 'state' AND (zone_value = %s OR zone_value = %s)
-                " . ($country ? " AND country_context = %s" : "") . "
+                AND country_context = %s
             ) OR ID IN (
                 SELECT DISTINCT distributor_id FROM {$locations_table}
-                WHERE state_province = %s OR state_province = %s
+                WHERE (state_province = %s OR state_province = %s)
+                " . ( $effective_country ? " AND country_code = %s" : "" ) . "
             ))";
             $params[] = $state_code;
             $params[] = $state_name;
-            if ($country) $params[] = $country;
+            $params[] = $effective_country;
             $params[] = $state_code;
             $params[] = $state_name;
+            if ( $effective_country ) $params[] = $effective_country;
         }
 
         // 3. Match by ZIP (Service Zone - single or range)
@@ -288,6 +304,20 @@ class TDL_REST_API {
                 )";
             }
             $params[] = $country;
+        }
+
+        // Guard: if no conditions were added (e.g. empty query + non-numeric zip),
+        // return an empty result rather than generating invalid SQL.
+        if ( empty( $parts ) ) {
+            return [
+                'success'     => true,
+                'search_type' => 'none',
+                'query'       => $query,
+                'total'       => 0,
+                'page'        => $page,
+                'per_page'    => $per_page,
+                'results'     => [],
+            ];
         }
 
         $offset = ($page - 1) * $per_page;
@@ -668,43 +698,55 @@ class TDL_REST_API {
     }
     
     /**
-     * Match a string to a country
+     * Match a string to an ISO-2 country code.
+     *
+     * Covers the full get_country_names() list so that any country name typed
+     * in the free-text search path (or sent via ?q=) resolves correctly.
+     * Previously only 13 countries were recognised, causing Argentina, UAE, etc.
+     * to fall through to city search and return 0 results.
      */
-    private static function match_country($input) {
-        $input = trim(strtoupper($input));
-        
-        // Common country mappings (limited for brevity, can be expanded)
-        $countries = [
-            'US' => ['UNITED STATES', 'USA', 'U.S.A.', 'U.S.', 'AMERICA'],
-            'CA' => ['CANADA'],
-            'MX' => ['MEXICO', 'MÉXICO'],
-            'GB' => ['UNITED KINGDOM', 'UK', 'GREAT BRITAIN', 'ENGLAND'],
-            'FR' => ['FRANCE'],
-            'DE' => ['GERMANY', 'DEUTSCHLAND'],
-            'IT' => ['ITALY', 'ITALIA'],
-            'ES' => ['SPAIN', 'ESPAÑA'],
-            'AU' => ['AUSTRALIA'],
-            'JP' => ['JAPAN'],
-            'CN' => ['CHINA'],
-            'BR' => ['BRAZIL', 'BRASIL'],
-            'IN' => ['INDIA'],
-        ];
-        
-        // Check if input is already an ISO code
-        foreach ($countries as $code => $names) {
-            if ($input === $code) {
-                return $code;
-            }
-            if (in_array($input, $names)) {
-                return $code;
-            }
+    private static function match_country( $input ) {
+        $input = trim( strtoupper( $input ) );
+
+        if ( empty( $input ) ) {
+            return null;
         }
-        
-        // If it's a 2-letter code we don't have mapped, return it
-        if (preg_match('/^[A-Z]{2}$/', $input)) {
+
+        // Aliases for names/abbreviations not present in the ISO name list.
+        $aliases = [
+            'USA'                      => 'US',
+            'U.S.A.'                   => 'US',
+            'U.S.'                     => 'US',
+            'AMERICA'                  => 'US',
+            'UNITED STATES OF AMERICA' => 'US',
+            'UK'                       => 'GB',
+            'GREAT BRITAIN'            => 'GB',
+            'ENGLAND'                  => 'GB',
+            'MÉXICO'                   => 'MX',
+            'DEUTSCHLAND'              => 'DE',
+            'ITALIA'                   => 'IT',
+            'ESPAÑA'                   => 'ES',
+            'BRASIL'                   => 'BR',
+        ];
+
+        if ( isset( $aliases[ $input ] ) ) {
+            return $aliases[ $input ];
+        }
+
+        $country_names = self::get_country_names();
+
+        // Exact ISO-2 code match.
+        if ( isset( $country_names[ $input ] ) ) {
             return $input;
         }
-        
+
+        // Full name match (case-insensitive).
+        foreach ( $country_names as $code => $name ) {
+            if ( strtoupper( $name ) === $input ) {
+                return $code;
+            }
+        }
+
         return null;
     }
     
