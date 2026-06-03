@@ -31,13 +31,47 @@
 /* ── Search Form ────────────────────────────────────────────────────────── */
 .tdl-search-form {
     margin-bottom: 20px;
-    position: relative; /* positioning context for Nominatim dropdown */
 }
 
-.tdl-search-input-wrap {
+/* Tab bar */
+.tdl-search-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--tdl-border);
+    max-width: 640px;
+    gap: 0;
+}
+
+.tdl-search-tab {
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    color: var(--tdl-ink-sm);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px; /* overlap the tab bar bottom border */
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color var(--tdl-transition), border-color var(--tdl-transition);
+}
+
+.tdl-search-tab:hover {
+    color: var(--tdl-primary);
+}
+
+.tdl-search-tab.active,
+.tdl-search-tab[aria-selected="true"] {
+    color: var(--tdl-primary);
+    border-bottom-color: var(--tdl-primary);
+}
+
+/* Input row — shared container for the active panel + Search button */
+.tdl-search-input-row {
     display: flex;
     align-items: stretch;
     max-width: 640px;
+    margin-top: 10px;
     background: var(--tdl-white);
     border: 1.5px solid var(--tdl-border);
     border-radius: var(--tdl-radius);
@@ -46,22 +80,24 @@
     transition: border-color var(--tdl-transition), box-shadow var(--tdl-transition);
 }
 
-.tdl-search-input-wrap:focus-within {
+.tdl-search-input-row:focus-within {
     border-color: #c4c7cc;
     box-shadow: var(--tdl-shadow-md);
 }
 
-.tdl-search-icon {
-    display: flex;
-    align-items: center;
-    padding: 0 4px 0 14px;
-    color: var(--tdl-ink-xs);
-    flex-shrink: 0;
-    pointer-events: none;
+/* Each tab panel fills available width; only one is visible at a time */
+.tdl-tab-panel {
+    flex: 1;
+    min-width: 0;
+}
+
+.tdl-tab-panel[hidden] {
+    display: none;
 }
 
 .tdl-search-input {
-    flex: 1;
+    display: block;
+    width: 100%;
     padding: 13px 12px;
     font-size: 14px;
     font-family: inherit;
@@ -70,10 +106,38 @@
     background: transparent;
     color: var(--tdl-ink-xl);
     min-width: 0;
+    box-sizing: border-box;
 }
 
 .tdl-search-input::placeholder {
     color: var(--tdl-ink-xs);
+}
+
+/* Select element styled to match the text input */
+.tdl-search-select {
+    display: block;
+    width: 100%;
+    padding: 13px 36px 13px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    border: none;
+    outline: none;
+    background: var(--tdl-white);
+    color: var(--tdl-ink-xl);
+    appearance: none;
+    -webkit-appearance: none;
+    /* Chevron arrow via inline SVG */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 10px 6px;
+    cursor: pointer;
+    min-height: 48px;
+    box-sizing: border-box;
+}
+
+.tdl-search-select:focus {
+    outline: none;
 }
 
 .tdl-search-btn {
@@ -666,7 +730,19 @@
 }
 
 @media (max-width: 600px) {
-    .tdl-search-input-wrap {
+    /* Tabs scroll horizontally rather than wrapping to a second row */
+    .tdl-search-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .tdl-search-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Stack the input row vertically: panel on top, Search button below */
+    .tdl-search-input-row {
         flex-direction: column;
         overflow: visible;
         background: transparent;
@@ -675,23 +751,20 @@
         gap: 8px;
     }
 
-    /* Restore individual borders on mobile */
-    .tdl-search-icon {
-        display: none;
+    .tdl-tab-panel {
+        background: var(--tdl-white);
+        border: 1.5px solid var(--tdl-border);
+        border-radius: var(--tdl-radius);
+        box-shadow: var(--tdl-shadow-sm);
+        overflow: hidden;
     }
 
     .tdl-search-input {
-        border: 1.5px solid var(--tdl-border);
-        border-radius: var(--tdl-radius);
-        background: var(--tdl-white);
-        padding: 13px 16px;
-        box-shadow: var(--tdl-shadow-sm);
         min-height: 44px;
     }
 
-    .tdl-search-input-wrap:focus-within .tdl-search-input {
-        border-color: #c4c7cc;
-        box-shadow: var(--tdl-shadow-md);
+    .tdl-search-select {
+        min-height: 44px;
     }
 
     .tdl-search-btn {
@@ -840,42 +913,6 @@
     letter-spacing: -0.02em;
 }
 
-/* ── Nominatim Autocomplete ─────────────────────────────────────────────── */
-.tdl-autocomplete-results {
-    position: absolute;
-    top: calc(100% + 4px); /* positioned relative to .tdl-search-form */
-    left: 0;
-    max-width: 640px;
-    width: 100%;
-    background: var(--tdl-white);
-    border: 1.5px solid var(--tdl-border);
-    border-radius: var(--tdl-radius);
-    box-shadow: var(--tdl-shadow-lg);
-    z-index: 1000;
-    max-height: 220px;
-    overflow-y: auto;
-    display: none;
-}
-
-.tdl-autocomplete-item {
-    padding: 10px 16px;
-    cursor: pointer;
-    font-size: 14px;
-    color: var(--tdl-ink-lg);
-    transition: background var(--tdl-transition);
-    border-bottom: 1px solid #f4f5f7;
-    line-height: 1.4;
-}
-
-.tdl-autocomplete-item:last-child {
-    border-bottom: none;
-}
-
-.tdl-autocomplete-item:hover,
-.tdl-autocomplete-item.selected {
-    background: var(--tdl-bg);
-    color: var(--tdl-ink-xl);
-}
 
 /* ── Quote Request Modal ────────────────────────────────────────────────── */
 

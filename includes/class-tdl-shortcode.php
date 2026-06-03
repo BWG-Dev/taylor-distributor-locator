@@ -74,6 +74,8 @@ class TDL_Shortcode {
                 'error'             => TDL_WPML::translate( 'error_generic',        __( 'An error occurred. Please try again.', 'taylor-distributor-locator' ) ),
                 'requestQuote'      => TDL_WPML::translate( 'request_quote',        __( 'Request Quote', 'taylor-distributor-locator' ) ),
                 'serviceArea'       => TDL_WPML::translate( 'service_area',         __( 'Service Area', 'taylor-distributor-locator' ) ),
+                'selectState'       => TDL_WPML::translate( 'select_state',         __( 'Select a state or province...', 'taylor-distributor-locator' ) ),
+                'selectCountry'     => TDL_WPML::translate( 'select_country',       __( 'Select a country...', 'taylor-distributor-locator' ) ),
                 'emailMain'         => TDL_WPML::translate( 'email_main_label',     __( 'Main', 'taylor-distributor-locator' ) ),
                 'emailSales'        => TDL_WPML::translate( 'email_sales_label',    __( 'Sales', 'taylor-distributor-locator' ) ),
                 'emailParts'        => TDL_WPML::translate( 'email_parts_label',    __( 'Parts', 'taylor-distributor-locator' ) ),

@@ -11,25 +11,60 @@ if (!defined('ABSPATH')) {
 <div class="tdl-locator" id="tdl-locator">
     <script type="application/json" id="tdl-config"><?php echo wp_json_encode($config); ?></script>
     
-    <!-- Search Form -->
+    <!-- Search Form — four explicit modes replacing the unified text box -->
     <div class="tdl-search-form">
-        <div class="tdl-search-input-wrap">
-            <span class="tdl-search-icon" aria-hidden="true">
-                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M10 6.5C10 8.43 8.43 10 6.5 10C4.57 10 3 8.43 3 6.5C3 4.57 4.57 3 6.5 3C8.43 3 10 4.57 10 6.5Z" stroke="currentColor" stroke-width="1.5"/>
-                    <path d="M13 13L9.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-            </span>
-            <input
-                type="text"
-                id="tdl-search-input"
-                class="tdl-search-input"
-                placeholder="<?php echo esc_attr($config['i18n']['searchPlaceholder']); ?>"
-                aria-label="<?php echo esc_attr( TDL_WPML::translate( 'search_aria_label', __( 'Search for distributors', 'taylor-distributor-locator' ) ) ); ?>"
-                autocomplete="off"
-            />
+        <div class="tdl-search-tabs" role="tablist" aria-label="<?php echo esc_attr( TDL_WPML::translate( 'search_tabs_label', __( 'Search mode', 'taylor-distributor-locator' ) ) ); ?>">
+            <button type="button" role="tab" class="tdl-search-tab active" id="tdl-tab-zip"
+                aria-selected="true" aria-controls="tdl-panel-zip" data-mode="zip">
+                <?php echo esc_html( TDL_WPML::translate( 'tab_zip', __( 'ZIP Code', 'taylor-distributor-locator' ) ) ); ?>
+            </button>
+            <button type="button" role="tab" class="tdl-search-tab" id="tdl-tab-state"
+                aria-selected="false" aria-controls="tdl-panel-state" data-mode="state">
+                <?php echo esc_html( TDL_WPML::translate( 'tab_state', __( 'State / Province', 'taylor-distributor-locator' ) ) ); ?>
+            </button>
+            <button type="button" role="tab" class="tdl-search-tab" id="tdl-tab-country"
+                aria-selected="false" aria-controls="tdl-panel-country" data-mode="country">
+                <?php echo esc_html( TDL_WPML::translate( 'tab_country', __( 'Country', 'taylor-distributor-locator' ) ) ); ?>
+            </button>
+            <button type="button" role="tab" class="tdl-search-tab" id="tdl-tab-city"
+                aria-selected="false" aria-controls="tdl-panel-city" data-mode="city">
+                <?php echo esc_html( TDL_WPML::translate( 'tab_city', __( 'City / Region', 'taylor-distributor-locator' ) ) ); ?>
+            </button>
+        </div>
+
+        <div class="tdl-search-input-row">
+            <!-- ZIP panel -->
+            <div class="tdl-tab-panel active" id="tdl-panel-zip" role="tabpanel" aria-labelledby="tdl-tab-zip">
+                <input type="text" id="tdl-zip-input" class="tdl-search-input"
+                    placeholder="<?php echo esc_attr( TDL_WPML::translate( 'zip_placeholder', __( 'Enter 5-digit ZIP code', 'taylor-distributor-locator' ) ) ); ?>"
+                    maxlength="5" inputmode="numeric" pattern="[0-9]*"
+                    aria-label="<?php echo esc_attr( TDL_WPML::translate( 'zip_aria', __( 'ZIP code', 'taylor-distributor-locator' ) ) ); ?>"
+                    autocomplete="off" />
+            </div>
+            <!-- State / Province panel -->
+            <div class="tdl-tab-panel" id="tdl-panel-state" role="tabpanel" aria-labelledby="tdl-tab-state" hidden>
+                <select id="tdl-state-select" class="tdl-search-select"
+                    aria-label="<?php echo esc_attr( TDL_WPML::translate( 'state_aria', __( 'State or province', 'taylor-distributor-locator' ) ) ); ?>">
+                    <option value=""><?php echo esc_html( TDL_WPML::translate( 'select_state', __( 'Select a state or province...', 'taylor-distributor-locator' ) ) ); ?></option>
+                </select>
+            </div>
+            <!-- Country panel -->
+            <div class="tdl-tab-panel" id="tdl-panel-country" role="tabpanel" aria-labelledby="tdl-tab-country" hidden>
+                <select id="tdl-country-select" class="tdl-search-select"
+                    aria-label="<?php echo esc_attr( TDL_WPML::translate( 'country_aria', __( 'Country', 'taylor-distributor-locator' ) ) ); ?>">
+                    <option value=""><?php echo esc_html( TDL_WPML::translate( 'select_country', __( 'Select a country...', 'taylor-distributor-locator' ) ) ); ?></option>
+                </select>
+            </div>
+            <!-- City / Region panel -->
+            <div class="tdl-tab-panel" id="tdl-panel-city" role="tabpanel" aria-labelledby="tdl-tab-city" hidden>
+                <input type="text" id="tdl-city-input" class="tdl-search-input"
+                    placeholder="<?php echo esc_attr( TDL_WPML::translate( 'city_placeholder', __( 'Enter city or region', 'taylor-distributor-locator' ) ) ); ?>"
+                    aria-label="<?php echo esc_attr( TDL_WPML::translate( 'city_aria', __( 'City or region', 'taylor-distributor-locator' ) ) ); ?>"
+                    autocomplete="off" />
+            </div>
+
             <button type="button" id="tdl-search-btn" class="tdl-search-btn">
-                <?php echo esc_html($config['i18n']['search']); ?>
+                <?php echo esc_html( $config['i18n']['search'] ); ?>
             </button>
         </div>
     </div>

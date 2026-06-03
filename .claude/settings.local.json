@@ -11,7 +11,10 @@
       "PowerShell(Get-ChildItem -Path \"C:\\\\wamp64\\\\www\\\\TaylorCo\\\\wp-content\\\\plugins\\\\sitepress-multilingual-cms\" -Filter \"wpml-config.xml\" -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })",
       "PowerShell(wp *)",
       "PowerShell(php --version 2>&1)",
-      "PowerShell(php \"C:\\\\wamp64\\\\www\\\\TaylorCo\\\\check-wpml-langs.php\")"
+      "PowerShell(php \"C:\\\\wamp64\\\\www\\\\TaylorCo\\\\check-wpml-langs.php\")",
+      "Read(//c/wamp64/www/TaylorCo/**)",
+      "Bash(C:/wamp64/bin/mysql/mysql8.0.31/bin/mysql.exe -u root --password= -e ' *)",
+      "Bash(C:/wamp64/bin/mysql/mysql9.1.0/bin/mysql.exe *)"
     ]
   }
 }
