@@ -3,7 +3,7 @@
  * Plugin Name: Taylor Distributor Locator
  * Plugin URI: https://welldressedwalrus.com
  * Description: Custom distributor locator for Taylor Company
- * Version: 0.5.0
+ * Version: 0.6.0
  * Requires PHP: 8.1
  * Author: Well Dressed Walrus
  * Text Domain: taylor-distributor-locator
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('TDL_VERSION', '0.5.0');
+define('TDL_VERSION', '0.6.0');
 define('TDL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('TDL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('TDL_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -62,6 +62,7 @@ function tdl_init() {
     TDL_Shortcode::init();
     TDL_GF_Integration::init();
     TDL_Routing_Log::maybe_create_table(); // Ensures table exists on already-activated sites after M8 update.
+    TDL_Activator::maybe_run_migrations(); // Runs pending data migrations; no-op after first execution.
     TDL_Email_Router::init();
     TDL_Admin_Log::init();
     TDL_CSV_Importer::init();
