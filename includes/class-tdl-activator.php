@@ -100,6 +100,79 @@ class TDL_Activator {
     }
     
     /**
+     * Run any pending data migrations.
+     *
+     * Called on every plugins_loaded (after the plugin bootstraps) but each
+     * migration is guarded by a version check so it runs exactly once.
+     * Add new migrations as additional `if` blocks — never edit existing ones.
+     */
+    public static function maybe_run_migrations() {
+        $ran = get_option( 'tdl_migration_version', '0.0.0' );
+
+        // v0.6.0 — Fix Mexican state service zones that the CSV importer stored
+        // with incorrect country_context and non-standard 2-letter abbreviations.
+        // Three classes of bad data corrected:
+        //   1. Unambiguous MX 2-letter codes stored as country_context='US'
+        //   2. Remaining MX codes missed in the first pass (DU,GR,QT,SL,TM)
+        //   3. Ambiguous codes (CO,HI,MO,NL) on distributors physically in Mexico
+        if ( version_compare( $ran, '0.6.0', '<' ) ) {
+            global $wpdb;
+            $zones = $wpdb->prefix . 'tdl_service_zones';
+            $locs  = $wpdb->prefix . 'tdl_locations';
+
+            // Pass 1 — unambiguous MX shorthand codes stored under US context.
+            $pass1_map = [
+                'AG'  => 'AGU', 'BS'  => 'BCS', 'CH'  => 'CHH', 'CL'  => 'COL',
+                'CM'  => 'CAM', 'CMX' => 'CDMX','CS'  => 'CHP', 'GT'  => 'GUA',
+                'JA'  => 'JAL', 'MX'  => 'MEX', 'NA'  => 'NAY', 'OA'  => 'OAX',
+                'PU'  => 'PUE', 'QR'  => 'ROO', 'SI'  => 'SIN', 'SO'  => 'SON',
+                'TB'  => 'TAB', 'TL'  => 'TLA', 'VE'  => 'VER', 'YU'  => 'YUC',
+                'ZA'  => 'ZAC',
+            ];
+            foreach ( $pass1_map as $old => $new ) {
+                $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$zones} SET zone_value = %s, country_context = 'MX'
+                     WHERE zone_type = 'state' AND zone_value = %s",
+                    $new, $old
+                ) );
+            }
+
+            // Pass 2 — five additional MX shorthand codes missed in pass 1.
+            $pass2_map = [
+                'DU' => 'DUR', 'GR' => 'GRO', 'QT' => 'QUE',
+                'SL' => 'SLP', 'TM' => 'TAM',
+            ];
+            foreach ( $pass2_map as $old => $new ) {
+                $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$zones} SET zone_value = %s, country_context = 'MX'
+                     WHERE zone_type = 'state' AND zone_value = %s",
+                    $new, $old
+                ) );
+            }
+
+            // Pass 3 — ambiguous codes that collide with US/CA codes but belong to
+            // distributors whose primary location is physically in Mexico.
+            $pass3_map = [
+                'CO' => 'COA', 'HI' => 'HID', 'MO' => 'MOR', 'NL' => 'NLE',
+            ];
+            foreach ( $pass3_map as $old => $new ) {
+                $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$zones} s
+                     JOIN {$locs} l ON l.distributor_id = s.distributor_id AND l.is_primary = 1
+                     SET s.zone_value = %s, s.country_context = 'MX'
+                     WHERE s.zone_type = 'state' AND s.zone_value = %s AND l.country_code = 'MX'",
+                    $new, $old
+                ) );
+            }
+
+            // Bust REST API transient cache so stale results are not served.
+            update_option( 'tdl_data_version', time() );
+
+            update_option( 'tdl_migration_version', '0.6.0' );
+        }
+    }
+
+    /**
      * Set default plugin options
      */
     private static function set_default_options() {
