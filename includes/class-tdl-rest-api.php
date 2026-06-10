@@ -855,7 +855,7 @@ class TDL_REST_API {
                     'address_2' => $loc->address_2,
                     'address_3' => $loc->address_3,
                     'city' => $loc->city,
-                    'state' => $loc->state_province,
+                    'state' => self::expand_state_name( (string) $loc->state_province, (string) $loc->country_code ),
                     'zip' => $loc->zip_postal,
                     'country' => $loc->country_code,
                     'lat' => $loc->latitude ? (float) $loc->latitude : null,
@@ -920,7 +920,7 @@ class TDL_REST_API {
             "SELECT l.distributor_id, p.post_title,
                     l.latitude, l.longitude,
                     l.location_name, l.street_address, l.address_2, l.address_3,
-                    l.city, l.state_province, l.zip_postal,
+                    l.city, l.state_province, l.zip_postal, l.country_code,
                     l.phone AS loc_phone, l.hours_operation
              FROM {$locations_table} l
              JOIN {$wpdb->posts} p ON l.distributor_id = p.ID
@@ -952,7 +952,7 @@ class TDL_REST_API {
                 'address_2'     => $row->address_2 ?: '',
                 'address_3'     => $row->address_3 ?: '',
                 'city'          => $row->city ?: '',
-                'state'         => $row->state_province ?: '',
+                'state'         => self::expand_state_name( (string) $row->state_province, (string) $row->country_code ),
                 'zip'           => $row->zip_postal ?: '',
                 'hours'         => $row->hours_operation ?: '',
                 // Location-level phone; JS falls back to distributor phone when empty.
@@ -1336,6 +1336,23 @@ class TDL_REST_API {
         ];
     }
     
+    /**
+     * Expand a state/province abbreviation to its full name.
+     * Uses country_code to pick the correct map; falls back to the raw value
+     * if no match is found so existing data is never silently dropped.
+     */
+    private static function expand_state_name( string $code, string $country_code ): string {
+        if ( $code === '' ) {
+            return '';
+        }
+        $map = match( strtoupper( $country_code ) ) {
+            'CA'    => self::$ca_provinces,
+            'MX'    => self::$mx_states,
+            default => self::$us_states,
+        };
+        return $map[ strtoupper( $code ) ] ?? $code;
+    }
+
     /**
      * Get US states list (public)
      */

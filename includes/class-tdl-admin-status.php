@@ -83,16 +83,29 @@ class TDL_Admin_Status {
 
         // Read errors directly from the DB — authoritative regardless of whether
         // errors came from batch geocoding or the per-distributor CSV-import path.
+        // JOIN to wdw_posts excludes orphaned rows left behind by deleted distributors.
         $error_rows = $wpdb->get_results(
             "SELECT l.id, l.street_address, l.city, l.state_province, l.country_code, l.geocode_error
              FROM {$table_loc} l
+             INNER JOIN {$wpdb->posts} p ON p.ID = l.distributor_id AND p.post_type = 'distributor' AND p.post_status = 'publish'
              WHERE l.geocode_error IS NOT NULL
              ORDER BY l.id ASC"
         );
-        $total_locations = $wpdb->get_var("SELECT COUNT(*) FROM {$table_loc}");
-        $geocoded_locations = $wpdb->get_var("SELECT COUNT(*) FROM {$table_loc} WHERE latitude IS NOT NULL AND longitude IS NOT NULL AND latitude != 0");
-        $errored_locations = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table_loc} WHERE geocode_error IS NOT NULL");
-        $pending_locations = $total_locations - $geocoded_locations;
+        $total_locations    = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$table_loc} l
+             INNER JOIN {$wpdb->posts} p ON p.ID = l.distributor_id AND p.post_type = 'distributor' AND p.post_status = 'publish'"
+        );
+        $geocoded_locations = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$table_loc} l
+             INNER JOIN {$wpdb->posts} p ON p.ID = l.distributor_id AND p.post_type = 'distributor' AND p.post_status = 'publish'
+             WHERE l.latitude IS NOT NULL AND l.longitude IS NOT NULL AND l.latitude != 0"
+        );
+        $errored_locations  = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$table_loc} l
+             INNER JOIN {$wpdb->posts} p ON p.ID = l.distributor_id AND p.post_type = 'distributor' AND p.post_status = 'publish'
+             WHERE l.geocode_error IS NOT NULL"
+        );
+        $pending_locations  = $total_locations - $geocoded_locations;
         $percent = $total_locations > 0 ? round(($geocoded_locations / $total_locations) * 100) : 0;
         
         $is_running = !empty($stats['status']) && $stats['status'] === 'running';
@@ -286,13 +299,24 @@ class TDL_Admin_Status {
             spawn_cron();
         }
         
-        // Get fresh counts
+        // Get fresh counts — JOIN excludes orphaned rows from deleted distributors.
         global $wpdb;
         $table_loc = $wpdb->prefix . 'tdl_locations';
-        $total_locations = $wpdb->get_var("SELECT COUNT(*) FROM {$table_loc}");
-        $geocoded_locations = $wpdb->get_var("SELECT COUNT(*) FROM {$table_loc} WHERE latitude IS NOT NULL AND longitude IS NOT NULL AND latitude != 0");
-        $errored_locations = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table_loc} WHERE geocode_error IS NOT NULL");
-        $pending_locations = $total_locations - $geocoded_locations;
+        $total_locations    = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$table_loc} l
+             INNER JOIN {$wpdb->posts} p ON p.ID = l.distributor_id AND p.post_type = 'distributor' AND p.post_status = 'publish'"
+        );
+        $geocoded_locations = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$table_loc} l
+             INNER JOIN {$wpdb->posts} p ON p.ID = l.distributor_id AND p.post_type = 'distributor' AND p.post_status = 'publish'
+             WHERE l.latitude IS NOT NULL AND l.longitude IS NOT NULL AND l.latitude != 0"
+        );
+        $errored_locations  = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$table_loc} l
+             INNER JOIN {$wpdb->posts} p ON p.ID = l.distributor_id AND p.post_type = 'distributor' AND p.post_status = 'publish'
+             WHERE l.geocode_error IS NOT NULL"
+        );
+        $pending_locations  = $total_locations - $geocoded_locations;
         $percent = $total_locations > 0 ? round(($geocoded_locations / $total_locations) * 100) : 0;
         
         // Get recent errors
