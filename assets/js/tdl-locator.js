@@ -683,7 +683,6 @@
         }
 
         return '<div class="tdl-result-card" data-index="' + index + '" data-id="' + distributor.id + '">' +
-            '<div class="tdl-result-pin-number">' + (index + 1) + '</div>' +
             '<div class="tdl-result-content">' +
             '<h3 class="tdl-distributor-name">' + escapeHtml(distributor.name) + '</h3>' +
             primaryLocationHtml +
