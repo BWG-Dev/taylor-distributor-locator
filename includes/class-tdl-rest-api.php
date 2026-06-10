@@ -1041,42 +1041,62 @@ class TDL_REST_API {
      */
     public static function handle_get_states($request) {
         $country = strtoupper($request->get_param('country'));
-        
+
         global $wpdb;
-        $zones_table = $wpdb->prefix . 'tdl_service_zones';
-        
-        // Get states that have distributors for this country
-        $state_codes = $wpdb->get_col($wpdb->prepare(
-            "SELECT DISTINCT zone_value FROM {$zones_table} 
-             WHERE zone_type = 'state' AND country_context = %s",
-            $country
-        ));
-        
-        // Map to names
+        $zones_table     = $wpdb->prefix . 'tdl_service_zones';
+        $locations_table = $wpdb->prefix . 'tdl_locations';
+
         $state_map = match($country) {
             'US' => self::$us_states,
             'CA' => self::$ca_provinces,
             'MX' => self::$mx_states,
             default => [],
         };
-        
+
+        // Source 1: explicit state service zones for this country.
+        $zone_codes = $wpdb->get_col( $wpdb->prepare(
+            "SELECT DISTINCT zone_value FROM {$zones_table}
+             WHERE zone_type = 'state' AND country_context = %s",
+            $country
+        ) );
+
+        // Source 2: physical location state_province values for this country.
+        // Covers distributors whose territory is defined only by ZIP ranges so
+        // they have no explicit state zone row but are physically in the state.
+        $location_codes = $wpdb->get_col( $wpdb->prepare(
+            "SELECT DISTINCT l.state_province
+             FROM {$locations_table} l
+             INNER JOIN {$wpdb->posts} p ON p.ID = l.distributor_id
+             WHERE p.post_type = 'distributor' AND p.post_status = 'publish'
+               AND l.country_code = %s
+               AND l.state_province IS NOT NULL AND l.state_province != ''",
+            $country
+        ) );
+
+        // Merge, normalise to uppercase, and keep only codes that exist in the
+        // state map so unknown/garbage values don't pollute the dropdown.
+        $all_codes = array_unique( array_map( 'strtoupper', array_merge( $zone_codes, $location_codes ) ) );
+
         $states = [];
-        foreach ($state_codes as $code) {
+        foreach ( $all_codes as $code ) {
+            // Only include codes that resolve to a known state name.
+            if ( ! isset( $state_map[ $code ] ) ) {
+                continue;
+            }
             $states[] = [
                 'code' => $code,
-                'name' => $state_map[$code] ?? $code,
+                'name' => $state_map[ $code ],
             ];
         }
-        
-        // Sort by name
-        usort($states, function($a, $b) {
-            return strcasecmp($a['name'], $b['name']);
-        });
-        
+
+        usort( $states, function( $a, $b ) {
+            return strcasecmp( $a['name'], $b['name'] );
+        } );
+
         return new WP_REST_Response([
             'success' => true,
             'country' => $country,
-            'states' => $states,
+            'states'  => $states,
         ], 200);
     }
     
