@@ -57,12 +57,14 @@
 }
 
 .tdl-search-tab:hover {
-    color: var(--tdl-primary);
+    background: var(--tdl-primary);
+    color: #fff;
 }
 
 .tdl-search-tab.active,
 .tdl-search-tab[aria-selected="true"] {
-    color: var(--tdl-primary);
+    background: var(--tdl-primary);
+    color: #fff;
     border-bottom-color: var(--tdl-primary);
 }
 

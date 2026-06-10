@@ -129,6 +129,11 @@
             panel.classList.toggle('active', active);
         });
 
+        // Clear all inputs and selects in every panel when switching tabs
+        // so stale values from a previous search don't carry over.
+        document.querySelectorAll('.tdl-tab-panel input').forEach(function (el) { el.value = ''; });
+        document.querySelectorAll('.tdl-tab-panel select').forEach(function (el) { el.selectedIndex = 0; });
+
         if (mode === 'state' && !statesLoaded) loadStatesDropdown();
         if (mode === 'country' && !countriesLoaded) loadCountriesDropdown();
 
