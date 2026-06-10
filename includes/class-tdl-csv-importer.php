@@ -43,6 +43,8 @@ class TDL_CSV_Importer {
 		'state_province',
 		'zip_postal',
 		'country_code',
+		'latitude',
+		'longitude',
 		'location_phone',
 		'hours_operation',
 		'is_primary',
@@ -605,8 +607,8 @@ class TDL_CSV_Importer {
 				'state_province'  => sanitize_text_field( $row['state_province']  ?? '' ),
 				'zip_postal'      => sanitize_text_field( $row['zip_postal']      ?? '' ),
 				'country_code'    => self::sanitize_country_code( $row['country_code'] ?? '' ),
-				'latitude'        => null,
-				'longitude'       => null,
+				'latitude'        => self::sanitize_coordinate( $row['latitude']  ?? '' ),
+				'longitude'       => self::sanitize_coordinate( $row['longitude'] ?? '' ),
 				'phone'           => sanitize_text_field( $row['location_phone']  ?? '' ),
 				'hours_operation' => sanitize_textarea_field( $row['hours_operation'] ?? '' ),
 				// Each post has exactly one location row; is_primary=1 ensures it
@@ -649,8 +651,10 @@ class TDL_CSV_Importer {
 
 		$wpdb->query( 'COMMIT' );
 
-		// Queue geocoding for the new/updated location.
-		if ( ! wp_next_scheduled( 'tdl_geocode_distributor', [ $post_id ] ) ) {
+		// Only queue geocoding if coordinates were not supplied in the CSV.
+		$has_coords = self::sanitize_coordinate( $row['latitude']  ?? '' ) !== null
+		           && self::sanitize_coordinate( $row['longitude'] ?? '' ) !== null;
+		if ( ! $has_coords && ! wp_next_scheduled( 'tdl_geocode_distributor', [ $post_id ] ) ) {
 			wp_schedule_single_event( time() + 5, 'tdl_geocode_distributor', [ $post_id ] );
 		}
 
@@ -699,6 +703,19 @@ class TDL_CSV_Importer {
 	private static function sanitize_country_code( string $raw ): string {
 		$cc = strtoupper( trim( sanitize_text_field( $raw ) ) );
 		return strlen( $cc ) === 2 ? $cc : 'US';
+	}
+
+	/**
+	 * Parse a coordinate string from CSV. Returns a float if the value is a
+	 * valid non-zero decimal, or null so the geocoder picks it up later.
+	 */
+	private static function sanitize_coordinate( string $raw ): ?float {
+		$val = trim( $raw );
+		if ( $val === '' || ! is_numeric( $val ) ) {
+			return null;
+		}
+		$float = (float) $val;
+		return $float !== 0.0 ? $float : null;
 	}
 
 	private static function validate_row( array $row ): array {
