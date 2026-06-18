@@ -16,7 +16,15 @@
       "Bash(C:/wamp64/bin/mysql/mysql8.0.31/bin/mysql.exe -u root --password= -e ' *)",
       "Bash(C:/wamp64/bin/mysql/mysql9.1.0/bin/mysql.exe *)",
       "Bash(\"C:/wamp64/bin/mysql/mysql9.1.0/bin/mysqldump.exe\" -u root --no-tablespaces --skip-add-drop-table --insert-ignore taylor wdw_tdl_locations wdw_tdl_service_zones)",
-      "Bash(\"C:/wamp64/bin/mysql/mysql9.1.0/bin/mysqldump.exe\" -u root taylor wdw_tdl_locations wdw_tdl_service_zones)"
+      "Bash(\"C:/wamp64/bin/mysql/mysql9.1.0/bin/mysqldump.exe\" -u root taylor wdw_tdl_locations wdw_tdl_service_zones)",
+      "Bash(php -l includes/class-tdl-csv-importer.php)",
+      "Bash(php -l includes/class-tdl-admin-settings.php)",
+      "Bash(php -l includes/class-tdl-shortcode.php)",
+      "Bash(php -l templates/admin/csv-import-page.php)",
+      "Bash(php -l templates/locator-main.php)",
+      "Bash(php -r ' *)",
+      "Bash(C:wamp64binmysqlmysql8.3.0binmysql.exe *)",
+      "Bash(php *)"
     ]
   }
 }

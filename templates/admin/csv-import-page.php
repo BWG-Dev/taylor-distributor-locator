@@ -94,9 +94,15 @@ $sample_url = wp_nonce_url(
 					<label for="csv_file"><strong><?php esc_html_e( 'Select CSV file:', 'taylor-distributor-locator' ); ?></strong></label><br>
 					<input type="file" name="csv_file" id="csv_file" accept=".csv" required style="margin-top:6px;">
 				</p>
+				<p style="margin-bottom:12px;">
+					<label>
+						<input type="checkbox" id="tdl-dry-run" value="1" checked />
+						<?php esc_html_e( 'Dry run (preview only — no changes will be made)', 'taylor-distributor-locator' ); ?>
+					</label>
+				</p>
 				<p>
 					<button type="submit" class="button button-primary" id="tdl-import-btn">
-						<?php esc_html_e( 'Import', 'taylor-distributor-locator' ); ?>
+						<?php esc_html_e( 'Preview Import', 'taylor-distributor-locator' ); ?>
 					</button>
 				</p>
 			</form>

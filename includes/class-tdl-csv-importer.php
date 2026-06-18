@@ -112,6 +112,9 @@ class TDL_CSV_Importer {
 			'migComplete'     => __( 'Migration complete', 'taylor-distributor-locator' ),
 			'migUpdated'      => __( 'post titles updated.', 'taylor-distributor-locator' ),
 			'migError'        => __( 'Migration error.', 'taylor-distributor-locator' ),
+			'dryRunBanner'    => __( 'Dry run complete — no changes were made. Review the preview below, then run the real import.', 'taylor-distributor-locator' ),
+			'wouldCreate'     => __( 'Would Create', 'taylor-distributor-locator' ),
+			'wouldUpdate'     => __( 'Would Update', 'taylor-distributor-locator' ),
 		],
 	] );
 	}
@@ -412,7 +415,9 @@ class TDL_CSV_Importer {
 			wp_send_json_error( [ 'message' => __( 'No valid data rows found in the CSV.', 'taylor-distributor-locator' ) ] );
 		}
 
-		// ── Import ────────────────────────────────────────────────────────────
+		$dry_run = ! empty( $_POST['dry_run'] );
+
+		// ── Import (or preview) ───────────────────────────────────────────────
 		$stats         = [ 'created' => 0, 'updated' => 0, 'skipped' => 0, 'errors' => 0 ];
 		$created_names = [];
 		$updated_names = [];
@@ -427,12 +432,14 @@ class TDL_CSV_Importer {
 			$errors      = self::validate_row( $row );
 			$warning_idx = self::add_warning( $errors, $post_title, $row['_row_number'], $row_errors );
 
-			$result = self::import_row( $row, $post_title, 0 );
+			$result = $dry_run
+				? self::preview_row( $post_title )
+				: self::import_row( $row, $post_title, 0 );
 
 			self::attach_edit_url( $warning_idx, $result, $row_errors );
 			self::tally( $result, $stats, $created_names, $updated_names, $row_errors, $post_title, $row['_row_number'] );
 
-			if ( isset( $result['post_id'] ) && $result['post_id'] > 0 ) {
+			if ( ! $dry_run && isset( $result['post_id'] ) && $result['post_id'] > 0 ) {
 				$parent_map[ $company ] = (int) $result['post_id'];
 			}
 		}
@@ -445,16 +452,23 @@ class TDL_CSV_Importer {
 			$errors      = self::validate_row( $row );
 			$warning_idx = self::add_warning( $errors, $post_title, $row['_row_number'], $row_errors );
 
-			$parent_id = self::find_parent_id( $company, $parent_map );
-			$result    = self::import_row( $row, $post_title, $parent_id );
+			if ( $dry_run ) {
+				$result = self::preview_row( $post_title );
+			} else {
+				$parent_id = self::find_parent_id( $company, $parent_map );
+				$result    = self::import_row( $row, $post_title, $parent_id );
+			}
 
 			self::attach_edit_url( $warning_idx, $result, $row_errors );
 			self::tally( $result, $stats, $created_names, $updated_names, $row_errors, $post_title, $row['_row_number'] );
 		}
 
-		update_option( 'tdl_data_version', time() );
+		if ( ! $dry_run ) {
+			update_option( 'tdl_data_version', time() );
+		}
 
 		wp_send_json_success( [
+			'dry_run'       => $dry_run,
 			'stats'         => $stats,
 			'created_names' => $created_names,
 			'updated_names' => $updated_names,
@@ -497,6 +511,32 @@ class TDL_CSV_Importer {
 				$wpdb->esc_like( $company ) . ' — %'
 			)
 		);
+	}
+
+	/**
+	 * Read-only preview: determine whether a row would create or update
+	 * without touching the database.
+	 *
+	 * @return array{status: 'created'|'updated', post_id: int}
+	 */
+	private static function preview_row( string $post_title ): array {
+		global $wpdb;
+
+		$existing_id = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT ID FROM {$wpdb->posts}
+				 WHERE post_title = %s
+				   AND post_type  = 'distributor'
+				   AND post_status != 'trash'
+				 LIMIT 1",
+				$post_title
+			)
+		);
+
+		return [
+			'status'  => $existing_id > 0 ? 'updated' : 'created',
+			'post_id' => $existing_id > 0 ? $existing_id : 0,
+		];
 	}
 
 	/**

@@ -26,10 +26,12 @@ if (!defined('ABSPATH')) {
                 aria-selected="false" aria-controls="tdl-panel-country" data-mode="country">
                 <?php echo esc_html( TDL_WPML::translate( 'tab_country', __( 'Country', 'taylor-distributor-locator' ) ) ); ?>
             </button>
+            <?php if ( ! empty( $config['showCityTab'] ) ) : ?>
             <button type="button" role="tab" class="tdl-search-tab" id="tdl-tab-city"
                 aria-selected="false" aria-controls="tdl-panel-city" data-mode="city">
                 <?php echo esc_html( TDL_WPML::translate( 'tab_city', __( 'City / Region', 'taylor-distributor-locator' ) ) ); ?>
             </button>
+            <?php endif; ?>
         </div>
 
         <div class="tdl-search-input-row">
@@ -41,20 +43,29 @@ if (!defined('ABSPATH')) {
                     aria-label="<?php echo esc_attr( TDL_WPML::translate( 'zip_aria', __( 'ZIP code', 'taylor-distributor-locator' ) ) ); ?>"
                     autocomplete="off" />
             </div>
-            <!-- State / Province panel -->
+            <!-- State / Province panel — typeahead -->
             <div class="tdl-tab-panel" id="tdl-panel-state" role="tabpanel" aria-labelledby="tdl-tab-state" hidden>
-                <select id="tdl-state-select" class="tdl-search-select"
-                    aria-label="<?php echo esc_attr( TDL_WPML::translate( 'state_aria', __( 'State or province', 'taylor-distributor-locator' ) ) ); ?>">
-                    <option value=""><?php echo esc_html( TDL_WPML::translate( 'select_state', __( 'Select a state or province...', 'taylor-distributor-locator' ) ) ); ?></option>
-                </select>
+                <div class="tdl-typeahead-wrap">
+                    <input type="text" id="tdl-state-input" class="tdl-search-input tdl-typeahead-input"
+                        placeholder="<?php echo esc_attr( TDL_WPML::translate( 'state_placeholder', __( 'Type a state or province...', 'taylor-distributor-locator' ) ) ); ?>"
+                        autocomplete="off" role="combobox" aria-expanded="false" aria-controls="tdl-state-dropdown"
+                        aria-label="<?php echo esc_attr( TDL_WPML::translate( 'state_aria', __( 'State or province', 'taylor-distributor-locator' ) ) ); ?>" />
+                    <input type="hidden" id="tdl-state-value" />
+                    <div class="tdl-typeahead-dropdown" id="tdl-state-dropdown" role="listbox" hidden></div>
+                </div>
             </div>
-            <!-- Country panel -->
+            <!-- Country panel — typeahead -->
             <div class="tdl-tab-panel" id="tdl-panel-country" role="tabpanel" aria-labelledby="tdl-tab-country" hidden>
-                <select id="tdl-country-select" class="tdl-search-select"
-                    aria-label="<?php echo esc_attr( TDL_WPML::translate( 'country_aria', __( 'Country', 'taylor-distributor-locator' ) ) ); ?>">
-                    <option value=""><?php echo esc_html( TDL_WPML::translate( 'select_country', __( 'Select a country...', 'taylor-distributor-locator' ) ) ); ?></option>
-                </select>
+                <div class="tdl-typeahead-wrap">
+                    <input type="text" id="tdl-country-input" class="tdl-search-input tdl-typeahead-input"
+                        placeholder="<?php echo esc_attr( TDL_WPML::translate( 'country_placeholder', __( 'Type a country...', 'taylor-distributor-locator' ) ) ); ?>"
+                        autocomplete="off" role="combobox" aria-expanded="false" aria-controls="tdl-country-dropdown"
+                        aria-label="<?php echo esc_attr( TDL_WPML::translate( 'country_aria', __( 'Country', 'taylor-distributor-locator' ) ) ); ?>" />
+                    <input type="hidden" id="tdl-country-value" />
+                    <div class="tdl-typeahead-dropdown" id="tdl-country-dropdown" role="listbox" hidden></div>
+                </div>
             </div>
+            <?php if ( ! empty( $config['showCityTab'] ) ) : ?>
             <!-- City / Region panel -->
             <div class="tdl-tab-panel" id="tdl-panel-city" role="tabpanel" aria-labelledby="tdl-tab-city" hidden>
                 <input type="text" id="tdl-city-input" class="tdl-search-input"
@@ -62,6 +73,7 @@ if (!defined('ABSPATH')) {
                     aria-label="<?php echo esc_attr( TDL_WPML::translate( 'city_aria', __( 'City or region', 'taylor-distributor-locator' ) ) ); ?>"
                     autocomplete="off" />
             </div>
+            <?php endif; ?>
 
             <button type="button" id="tdl-search-btn" class="tdl-search-btn">
                 <?php echo esc_html( $config['i18n']['search'] ); ?>

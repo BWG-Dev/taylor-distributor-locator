@@ -18,9 +18,15 @@
 		const $text     = $( '.tdl-progress-text' );
 		const $result   = $( '#tdl-import-result' );
 		const $btn      = $( '#tdl-import-btn' );
+		const $dryRun   = $( '#tdl-dry-run' );
 		const i18n      = tdlCsvImport.i18n;
 
 		if ( ! $form.length ) return;
+
+		// Toggle button label when dry-run checkbox changes
+		$dryRun.on( 'change', function () {
+			$btn.text( this.checked ? 'Preview Import' : 'Import' );
+		} );
 
 		$form.on( 'submit', function ( e ) {
 			e.preventDefault();
@@ -31,10 +37,15 @@
 				return;
 			}
 
+			const isDryRun = $dryRun.is( ':checked' );
+
 			const formData = new FormData();
 			formData.append( 'action', 'tdl_import_csv' );
 			formData.append( 'nonce', tdlCsvImport.nonce );
 			formData.append( 'csv_file', file );
+			if ( isDryRun ) {
+				formData.append( 'dry_run', '1' );
+			}
 
 			$btn.prop( 'disabled', true );
 			$result.hide().removeClass( 'tdl-fatal' ).empty();
@@ -104,20 +115,32 @@
 			const createdNames = data.created_names || [];
 			const updatedNames = data.updated_names || [];
 			const rowErrors    = data.row_errors    || [];
+			const isDryRun     = !! data.dry_run;
 
-			let html = '<div class="tdl-import-stats">';
-			html += statBox( stats.created || 0, i18n.created, 'created' );
-			html += statBox( stats.updated || 0, i18n.updated, 'updated' );
+			const lblCreated = isDryRun ? ( i18n.wouldCreate || 'Would Create' ) : i18n.created;
+			const lblUpdated = isDryRun ? ( i18n.wouldUpdate || 'Would Update' ) : i18n.updated;
+
+			let html = '';
+
+			if ( isDryRun ) {
+				html += '<div class="notice notice-info inline" style="margin:0 0 14px;"><p>' +
+					esc( i18n.dryRunBanner || 'Dry run complete — no changes were made.' ) +
+					'</p></div>';
+			}
+
+			html += '<div class="tdl-import-stats">';
+			html += statBox( stats.created || 0, lblCreated, 'created' );
+			html += statBox( stats.updated || 0, lblUpdated, 'updated' );
 			html += statBox( stats.skipped || 0, i18n.skipped, 'skipped' );
 			html += statBox( stats.errors  || 0, i18n.errors,  'errors' );
 			html += '</div>';
 
 			if ( createdNames.length ) {
-				html += nameLog( i18n.created + ' (' + createdNames.length + ')', createdNames, 'created' );
+				html += nameLog( lblCreated + ' (' + createdNames.length + ')', createdNames, 'created' );
 			}
 
 			if ( updatedNames.length ) {
-				html += nameLog( i18n.updated + ' (' + updatedNames.length + ')', updatedNames, 'updated' );
+				html += nameLog( lblUpdated + ' (' + updatedNames.length + ')', updatedNames, 'updated' );
 			}
 
 			if ( rowErrors.length ) {
