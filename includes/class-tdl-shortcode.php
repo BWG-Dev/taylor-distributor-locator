@@ -59,6 +59,7 @@ class TDL_Shortcode {
             'centerLat' => $atts['center_lat'],
             'centerLng' => $atts['center_lng'],
             'mapId'                => get_option('tdl_google_maps_map_id', ''),
+            'showCityTab'              => (bool) get_option( 'tdl_show_city_tab', true ),
             'gfFormId'                 => TDL_GF_Integration::get_form_id(),
             'gfDistributorFieldId'     => TDL_GF_Integration::get_distributor_field_id(),
             'gfDistributorNameFieldId' => TDL_GF_Integration::get_distributor_name_field_id(),
@@ -74,8 +75,6 @@ class TDL_Shortcode {
                 'error'             => TDL_WPML::translate( 'error_generic',        __( 'An error occurred. Please try again.', 'taylor-distributor-locator' ) ),
                 'requestQuote'      => TDL_WPML::translate( 'request_quote',        __( 'Request Quote', 'taylor-distributor-locator' ) ),
                 'serviceArea'       => TDL_WPML::translate( 'service_area',         __( 'Service Area', 'taylor-distributor-locator' ) ),
-                'selectState'       => TDL_WPML::translate( 'select_state',         __( 'Select a state or province...', 'taylor-distributor-locator' ) ),
-                'selectCountry'     => TDL_WPML::translate( 'select_country',       __( 'Select a country...', 'taylor-distributor-locator' ) ),
                 'emailMain'         => TDL_WPML::translate( 'email_main_label',     __( 'Main', 'taylor-distributor-locator' ) ),
                 'emailSales'        => TDL_WPML::translate( 'email_sales_label',    __( 'Sales', 'taylor-distributor-locator' ) ),
                 'emailParts'        => TDL_WPML::translate( 'email_parts_label',    __( 'Parts', 'taylor-distributor-locator' ) ),
@@ -183,12 +182,22 @@ class TDL_Shortcode {
             true
         );
 
-        // Google Maps API - must load after our script with callback
+        // Google Maps API + MarkerClusterer.
+        // Clusterer is loaded before the Maps API so it's available when the
+        // Maps API callback (tdlInitMap) fires. The clusterer UMD bundle
+        // doesn't reference google.maps at parse time — only at runtime.
         if ($map_provider === 'google' && !empty($api_key)) {
+            wp_enqueue_script(
+                'google-markerclusterer',
+                'https://unpkg.com/@googlemaps/markerclusterer@2.5.3/dist/index.min.js',
+                ['tdl-locator'],
+                '2.5.3',
+                true
+            );
             wp_enqueue_script(
                 'google-maps',
                 'https://maps.googleapis.com/maps/api/js?key=' . esc_attr($api_key) . '&callback=tdlInitMap&libraries=marker,places&v=weekly&loading=async',
-                ['tdl-locator'],
+                ['google-markerclusterer'],
                 null,
                 true
             );

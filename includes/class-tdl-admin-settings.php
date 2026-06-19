@@ -156,6 +156,24 @@ class TDL_Admin_Settings {
             ['name' => 'tdl_results_per_page', 'min' => 1, 'max' => 100]
         );
         
+        // Show City/Region search tab
+        register_setting('tdl_settings', 'tdl_show_city_tab', [
+            'type'              => 'boolean',
+            'sanitize_callback' => [__CLASS__, 'sanitize_checkbox'],
+            'default'           => true,
+        ]);
+        add_settings_field(
+            'tdl_show_city_tab',
+            __('Show City / Region Tab', 'taylor-distributor-locator'),
+            [__CLASS__, 'render_checkbox_field'],
+            'tdl-settings',
+            'tdl_general_section',
+            [
+                'name'        => 'tdl_show_city_tab',
+                'label'       => __('Show the City / Region search tab on the frontend locator', 'taylor-distributor-locator'),
+            ]
+        );
+
         // Cache Duration
         register_setting('tdl_settings', 'tdl_cache_duration', [
             'type' => 'integer',
@@ -357,6 +375,26 @@ class TDL_Admin_Settings {
         );
     }
     
+    /**
+     * Render a checkbox field
+     */
+    public static function render_checkbox_field( $args ) {
+        $value = get_option( $args['name'], true );
+        printf(
+            '<label><input type="checkbox" name="%s" value="1" %s /> %s</label>',
+            esc_attr( $args['name'] ),
+            checked( $value, true, false ),
+            esc_html( $args['label'] ?? '' )
+        );
+    }
+
+    /**
+     * Sanitize checkbox to boolean — unchecked sends nothing, checked sends '1'.
+     */
+    public static function sanitize_checkbox( $value ): bool {
+        return ! empty( $value );
+    }
+
     /**
      * Get a color setting with fallback
      */

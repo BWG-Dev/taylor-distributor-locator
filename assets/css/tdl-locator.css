@@ -78,7 +78,8 @@
     border: 1.5px solid var(--tdl-border);
     border-radius: var(--tdl-radius);
     box-shadow: var(--tdl-shadow-sm);
-    overflow: hidden;
+    overflow: visible;
+    position: relative;
     transition: border-color var(--tdl-transition), box-shadow var(--tdl-transition);
 }
 
@@ -151,6 +152,7 @@
     background: var(--tdl-ink-xl);
     color: #fff;
     border: none;
+    border-radius: 0 var(--tdl-radius) var(--tdl-radius) 0;
     cursor: pointer;
     transition: background var(--tdl-transition);
     font-family: inherit;
@@ -159,6 +161,63 @@
 
 .tdl-search-btn:hover {
     background: var(--tdl-ink-lg);
+}
+
+/* ── Typeahead dropdown ─────────────────────────────────────────────────── */
+.tdl-typeahead-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.tdl-typeahead-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--tdl-white);
+    border: 1.5px solid var(--tdl-border);
+    border-top: none;
+    border-radius: 0 0 var(--tdl-radius) var(--tdl-radius);
+    box-shadow: var(--tdl-shadow-md);
+    max-height: 260px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.tdl-typeahead-dropdown[hidden] {
+    display: none;
+}
+
+.tdl-ta-item {
+    padding: 9px 12px;
+    font-size: 14px;
+    color: var(--tdl-ink-xl);
+    cursor: pointer;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    transition: background 0.1s ease;
+}
+
+.tdl-ta-item:hover,
+.tdl-ta-item.tdl-ta-active {
+    background: var(--tdl-bg);
+}
+
+.tdl-ta-code {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--tdl-ink-xs);
+    letter-spacing: 0.03em;
+}
+
+.tdl-ta-group {
+    font-size: 11px;
+    color: var(--tdl-ink-xs);
+    margin-left: auto;
+    white-space: nowrap;
 }
 
 /* ── Status ─────────────────────────────────────────────────────────────── */
@@ -742,7 +801,8 @@
         border: 1.5px solid var(--tdl-border);
         border-radius: var(--tdl-radius);
         box-shadow: var(--tdl-shadow-sm);
-        overflow: hidden;
+        overflow: visible;
+        position: relative;
     }
 
     .tdl-search-input {
@@ -843,10 +903,10 @@
 .tdl-marker-pin {
     background-color: var(--tdl-ink-xl, #111827);
     border-radius: 50%;
-    width: 10px;
-    height: 10px;
-    border: 2px solid rgba(255,255,255,0.9);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.45);
+    width: 16px;
+    height: 16px;
+    border: 2.5px solid rgba(255,255,255,0.9);
+    box-shadow: 0 1px 5px rgba(0,0,0,0.5);
     box-sizing: border-box;
     transition: transform 0.15s ease;
     cursor: pointer;

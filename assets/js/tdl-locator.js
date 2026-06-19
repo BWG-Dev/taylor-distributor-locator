@@ -14,6 +14,7 @@
     let mapsReady = false; // Only used for Google Maps callback
     let mapProvider = 'google'; // 'google' or 'openstreetmap'
     let clusterGroup = null; // Leaflet.markercluster group
+    let googleClusterer = null; // Google Maps MarkerClusterer instance
     let isDefaultView = true; // true on initial page load; false once a search is performed
     let mapSearchToken = 0;  // incremented on each new search to discard stale async responses
 
@@ -24,9 +25,12 @@
 
     // Active search tab mode — set by tab clicks, read by performSearch().
     let activeSearchMode = 'zip';
-    // Lazy-load flags for dropdowns — populated once on first tab activation.
+    // Lazy-load flags for typeahead data — populated once on first tab activation.
     let statesLoaded = false;
     let countriesLoaded = false;
+    // Typeahead data arrays.
+    let stateItems = [];  // { code, name, group }
+    let countryItems = []; // { code, name }
 
     /**
      * Initialize on DOM ready
@@ -102,13 +106,24 @@
         // Search button
         btn.addEventListener('click', performSearch);
 
-        // Enter key on text inputs
-        ['tdl-zip-input', 'tdl-city-input'].forEach(function (id) {
-            const el = document.getElementById(id);
+        // Enter key on text inputs (zip, city, typeahead inputs)
+        ['tdl-zip-input', 'tdl-city-input', 'tdl-state-input', 'tdl-country-input'].forEach(function (id) {
+            var el = document.getElementById(id);
             if (el) el.addEventListener('keypress', function (e) {
-                if (e.key === 'Enter') performSearch();
+                if (e.key === 'Enter') {
+                    // Only trigger search if the typeahead dropdown is closed
+                    var dropdown = el.closest('.tdl-typeahead-wrap');
+                    var dd = dropdown ? dropdown.querySelector('.tdl-typeahead-dropdown') : null;
+                    if (!dd || dd.hidden) {
+                        performSearch();
+                    }
+                }
             });
         });
+
+        // Initialize typeaheads
+        initTypeahead('tdl-state-input', 'tdl-state-dropdown', 'tdl-state-value', loadStatesData, 2);
+        initTypeahead('tdl-country-input', 'tdl-country-dropdown', 'tdl-country-value', loadCountriesData, 2);
     }
 
     /**
@@ -129,80 +144,177 @@
             panel.classList.toggle('active', active);
         });
 
-        // Clear all inputs and selects in every panel when switching tabs
+        // Clear all inputs, hidden values, and close typeahead dropdowns
         // so stale values from a previous search don't carry over.
         document.querySelectorAll('.tdl-tab-panel input').forEach(function (el) { el.value = ''; });
-        document.querySelectorAll('.tdl-tab-panel select').forEach(function (el) { el.selectedIndex = 0; });
+        document.querySelectorAll('.tdl-typeahead-dropdown').forEach(function (el) { el.hidden = true; });
 
-        if (mode === 'state' && !statesLoaded) loadStatesDropdown();
-        if (mode === 'country' && !countriesLoaded) loadCountriesDropdown();
+        if (mode === 'state' && !statesLoaded) loadStatesData();
+        if (mode === 'country' && !countriesLoaded) loadCountriesData();
 
-        const focusEl = document.querySelector('#tdl-panel-' + mode + ' input, #tdl-panel-' + mode + ' select');
+        var focusEl = document.querySelector('#tdl-panel-' + mode + ' input:not([type="hidden"])');
         if (focusEl) focusEl.focus();
     }
 
     /**
-     * Populate the State/Province dropdown from /states for US, CA, MX in parallel.
-     * Only states that have actual service-zone coverage are returned.
+     * Fetch state/province data from /states for US, CA, MX in parallel.
+     * Returns a Promise that resolves once stateItems[] is populated.
      */
-    function loadStatesDropdown() {
-        const select = document.getElementById('tdl-state-select');
-        if (!select) return;
+    function loadStatesData() {
+        if (statesLoaded) return Promise.resolve();
 
-        const base = config.restUrl + 'states?country=';
-        Promise.all([
+        var base = config.restUrl + 'states?country=';
+        return Promise.all([
             fetch(base + 'US').then(function (r) { return r.json(); }),
             fetch(base + 'CA').then(function (r) { return r.json(); }),
             fetch(base + 'MX').then(function (r) { return r.json(); }),
         ]).then(function (results) {
-            const groups = [
+            var groups = [
                 { label: 'United States', states: results[0].states || [] },
                 { label: 'Canada',        states: results[1].states || [] },
                 { label: 'Mexico',        states: results[2].states || [] },
             ];
-
-            select.innerHTML = '<option value="">' + (config.i18n.selectState || 'Select a state or province...') + '</option>';
-
-            groups.forEach(function (group) {
-                if (!group.states.length) return;
-                const og = document.createElement('optgroup');
-                og.label = group.label;
-                group.states.forEach(function (s) {
-                    const opt = document.createElement('option');
-                    opt.value = s.code;
-                    opt.textContent = s.name;
-                    og.appendChild(opt);
+            stateItems = [];
+            groups.forEach(function (g) {
+                g.states.forEach(function (s) {
+                    stateItems.push({ code: s.code, name: s.name, group: g.label });
                 });
-                select.appendChild(og);
             });
-
             statesLoaded = true;
         }).catch(function () {
-            select.innerHTML = '<option value="">Error loading states</option>';
+            stateItems = [];
         });
     }
 
     /**
-     * Populate the Country dropdown from /countries — only countries with coverage.
+     * Fetch country data from /countries endpoint.
+     * Returns a Promise that resolves once countryItems[] is populated.
      */
-    function loadCountriesDropdown() {
-        const select = document.getElementById('tdl-country-select');
-        if (!select) return;
+    function loadCountriesData() {
+        if (countriesLoaded) return Promise.resolve();
 
-        fetch(config.restUrl + 'countries')
+        return fetch(config.restUrl + 'countries')
             .then(function (r) { return r.json(); })
             .then(function (data) {
-                select.innerHTML = '<option value="">' + (config.i18n.selectCountry || 'Select a country...') + '</option>';
-                (data.countries || []).forEach(function (c) {
-                    const opt = document.createElement('option');
-                    opt.value = c.code;
-                    opt.textContent = c.name;
-                    select.appendChild(opt);
+                countryItems = (data.countries || []).map(function (c) {
+                    return { code: c.code, name: c.name };
                 });
                 countriesLoaded = true;
             }).catch(function () {
-                select.innerHTML = '<option value="">Error loading countries</option>';
+                countryItems = [];
             });
+    }
+
+    /**
+     * Generic typeahead: wires an input + hidden value + dropdown panel.
+     * Shows filtered suggestions after minChars characters are typed.
+     */
+    function initTypeahead(inputId, dropdownId, hiddenId, dataLoader, minChars) {
+        var input    = document.getElementById(inputId);
+        var dropdown = document.getElementById(dropdownId);
+        var hidden   = document.getElementById(hiddenId);
+        if (!input || !dropdown || !hidden) return;
+
+        var activeIdx = -1;
+        var lastMatches = [];
+
+        function getItems() {
+            if (inputId.indexOf('state') !== -1) return stateItems;
+            return countryItems;
+        }
+
+        function filter(q) {
+            var lq = q.toLowerCase();
+            return getItems().filter(function (item) {
+                return item.name.toLowerCase().indexOf(lq) === 0 ||
+                       item.code.toLowerCase().indexOf(lq) === 0;
+            }).slice(0, 12);
+        }
+
+        function render(matches) {
+            lastMatches = matches;
+            if (!matches.length) {
+                dropdown.hidden = true;
+                input.setAttribute('aria-expanded', 'false');
+                return;
+            }
+            var html = '';
+            matches.forEach(function (item, i) {
+                var cls = i === activeIdx ? 'tdl-ta-item tdl-ta-active' : 'tdl-ta-item';
+                var groupHtml = item.group
+                    ? ' <span class="tdl-ta-group">' + escapeHtml(item.group) + '</span>'
+                    : '';
+                html += '<div class="' + cls + '" role="option" data-code="' +
+                    escapeAttr(item.code) + '" data-index="' + i + '">' +
+                    escapeHtml(item.name) +
+                    ' <span class="tdl-ta-code">' + escapeHtml(item.code) + '</span>' +
+                    groupHtml + '</div>';
+            });
+            dropdown.innerHTML = html;
+            dropdown.hidden = false;
+            input.setAttribute('aria-expanded', 'true');
+        }
+
+        function selectItem(item) {
+            input.value  = item.name;
+            hidden.value = item.code;
+            dropdown.hidden = true;
+            input.setAttribute('aria-expanded', 'false');
+            activeIdx = -1;
+        }
+
+        input.addEventListener('focus', function () { dataLoader(); });
+
+        input.addEventListener('input', function () {
+            hidden.value = '';
+            activeIdx = -1;
+            var q = input.value.trim();
+            if (q.length < minChars) {
+                dropdown.hidden = true;
+                input.setAttribute('aria-expanded', 'false');
+                return;
+            }
+            dataLoader().then(function () { render(filter(q)); });
+        });
+
+        input.addEventListener('keydown', function (e) {
+            if (dropdown.hidden || !lastMatches.length) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIdx = Math.min(activeIdx + 1, lastMatches.length - 1);
+                render(lastMatches);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIdx = Math.max(activeIdx - 1, 0);
+                render(lastMatches);
+            } else if (e.key === 'Enter') {
+                if (activeIdx >= 0 && lastMatches[activeIdx]) {
+                    e.preventDefault();
+                    selectItem(lastMatches[activeIdx]);
+                }
+            } else if (e.key === 'Escape') {
+                dropdown.hidden = true;
+                input.setAttribute('aria-expanded', 'false');
+                activeIdx = -1;
+            }
+        });
+
+        dropdown.addEventListener('click', function (e) {
+            var el = e.target.closest('.tdl-ta-item');
+            if (!el) return;
+            var code = el.dataset.code;
+            var match = getItems().find(function (i) { return i.code === code; });
+            if (match) selectItem(match);
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('#' + inputId) && !e.target.closest('#' + dropdownId)) {
+                dropdown.hidden = true;
+                input.setAttribute('aria-expanded', 'false');
+                activeIdx = -1;
+            }
+        });
     }
 
     /**
@@ -342,9 +454,51 @@
             streetViewControl: false,
         });
 
+        // Initialize MarkerClusterer if the library loaded.
+        if (typeof markerClusterer !== 'undefined' && markerClusterer.MarkerClusterer) {
+            googleClusterer = new markerClusterer.MarkerClusterer({
+                map: map,
+                markers: [],
+                renderer: {
+                    render: function (cluster, stats) {
+                        var count = cluster.count;
+                        var size = count < 10 ? 32 : count < 100 ? 38 : 44;
+                        var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">' +
+                            '<circle cx="' + (size / 2) + '" cy="' + (size / 2) + '" r="' + (size / 2 - 1) + '" fill="rgba(17,24,39,0.82)" stroke="rgba(255,255,255,0.7)" stroke-width="2"/>' +
+                            '<text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,sans-serif">' + count + '</text>' +
+                            '</svg>';
+                        return new google.maps.marker.AdvancedMarkerElement({
+                            position: cluster.position,
+                            content: domFromString(svg),
+                            zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
+                        });
+                    }
+                }
+            });
+        }
+
         if (isDefaultView) {
             fetchAllMarkers();
         }
+    }
+
+    /**
+     * Parse an HTML/SVG string into a DOM element.
+     */
+    function domFromString(html) {
+        var tpl = document.createElement('template');
+        tpl.innerHTML = html.trim();
+        return tpl.content.firstChild;
+    }
+
+    /**
+     * Build a circle-dot marker element for Google Maps AdvancedMarkerElement,
+     * visually identical to the Leaflet .tdl-marker-pin.
+     */
+    function createGooglePinElement() {
+        var el = document.createElement('div');
+        el.className = 'tdl-marker-pin';
+        return el;
     }
 
     /**
@@ -434,7 +588,7 @@
                 break;
             }
             case 'state': {
-                const val = (document.getElementById('tdl-state-select') || {}).value || '';
+                const val = (document.getElementById('tdl-state-value') || {}).value || '';
                 if (!val) {
                     showStatus('Please select a state or province.', 'error');
                     return;
@@ -443,7 +597,7 @@
                 break;
             }
             case 'country': {
-                const val = (document.getElementById('tdl-country-select') || {}).value || '';
+                const val = (document.getElementById('tdl-country-value') || {}).value || '';
                 if (!val) {
                     showStatus('Please select a country.', 'error');
                     return;
@@ -834,18 +988,14 @@
 
             if (mapProvider === 'google') {
                 const position = { lat: item.lat, lng: item.lng };
-                const pin = new google.maps.marker.PinElement({
-                    glyphColor: 'transparent',
-                    background: '#111827',
-                    borderColor: '#374151',
-                    scale: 0.75,
-                });
-                const marker = new google.maps.marker.AdvancedMarkerElement({
+                var markerOpts = {
                     position: position,
-                    map: map,
                     title: item.name,
-                    content: pin,
-                });
+                    content: createGooglePinElement(),
+                };
+                if (!googleClusterer) markerOpts.map = map;
+
+                const marker = new google.maps.marker.AdvancedMarkerElement(markerOpts);
 
                 const infoWindow = new google.maps.InfoWindow({
                     content: createInfoWindowContent(distributor, location),
@@ -854,8 +1004,6 @@
                 marker.addListener('gmp-click', function (e) {
                     closeAllInfoWindows();
                     infoWindow.open(map, marker);
-                    // Prevent the underlying DOM touch/click from bubbling past
-                    // the marker element on mobile, which can close the window.
                     if (e && e.domEvent) e.domEvent.stopPropagation();
                 });
 
@@ -866,9 +1014,9 @@
                 const myIcon = L.divIcon({
                     className: 'tdl-leaflet-marker',
                     html: '<div class="tdl-marker-pin"></div>',
-                    iconSize: [14, 14],
-                    iconAnchor: [7, 7],
-                    popupAnchor: [0, -10],
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10],
+                    popupAnchor: [0, -14],
                 });
 
                 const marker = L.marker(latLng, { icon: myIcon });
@@ -900,6 +1048,10 @@
                 }
             }
         });
+
+        if (mapProvider === 'google' && googleClusterer) {
+            googleClusterer.addMarkers(markers);
+        }
     }
 
     /**
@@ -930,21 +1082,15 @@
                 if (location.lat && location.lng) {
                     const position = { lat: location.lat, lng: location.lng };
 
-                    const pin = new google.maps.marker.PinElement({
-                        glyphText: String(index + 1),
-                        glyphColor: '#ffffff',
-                        background: '#111827',
-                        borderColor: '#374151',
-                    });
-
-                    const marker = new google.maps.marker.AdvancedMarkerElement({
+                    var markerOpts = {
                         position: position,
-                        map: map,
                         title: distributor.name + (location.name ? ' - ' + location.name : ''),
-                        content: pin,
-                    });
+                        content: createGooglePinElement(),
+                    };
+                    if (!googleClusterer) markerOpts.map = map;
 
-                    // Info window
+                    const marker = new google.maps.marker.AdvancedMarkerElement(markerOpts);
+
                     const infoContent = createInfoWindowContent(distributor, location);
                     const infoWindow = new google.maps.InfoWindow({
                         content: infoContent,
@@ -967,6 +1113,10 @@
                 }
             });
         });
+
+        if (googleClusterer) {
+            googleClusterer.addMarkers(markers);
+        }
 
         if (hasValidCoords) {
             if (validLocationCount > 1) {
@@ -994,9 +1144,9 @@
                     const myIcon = L.divIcon({
                         className: 'tdl-leaflet-marker',
                         html: '<div class="tdl-marker-pin"></div>',
-                        iconSize: [14, 14],
-                        iconAnchor: [7, 7],
-                        popupAnchor: [0, -10]
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10],
+                        popupAnchor: [0, -14]
                     });
 
                     const marker = L.marker(latLng, { icon: myIcon });
@@ -1147,7 +1297,11 @@
      */
     function clearMarkers() {
         if (mapProvider === 'google') {
-            markers.forEach(function (marker) { marker.map = null; });
+            if (googleClusterer) {
+                googleClusterer.clearMarkers();
+            } else {
+                markers.forEach(function (marker) { marker.map = null; });
+            }
         } else {
             if (clusterGroup) {
                 // Remove and recreate the group to guarantee no stale cluster icons
@@ -1246,13 +1400,21 @@
 
     // ── Quote Request Modal ──────────────────────────────────────────────────
 
+    var originalFormHtml = null; // Cached on first init for post-submission reset
+    var formNeedsReset   = false;
+
     /**
      * Set up modal close handlers, focus trap, and GF confirmation observer.
      * Called once on DOMContentLoaded; does nothing if the modal isn't present.
      */
     function initQuoteModal() {
-        const modal = document.getElementById('tdl-quote-modal');
+        var modal = document.getElementById('tdl-quote-modal');
         if (!modal) return;
+
+        var modalBody = modal.querySelector('.tdl-modal-body');
+        if (modalBody) {
+            originalFormHtml = modalBody.innerHTML;
+        }
 
         modal.querySelector('.tdl-modal-backdrop').addEventListener('click', closeQuoteModal);
         modal.querySelector('.tdl-modal-close').addEventListener('click', closeQuoteModal);
@@ -1267,13 +1429,13 @@
         // Trap Tab focus inside the dialog
         modal.addEventListener('keydown', function (e) {
             if (e.key !== 'Tab') return;
-            const focusable = Array.from(modal.querySelectorAll(
+            var focusable = Array.from(modal.querySelectorAll(
                 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), ' +
                 'select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
             ));
             if (focusable.length === 0) return;
-            const first = focusable[0];
-            const last  = focusable[focusable.length - 1];
+            var first = focusable[0];
+            var last  = focusable[focusable.length - 1];
             if (e.shiftKey && document.activeElement === first) {
                 e.preventDefault();
                 last.focus();
@@ -1283,38 +1445,72 @@
             }
         });
 
-        // Auto-close 2.5 s after GF replaces the form with its AJAX confirmation.
-        // GF adds id="gform_confirmation_wrapper_{formId}" when the submission succeeds.
-        const modalBody = modal.querySelector('.tdl-modal-body');
-        if (modalBody && config.gfFormId) {
-            new MutationObserver(function (mutations, obs) {
-                if (document.getElementById('gform_confirmation_wrapper_' + config.gfFormId)) {
-                    setTimeout(closeQuoteModal, 2500);
-                    obs.disconnect();
-                }
-            }).observe(modalBody, { childList: true, subtree: true });
-        }
+        setupFormObserver();
+    }
+
+    /**
+     * Watch for GF's AJAX confirmation and auto-close the modal after 2.5 s.
+     * Re-called after every form reset so the observer is always active.
+     */
+    function setupFormObserver() {
+        var modal = document.getElementById('tdl-quote-modal');
+        if (!modal || !config.gfFormId) return;
+
+        var modalBody = modal.querySelector('.tdl-modal-body');
+        if (!modalBody) return;
+
+        new MutationObserver(function (mutations, obs) {
+            if (document.getElementById('gform_confirmation_wrapper_' + config.gfFormId)) {
+                formNeedsReset = true;
+                setTimeout(closeQuoteModal, 2500);
+                obs.disconnect();
+            }
+        }).observe(modalBody, { childList: true, subtree: true });
     }
 
     /**
      * Open the quote modal and populate the hidden distributor context fields.
-     *
-     * @param {number} distributorId
-     * @param {string} distributorName
+     * If the form was previously submitted, restore its original HTML first.
      */
     function openQuoteModal(distributorId, distributorName) {
-        const modal = document.getElementById('tdl-quote-modal');
+        var modal = document.getElementById('tdl-quote-modal');
         if (!modal) return;
+
+        // Reset the form if a previous submission replaced it with confirmation
+        if (formNeedsReset && originalFormHtml) {
+            var modalBody = modal.querySelector('.tdl-modal-body');
+            if (modalBody) {
+                modalBody.innerHTML = originalFormHtml;
+
+                // Re-execute inline scripts so GF re-binds its AJAX submission handler
+                modalBody.querySelectorAll('script').forEach(function (old) {
+                    var fresh = document.createElement('script');
+                    if (old.src) {
+                        fresh.src = old.src;
+                    } else {
+                        fresh.textContent = old.textContent;
+                    }
+                    old.parentNode.replaceChild(fresh, old);
+                });
+
+                // Trigger GF's post-render event for conditional logic and formatting
+                if (window.jQuery) {
+                    window.jQuery(document).trigger('gform_post_render', [config.gfFormId, 0]);
+                }
+            }
+            formNeedsReset = false;
+            setupFormObserver();
+        }
 
         // Populate hidden GF fields before the form is shown
         if (config.gfFormId) {
-            const fid = config.gfFormId;
+            var fid = config.gfFormId;
             if (config.gfDistributorFieldId) {
-                const idInput = document.getElementById('input_' + fid + '_' + config.gfDistributorFieldId);
+                var idInput = document.getElementById('input_' + fid + '_' + config.gfDistributorFieldId);
                 if (idInput) idInput.value = distributorId;
             }
             if (config.gfDistributorNameFieldId) {
-                const nameInput = document.getElementById('input_' + fid + '_' + config.gfDistributorNameFieldId);
+                var nameInput = document.getElementById('input_' + fid + '_' + config.gfDistributorNameFieldId);
                 if (nameInput) nameInput.value = distributorName || '';
             }
         }
@@ -1322,13 +1518,12 @@
         modal.removeAttribute('hidden');
         document.body.classList.add('tdl-modal-open');
 
-        // Move focus to the close button for keyboard/screen-reader users
-        const closeBtn = modal.querySelector('.tdl-modal-close');
+        var closeBtn = modal.querySelector('.tdl-modal-close');
         if (closeBtn) closeBtn.focus();
     }
 
     function closeQuoteModal() {
-        const modal = document.getElementById('tdl-quote-modal');
+        var modal = document.getElementById('tdl-quote-modal');
         if (!modal) return;
         modal.setAttribute('hidden', '');
         document.body.classList.remove('tdl-modal-open');
