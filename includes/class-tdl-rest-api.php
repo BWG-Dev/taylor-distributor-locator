@@ -67,9 +67,10 @@ class TDL_REST_API {
             'permission_callback' => '__return_true',
             'args' => [
                 'q' => [
-                    'required' => true,
+                    'required' => false,
                     'type' => 'string',
                     'sanitize_callback' => 'sanitize_text_field',
+                    'default' => '',
                 ],
                 'city' => [
                     'type' => 'string',
@@ -121,6 +122,14 @@ class TDL_REST_API {
             'permission_callback' => '__return_true',
         ]);
         
+        // Lightweight all-marker endpoint — used by the default map view to render
+        // all distributor pins without paginating through /search.
+        register_rest_route('tdl/v1', '/markers', [
+            'methods'             => 'GET',
+            'callback'            => [__CLASS__, 'handle_get_markers'],
+            'permission_callback' => '__return_true',
+        ]);
+
         // States list endpoint
         register_rest_route('tdl/v1', '/states', [
             'methods' => 'GET',
@@ -147,20 +156,33 @@ class TDL_REST_API {
         $country = trim($request->get_param('country') ?? '');
         
         $page = max(1, $request->get_param('page'));
-        $per_page = min(100, max(1, $request->get_param('per_page')));
+        $per_page = min(500, max(1, $request->get_param('per_page')));
         
-        if (empty($query)) {
-            return new WP_REST_Response([
-                'success' => false,
-                'message' => __('Search query is required', 'taylor-distributor-locator'),
-            ], 400);
-        }
-        
-        // Check cache
-        $data_version = get_option('tdl_data_version', time());
-        // Incorporate all params into cache key
-        $cache_key = 'tdl_search_' . md5($query . '_' . $city . '_' . $state . '_' . $zip . '_' . $country . '_' . $page . '_' . $per_page . '_' . $data_version);
+        // Cache setup must come before the early-return so both paths can use it.
+        $data_version   = get_option('tdl_data_version', time());
         $cache_duration = get_option('tdl_cache_duration', 60) * MINUTE_IN_SECONDS;
+
+        // Only return all distributors when no search criteria are present at all.
+        // Previously this checked only $query, which caused explicit params like
+        // ?zip=, ?state=, ?country=, ?city= to be ignored — returning all 164
+        // distributors regardless of the filter the frontend sent.
+        if ( empty( $query ) && empty( $city ) && empty( $state ) && empty( $zip ) && empty( $country ) ) {
+            $cache_key = 'tdl_all_' . md5($page . '_' . $per_page . '_' . $data_version . '_' . TDL_VERSION);
+            if ($cache_duration > 0) {
+                $cached = get_transient($cache_key);
+                if ($cached !== false) {
+                    return new WP_REST_Response($cached, 200);
+                }
+            }
+            $result = self::get_all_distributors($page, $per_page);
+            if ($cache_duration > 0) {
+                set_transient($cache_key, $result, $cache_duration);
+            }
+            return new WP_REST_Response($result, 200);
+        }
+
+        // Incorporate all params into cache key
+        $cache_key = 'tdl_search_' . md5($query . '_' . $city . '_' . $state . '_' . $zip . '_' . $country . '_' . $page . '_' . $per_page . '_' . $data_version . '_' . TDL_VERSION);
         
         if ($cache_duration > 0) {
             $cached = get_transient($cache_key);
@@ -198,19 +220,28 @@ class TDL_REST_API {
         $parts = [];
         $params = [];
 
-        // Normalize state to code for location matching
-        $state_match = self::match_state($state);
-        $state_code = $state_match ? $state_match['code'] : $state;
-        $state_name = $state_match ? $state_match['name'] : $state;
+        // Normalize state to code for location matching.
+        // Also infer the country from the state when no explicit country is provided —
+        // without this, 'CO' matches both US-Colorado and any MX zone stored as 'CO'
+        // (e.g. Coahuila abbreviation collisions from the CSV import).
+        $state_match    = self::match_state($state);
+        $state_code     = $state_match ? $state_match['code']    : $state;
+        $state_name     = $state_match ? $state_match['name']    : $state;
+        $state_country  = $state_match ? $state_match['country'] : '';
+        // Explicit $country takes precedence; fall back to state-inferred country.
+        $effective_country = ! empty( $country ) ? $country : $state_country;
 
-        // 0. Match by Name (Always a good fallback)
-        $parts[] = "post_title LIKE %s";
-        $params[] = '%' . $wpdb->esc_like($query) . '%';
+        // Name match only when a text query is present. An empty query produces
+        // LIKE '%%' which matches every post and would swamp the zone conditions.
+        if ( ! empty( $query ) ) {
+            $parts[] = 'post_title LIKE %s';
+            $params[] = '%' . $wpdb->esc_like( $query ) . '%';
+        }
 
         // 1. Match by City (Physical Location)
         if (!empty($city)) {
             $parts[] = "ID IN (
-                SELECT DISTINCT distributor_id FROM {$locations_table} 
+                SELECT DISTINCT distributor_id FROM {$locations_table}
                 WHERE city LIKE %s
                 " . ($state ? " AND state_province = %s" : "") . "
             )";
@@ -218,17 +249,26 @@ class TDL_REST_API {
             if ($state) $params[] = $state_code;
         }
 
-        // 2. Match by State (Service Zone)
+        // 2. Match by State — service zone first, physical location as fallback.
+        // country_context is always applied (inferred from the state when not explicit)
+        // to prevent abbreviation collisions across US/CA/MX (e.g. 'CO' = Colorado or
+        // a Mexican state shorthand).
         if (!empty($state)) {
-            $parts[] = "ID IN (
-                SELECT DISTINCT distributor_id FROM {$zones_table} 
+            $parts[] = "(ID IN (
+                SELECT DISTINCT distributor_id FROM {$zones_table}
                 WHERE zone_type = 'state' AND (zone_value = %s OR zone_value = %s)
-                " . ($country ? " AND country_context = %s" : "") . "
-            )";
-            // Try both code and full name for state
+                AND country_context = %s
+            ) OR ID IN (
+                SELECT DISTINCT distributor_id FROM {$locations_table}
+                WHERE (state_province = %s OR state_province = %s)
+                " . ( $effective_country ? " AND country_code = %s" : "" ) . "
+            ))";
             $params[] = $state_code;
             $params[] = $state_name;
-             if ($country) $params[] = $country;
+            $params[] = $effective_country;
+            $params[] = $state_code;
+            $params[] = $state_name;
+            if ( $effective_country ) $params[] = $effective_country;
         }
 
         // 3. Match by ZIP (Service Zone - single or range)
@@ -244,8 +284,11 @@ class TDL_REST_API {
             $params[] = $zip_int;
         }
         
-        // 4. Match by Country (Service Zone)
-        if (!empty($country)) {
+        // 4. Match by Country (Service Zone) — only when no state or ZIP is present.
+        // If state is already provided, it implies the country; adding country as an OR
+        // condition would match every distributor serving that country, swamping the
+        // more specific state results.
+        if (!empty($country) && empty($state) && empty($zip)) {
             $na_countries = ['US', 'CA', 'MX'];
             if (in_array($country, $na_countries, true)) {
                 // For US/CA/MX, match any service zone belonging to this country
@@ -261,6 +304,20 @@ class TDL_REST_API {
                 )";
             }
             $params[] = $country;
+        }
+
+        // Guard: if no conditions were added (e.g. empty query + non-numeric zip),
+        // return an empty result rather than generating invalid SQL.
+        if ( empty( $parts ) ) {
+            return [
+                'success'     => true,
+                'search_type' => 'none',
+                'query'       => $query,
+                'total'       => 0,
+                'page'        => $page,
+                'per_page'    => $per_page,
+                'results'     => [],
+            ];
         }
 
         $offset = ($page - 1) * $per_page;
@@ -308,8 +365,18 @@ class TDL_REST_API {
             return self::search_by_zip($query, $page, $per_page);
         }
         
-        // Check for "City, State" format
+        // Check for comma — could be "City, State" OR "State, Country" (e.g. "FL, USA").
+        // Try "State, Country" first: if the right side is a country and the left is a
+        // recognisable state, route directly to the state search instead of city lookup.
         if (strpos($query, ',') !== false) {
+            $comma_parts  = array_map('trim', explode(',', $query, 2));
+            $right_country = self::match_country($comma_parts[1] ?? '');
+            if ($right_country) {
+                $left_state = self::match_state($comma_parts[0]);
+                if ($left_state) {
+                    return self::search_by_state($left_state['code'], $right_country, $page, $per_page);
+                }
+            }
             return self::search_by_city_state($query, $page, $per_page);
         }
         
@@ -464,45 +531,63 @@ class TDL_REST_API {
     }
     
     /**
-     * Search by state/province
+     * Search by state/province.
+     *
+     * Checks both explicit state service zones AND physical location rows so that
+     * distributors whose territory is defined only through ZIP ranges (no state zone)
+     * still surface when a user searches by state name.
      */
     private static function search_by_state($state_code, $country_code, $page, $per_page) {
         global $wpdb;
-        
-        $zones_table = $wpdb->prefix . 'tdl_service_zones';
-        $offset = ($page - 1) * $per_page;
-        
-        // Count total
-        $total = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(DISTINCT z.distributor_id) FROM {$zones_table} z
-             JOIN {$wpdb->posts} p ON z.distributor_id = p.ID
-             WHERE p.post_status = 'publish' AND p.post_type = 'distributor'
-             AND z.zone_type = 'state' AND z.zone_value = %s AND z.country_context = %s",
-            $state_code, $country_code
-        ));
 
-        // Fetch sorted page
-        $paged_ids = $wpdb->get_col($wpdb->prepare(
-            "SELECT DISTINCT z.distributor_id FROM {$zones_table} z
-             JOIN {$wpdb->posts} p ON z.distributor_id = p.ID
-             WHERE p.post_status = 'publish' AND p.post_type = 'distributor'
-             AND z.zone_type = 'state' AND z.zone_value = %s AND z.country_context = %s
-             ORDER BY p.post_title ASC
-             LIMIT %d OFFSET %d",
-            $state_code, $country_code, $per_page, $offset
-        ));
-        
+        $zones_table     = $wpdb->prefix . 'tdl_service_zones';
+        $locations_table = $wpdb->prefix . 'tdl_locations';
+        $offset          = ($page - 1) * $per_page;
+
+        // Resolve full state name so zone_value comparisons cover both 'FL' and 'Florida'.
+        $all_states = array_merge(self::$us_states, self::$ca_provinces, self::$mx_states);
+        $state_name = $all_states[$state_code] ?? $state_code;
+
+        // Base subquery condition shared by count and paged fetch.
+        $base_where = "FROM {$wpdb->posts} p
+            WHERE p.post_type = 'distributor' AND p.post_status = 'publish'
+            AND (
+                p.ID IN (
+                    SELECT DISTINCT distributor_id FROM {$zones_table}
+                    WHERE zone_type = 'state'
+                      AND (zone_value = %s OR zone_value = %s)
+                      AND country_context = %s
+                )
+                OR p.ID IN (
+                    SELECT DISTINCT distributor_id FROM {$locations_table}
+                    WHERE state_province = %s OR state_province = %s
+                )
+            )";
+
+        $base_params = [$state_code, $state_name, $country_code, $state_code, $state_name];
+
+        $total = (int) $wpdb->get_var(
+            $wpdb->prepare("SELECT COUNT(DISTINCT p.ID) {$base_where}", $base_params)
+        );
+
+        $paged_ids = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT DISTINCT p.ID {$base_where} ORDER BY p.post_title ASC LIMIT %d OFFSET %d",
+                array_merge($base_params, [$per_page, $offset])
+            )
+        );
+
         $results = self::get_distributors_data($paged_ids);
-        
+
         return [
-            'success' => true,
+            'success'     => true,
             'search_type' => 'state',
-            'query' => $state_code,
-            'country' => $country_code,
-            'total' => $total,
-            'page' => $page,
-            'per_page' => $per_page,
-            'results' => $results,
+            'query'       => $state_code,
+            'country'     => $country_code,
+            'total'       => $total,
+            'page'        => $page,
+            'per_page'    => $per_page,
+            'results'     => $results,
         ];
     }
     
@@ -613,46 +698,92 @@ class TDL_REST_API {
     }
     
     /**
-     * Match a string to a country
+     * Match a string to an ISO-2 country code.
+     *
+     * Covers the full get_country_names() list so that any country name typed
+     * in the free-text search path (or sent via ?q=) resolves correctly.
+     * Previously only 13 countries were recognised, causing Argentina, UAE, etc.
+     * to fall through to city search and return 0 results.
      */
-    private static function match_country($input) {
-        $input = trim(strtoupper($input));
-        
-        // Common country mappings (limited for brevity, can be expanded)
-        $countries = [
-            'US' => ['UNITED STATES', 'USA', 'U.S.A.', 'U.S.', 'AMERICA'],
-            'CA' => ['CANADA'],
-            'MX' => ['MEXICO', 'MÉXICO'],
-            'GB' => ['UNITED KINGDOM', 'UK', 'GREAT BRITAIN', 'ENGLAND'],
-            'FR' => ['FRANCE'],
-            'DE' => ['GERMANY', 'DEUTSCHLAND'],
-            'IT' => ['ITALY', 'ITALIA'],
-            'ES' => ['SPAIN', 'ESPAÑA'],
-            'AU' => ['AUSTRALIA'],
-            'JP' => ['JAPAN'],
-            'CN' => ['CHINA'],
-            'BR' => ['BRAZIL', 'BRASIL'],
-            'IN' => ['INDIA'],
-        ];
-        
-        // Check if input is already an ISO code
-        foreach ($countries as $code => $names) {
-            if ($input === $code) {
-                return $code;
-            }
-            if (in_array($input, $names)) {
-                return $code;
-            }
+    private static function match_country( $input ) {
+        $input = trim( strtoupper( $input ) );
+
+        if ( empty( $input ) ) {
+            return null;
         }
-        
-        // If it's a 2-letter code we don't have mapped, return it
-        if (preg_match('/^[A-Z]{2}$/', $input)) {
+
+        // Aliases for names/abbreviations not present in the ISO name list.
+        $aliases = [
+            'USA'                      => 'US',
+            'U.S.A.'                   => 'US',
+            'U.S.'                     => 'US',
+            'AMERICA'                  => 'US',
+            'UNITED STATES OF AMERICA' => 'US',
+            'UK'                       => 'GB',
+            'GREAT BRITAIN'            => 'GB',
+            'ENGLAND'                  => 'GB',
+            'MÉXICO'                   => 'MX',
+            'DEUTSCHLAND'              => 'DE',
+            'ITALIA'                   => 'IT',
+            'ESPAÑA'                   => 'ES',
+            'BRASIL'                   => 'BR',
+        ];
+
+        if ( isset( $aliases[ $input ] ) ) {
+            return $aliases[ $input ];
+        }
+
+        $country_names = self::get_country_names();
+
+        // Exact ISO-2 code match.
+        if ( isset( $country_names[ $input ] ) ) {
             return $input;
         }
-        
+
+        // Full name match (case-insensitive).
+        foreach ( $country_names as $code => $name ) {
+            if ( strtoupper( $name ) === $input ) {
+                return $code;
+            }
+        }
+
         return null;
     }
     
+    /**
+     * Return all published distributors ordered by name, paginated.
+     * Used when the search query is empty (default page-load state).
+     */
+    private static function get_all_distributors(int $page, int $per_page): array {
+        global $wpdb;
+
+        $offset = ($page - 1) * $per_page;
+
+        $total = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$wpdb->posts}
+             WHERE post_type = 'distributor' AND post_status = 'publish'"
+        );
+
+        $ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts}
+             WHERE post_type = 'distributor' AND post_status = 'publish'
+             ORDER BY post_title ASC
+             LIMIT %d OFFSET %d",
+            $per_page,
+            $offset
+        ));
+
+        return [
+            'success'     => true,
+            'search_type' => 'all',
+            'query'       => '',
+            'total'       => $total,
+            'page'        => $page,
+            'per_page'    => $per_page,
+            'results'     => self::get_distributors_data($ids),
+        ];
+    }
+
     /**
      * Get distributor data for a list of IDs
      */
@@ -724,7 +855,7 @@ class TDL_REST_API {
                     'address_2' => $loc->address_2,
                     'address_3' => $loc->address_3,
                     'city' => $loc->city,
-                    'state' => $loc->state_province,
+                    'state' => self::expand_state_name( (string) $loc->state_province, (string) $loc->country_code ),
                     'zip' => $loc->zip_postal,
                     'country' => $loc->country_code,
                     'lat' => $loc->latitude ? (float) $loc->latitude : null,
@@ -755,6 +886,99 @@ class TDL_REST_API {
         return $results;
     }
     
+    /**
+     * Return lightweight pin data (id, name, lat, lng, city, state) for every
+     * published distributor that has a geocoded primary location.
+     *
+     * This endpoint is intentionally minimal — it does not include contact details
+     * or service-territory data so that fetching all 164+ pins in one request
+     * stays fast. Full details are loaded on-demand via /search or /distributor/:id.
+     */
+    public static function handle_get_markers($request) {
+        global $wpdb;
+
+        $data_version   = get_option('tdl_data_version', time());
+        // Cache key includes TDL_VERSION so deploys bust stale responses.
+        // Keyed v2 because the response shape now includes contact/email fields
+        // required by the M3 info window — old cached payloads must not be served.
+        $cache_key      = 'tdl_markers_v2_' . md5( $data_version . '_' . TDL_VERSION );
+        $cache_duration = get_option('tdl_cache_duration', 60) * MINUTE_IN_SECONDS;
+
+        if ($cache_duration > 0) {
+            $cached = get_transient($cache_key);
+            if ($cached !== false) {
+                return new WP_REST_Response($cached, 200);
+            }
+        }
+
+        $locations_table = $wpdb->prefix . 'tdl_locations';
+
+        // Primary locations only — one pin per distributor on the default map view.
+        // Fetch all location fields needed by the M3 info window so the popup can
+        // render without a second round-trip fetch on every pin click.
+        $rows = $wpdb->get_results(
+            "SELECT l.distributor_id, p.post_title,
+                    l.latitude, l.longitude,
+                    l.location_name, l.street_address, l.address_2, l.address_3,
+                    l.city, l.state_province, l.zip_postal, l.country_code,
+                    l.phone AS loc_phone, l.hours_operation
+             FROM {$locations_table} l
+             JOIN {$wpdb->posts} p ON l.distributor_id = p.ID
+             WHERE p.post_type = 'distributor' AND p.post_status = 'publish'
+               AND l.is_primary = 1
+               AND l.latitude  IS NOT NULL AND l.latitude  != 0
+               AND l.longitude IS NOT NULL AND l.longitude != 0
+             ORDER BY p.post_title ASC"
+        );
+
+        // Prime the post meta cache for all distributor IDs in one query.
+        // This prevents N+1 when we call get_post_meta() below.
+        $dist_ids = array_map( 'intval', array_column( (array) $rows, 'distributor_id' ) );
+        if ( ! empty( $dist_ids ) ) {
+            update_postmeta_cache( $dist_ids );
+        }
+
+        $markers = [];
+        foreach ($rows as $row) {
+            $id = (int) $row->distributor_id;
+            $markers[] = [
+                'id'            => $id,
+                'name'          => $row->post_title,
+                'lat'           => (float) $row->latitude,
+                'lng'           => (float) $row->longitude,
+                // Location fields for the popup address block.
+                'location_name' => $row->location_name ?: '',
+                'address'       => $row->street_address ?: '',
+                'address_2'     => $row->address_2 ?: '',
+                'address_3'     => $row->address_3 ?: '',
+                'city'          => $row->city ?: '',
+                'state'         => self::expand_state_name( (string) $row->state_province, (string) $row->country_code ),
+                'zip'           => $row->zip_postal ?: '',
+                'hours'         => $row->hours_operation ?: '',
+                // Location-level phone; JS falls back to distributor phone when empty.
+                'loc_phone'     => $row->loc_phone ?: '',
+                // Distributor-level contact fields (meta cache is warm — no extra queries).
+                'phone'         => get_post_meta( $id, 'wpcf-phone', true ) ?: '',
+                'website'       => get_post_meta( $id, 'wpcf-website', true ) ?: '',
+                'emails'        => [
+                    'main'          => get_post_meta( $id, 'wpcf-email_main', true ) ?: '',
+                    'sales'         => get_post_meta( $id, 'wpcf-email_sales', true ) ?: '',
+                    'parts'         => get_post_meta( $id, 'wpcf-email_parts', true ) ?: '',
+                    'service'       => get_post_meta( $id, 'wpcf-email_service', true ) ?: '',
+                    'installations' => get_post_meta( $id, 'wpcf-email_installations', true ) ?: '',
+                ],
+            ];
+        }
+
+        $response = ['success' => true, 'markers' => $markers];
+
+        if ($cache_duration > 0) {
+            set_transient($cache_key, $response, $cache_duration);
+        }
+
+        return new WP_REST_Response($response, 200);
+    }
+
     /**
      * Handle get single distributor request
      */
@@ -817,42 +1041,62 @@ class TDL_REST_API {
      */
     public static function handle_get_states($request) {
         $country = strtoupper($request->get_param('country'));
-        
+
         global $wpdb;
-        $zones_table = $wpdb->prefix . 'tdl_service_zones';
-        
-        // Get states that have distributors for this country
-        $state_codes = $wpdb->get_col($wpdb->prepare(
-            "SELECT DISTINCT zone_value FROM {$zones_table} 
-             WHERE zone_type = 'state' AND country_context = %s",
-            $country
-        ));
-        
-        // Map to names
+        $zones_table     = $wpdb->prefix . 'tdl_service_zones';
+        $locations_table = $wpdb->prefix . 'tdl_locations';
+
         $state_map = match($country) {
             'US' => self::$us_states,
             'CA' => self::$ca_provinces,
             'MX' => self::$mx_states,
             default => [],
         };
-        
+
+        // Source 1: explicit state service zones for this country.
+        $zone_codes = $wpdb->get_col( $wpdb->prepare(
+            "SELECT DISTINCT zone_value FROM {$zones_table}
+             WHERE zone_type = 'state' AND country_context = %s",
+            $country
+        ) );
+
+        // Source 2: physical location state_province values for this country.
+        // Covers distributors whose territory is defined only by ZIP ranges so
+        // they have no explicit state zone row but are physically in the state.
+        $location_codes = $wpdb->get_col( $wpdb->prepare(
+            "SELECT DISTINCT l.state_province
+             FROM {$locations_table} l
+             INNER JOIN {$wpdb->posts} p ON p.ID = l.distributor_id
+             WHERE p.post_type = 'distributor' AND p.post_status = 'publish'
+               AND l.country_code = %s
+               AND l.state_province IS NOT NULL AND l.state_province != ''",
+            $country
+        ) );
+
+        // Merge, normalise to uppercase, and keep only codes that exist in the
+        // state map so unknown/garbage values don't pollute the dropdown.
+        $all_codes = array_unique( array_map( 'strtoupper', array_merge( $zone_codes, $location_codes ) ) );
+
         $states = [];
-        foreach ($state_codes as $code) {
+        foreach ( $all_codes as $code ) {
+            // Only include codes that resolve to a known state name.
+            if ( ! isset( $state_map[ $code ] ) ) {
+                continue;
+            }
             $states[] = [
                 'code' => $code,
-                'name' => $state_map[$code] ?? $code,
+                'name' => $state_map[ $code ],
             ];
         }
-        
-        // Sort by name
-        usort($states, function($a, $b) {
-            return strcasecmp($a['name'], $b['name']);
-        });
-        
+
+        usort( $states, function( $a, $b ) {
+            return strcasecmp( $a['name'], $b['name'] );
+        } );
+
         return new WP_REST_Response([
             'success' => true,
             'country' => $country,
-            'states' => $states,
+            'states'  => $states,
         ], 200);
     }
     
@@ -1112,6 +1356,23 @@ class TDL_REST_API {
         ];
     }
     
+    /**
+     * Expand a state/province abbreviation to its full name.
+     * Uses country_code to pick the correct map; falls back to the raw value
+     * if no match is found so existing data is never silently dropped.
+     */
+    private static function expand_state_name( string $code, string $country_code ): string {
+        if ( $code === '' ) {
+            return '';
+        }
+        $map = match( strtoupper( $country_code ) ) {
+            'CA'    => self::$ca_provinces,
+            'MX'    => self::$mx_states,
+            default => self::$us_states,
+        };
+        return $map[ strtoupper( $code ) ] ?? $code;
+    }
+
     /**
      * Get US states list (public)
      */

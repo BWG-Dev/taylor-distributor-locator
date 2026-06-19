@@ -1,4 +1,0 @@
-Fix the issue when searching United States you get locations in Mexico
-Fix the issue with the Geocoder page not working.
-Fix the issue with the Geocoder not displaying the errors
-Fix it so when you hit cancel it will cancel the geocoding process

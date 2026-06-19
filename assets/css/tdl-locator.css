@@ -1,204 +1,393 @@
 /**
- * Taylor Distributor Locator - Frontend Styles
- * Uses CSS custom properties for theme integration
+ * Taylor Distributor Locator — Frontend Styles
+ * Design: minimal, premium, modern SaaS
  */
 
-/* Container */
+/* ── Design tokens ──────────────────────────────────────────────────────── */
 .tdl-locator {
-    --tdl-radius: 6px;
-    --tdl-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    --tdl-transition: 0.2s ease;
+    --tdl-radius-sm:  6px;
+    --tdl-radius:     10px;
+    --tdl-radius-lg:  14px;
+    --tdl-shadow-xs:  0 1px 2px rgba(0,0,0,0.05);
+    --tdl-shadow-sm:  0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --tdl-shadow-md:  0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
+    --tdl-shadow-lg:  0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.05);
+    --tdl-transition: 0.15s ease;
+    --tdl-border:     #e8eaed;
+    --tdl-bg:         #f8f9fa;
+    --tdl-white:      #ffffff;
+    --tdl-ink-xs:     #9ca3af;
+    --tdl-ink-sm:     #6b7280;
+    --tdl-ink-md:     #4b5563;
+    --tdl-ink-lg:     #374151;
+    --tdl-ink-xl:     #111827;
 
-    font-family: inherit;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
     line-height: 1.5;
+    color: var(--tdl-ink-xl);
+    -webkit-font-smoothing: antialiased;
 }
 
-/* Search Form */
+/* ── Search Form ────────────────────────────────────────────────────────── */
 .tdl-search-form {
     margin-bottom: 20px;
 }
 
-.tdl-search-input-wrap {
+/* Tab bar */
+.tdl-search-tabs {
     display: flex;
-    max-width: 600px;
+    border-bottom: 2px solid var(--tdl-border);
+    max-width: 640px;
+    gap: 0;
+}
+
+.tdl-search-tab {
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    color: var(--tdl-ink-sm);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px; /* overlap the tab bar bottom border */
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color var(--tdl-transition), border-color var(--tdl-transition);
+}
+
+.tdl-search-tab:hover {
+    background: var(--tdl-primary);
+    color: #fff;
+}
+
+.tdl-search-tab.active,
+.tdl-search-tab[aria-selected="true"] {
+    background: var(--tdl-primary);
+    color: #fff;
+    border-bottom-color: var(--tdl-primary);
+}
+
+/* Input row — shared container for the active panel + Search button */
+.tdl-search-input-row {
+    display: flex;
+    align-items: stretch;
+    max-width: 640px;
+    margin-top: 10px;
+    background: var(--tdl-white);
+    border: 1.5px solid var(--tdl-border);
+    border-radius: var(--tdl-radius);
+    box-shadow: var(--tdl-shadow-sm);
+    overflow: visible;
     position: relative;
-    /* Ensure relative positioning for dropdown */
+    transition: border-color var(--tdl-transition), box-shadow var(--tdl-transition);
+}
+
+.tdl-search-input-row:focus-within {
+    border-color: #c4c7cc;
+    box-shadow: var(--tdl-shadow-md);
+}
+
+/* Each tab panel fills available width; only one is visible at a time */
+.tdl-tab-panel {
+    flex: 1;
+    min-width: 0;
+}
+
+.tdl-tab-panel[hidden] {
+    display: none;
 }
 
 .tdl-search-input {
-    flex: 1;
-    padding: 12px 16px;
-    font-size: 16px;
-    border: 2px solid #ddd;
-    border-right: none;
-    border-radius: var(--tdl-radius) 0 0 var(--tdl-radius);
+    display: block;
+    width: 100%;
+    padding: 13px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    border: none;
     outline: none;
-    transition: border-color var(--tdl-transition);
+    background: transparent;
+    color: var(--tdl-ink-xl);
+    min-width: 0;
+    box-sizing: border-box;
 }
 
-.tdl-search-input:focus {
-    border-color: var(--tdl-primary);
+.tdl-search-input::placeholder {
+    color: var(--tdl-ink-xs);
+}
+
+/* Select element styled to match the text input */
+.tdl-search-select {
+    display: block;
+    width: 100%;
+    padding: 13px 36px 13px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    border: none;
+    outline: none;
+    background: var(--tdl-white);
+    color: var(--tdl-ink-xl);
+    appearance: none;
+    -webkit-appearance: none;
+    /* Chevron arrow via inline SVG */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 10px 6px;
+    cursor: pointer;
+    min-height: 48px;
+    box-sizing: border-box;
+}
+
+.tdl-search-select:focus {
+    outline: none;
 }
 
 .tdl-search-btn {
-    padding: 12px 24px;
-    font-size: 16px;
+    flex-shrink: 0;
+    padding: 0 22px;
+    font-size: 13px;
     font-weight: 600;
-    background: var(--tdl-btn-bg);
-    color: var(--tdl-btn-text);
+    letter-spacing: 0.02em;
+    background: var(--tdl-ink-xl);
+    color: #fff;
     border: none;
     border-radius: 0 var(--tdl-radius) var(--tdl-radius) 0;
     cursor: pointer;
-    transition: opacity var(--tdl-transition);
+    transition: background var(--tdl-transition);
+    font-family: inherit;
+    white-space: nowrap;
 }
 
 .tdl-search-btn:hover {
-    opacity: 0.9;
+    background: var(--tdl-ink-lg);
 }
 
-/* Status */
-.tdl-status {
-    padding: 10px 0;
+/* ── Typeahead dropdown ─────────────────────────────────────────────────── */
+.tdl-typeahead-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.tdl-typeahead-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--tdl-white);
+    border: 1.5px solid var(--tdl-border);
+    border-top: none;
+    border-radius: 0 0 var(--tdl-radius) var(--tdl-radius);
+    box-shadow: var(--tdl-shadow-md);
+    max-height: 260px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.tdl-typeahead-dropdown[hidden] {
+    display: none;
+}
+
+.tdl-ta-item {
+    padding: 9px 12px;
     font-size: 14px;
+    color: var(--tdl-ink-xl);
+    cursor: pointer;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    transition: background 0.1s ease;
+}
+
+.tdl-ta-item:hover,
+.tdl-ta-item.tdl-ta-active {
+    background: var(--tdl-bg);
+}
+
+.tdl-ta-code {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--tdl-ink-xs);
+    letter-spacing: 0.03em;
+}
+
+.tdl-ta-group {
+    font-size: 11px;
+    color: var(--tdl-ink-xs);
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+/* ── Status ─────────────────────────────────────────────────────────────── */
+.tdl-status {
+    padding: 4px 0 14px;
+    font-size: 12px;
+    letter-spacing: 0.01em;
+    color: var(--tdl-ink-sm);
 }
 
 .tdl-status:empty {
     display: none;
 }
 
-.tdl-status-loading {
-    color: #666;
-}
+.tdl-status-loading { color: var(--tdl-ink-xs); }
+.tdl-status-success { color: var(--tdl-ink-sm); }
+.tdl-status-error   { color: #b91c1c; }
 
-.tdl-status-success {
-    color: var(--tdl-primary);
-    font-weight: 500;
-}
-
-.tdl-status-error {
-    color: #c33;
-}
-
-/* Main Content Layout */
+/* ── Layout ─────────────────────────────────────────────────────────────── */
 .tdl-content {
     display: block;
 }
 
 .tdl-content.tdl-split {
     display: grid;
-    grid-template-columns: 1fr 400px;
+    grid-template-columns: 1fr 380px;
     gap: 20px;
+    align-items: start;
 }
 
-/* Map Container */
+/* ── Map Container ──────────────────────────────────────────────────────── */
 .tdl-map-container {
     border-radius: var(--tdl-radius);
     overflow: hidden;
-    box-shadow: var(--tdl-shadow);
+    box-shadow: var(--tdl-shadow-sm);
+    border: 1px solid var(--tdl-border);
+    position: sticky;
+    top: 20px;
 }
 
 .tdl-map {
     width: 100%;
     height: 100%;
-    background: #e5e3df;
+    background: #f0f1f2;
 }
 
-/* Results Container */
+/* ── Results Panel ──────────────────────────────────────────────────────── */
 .tdl-results-container {
-    max-height: 600px;
+    max-height: 680px;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #dde0e4 transparent;
+}
+
+.tdl-results-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.tdl-results-container::-webkit-scrollbar-thumb {
+    background: #dde0e4;
+    border-radius: 2px;
 }
 
 .tdl-results {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
 }
 
-/* Result Card */
+/* ── Result Card ────────────────────────────────────────────────────────── */
 .tdl-result-card {
     display: flex;
-    gap: 12px;
-    background: #fff;
-    border-left: 4px solid var(--tdl-card-border);
+    gap: 14px;
+    background: var(--tdl-white);
+    border: 1.5px solid #f0f1f3;
     border-radius: var(--tdl-radius);
-    padding: 15px 20px;
-    box-shadow: var(--tdl-shadow);
+    padding: 18px;
     cursor: pointer;
-    transition: transform var(--tdl-transition), box-shadow var(--tdl-transition);
+    transition: border-color var(--tdl-transition), box-shadow var(--tdl-transition), transform var(--tdl-transition);
 }
 
 .tdl-result-card:hover {
-    transform: translateX(4px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: #dde0e4;
+    box-shadow: var(--tdl-shadow-md);
+    transform: translateY(-1px);
 }
 
 .tdl-result-card.active {
-    border-left-color: var(--tdl-card-active);
-    background: linear-gradient(to right, rgba(var(--tdl-card-active), 0.05), transparent);
+    border-color: var(--tdl-primary, var(--tdl-ink-xl));
+    box-shadow: var(--tdl-shadow-md);
 }
 
-.tdl-result-pin-number {
-    flex-shrink: 0;
-    width: 28px;
-    height: 28px;
-    background: var(--tdl-primary);
-    color: #fff;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 14px;
-}
 
 .tdl-result-content {
     flex: 1;
     min-width: 0;
 }
 
+/* ── Typography ─────────────────────────────────────────────────────────── */
 .tdl-distributor-name {
-    margin: 0 0 10px 0;
-    font-size: 18px;
-    color: var(--tdl-text);
+    margin: 0 0 7px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--tdl-ink-xl);
+    letter-spacing: -0.015em;
+    line-height: 1.3;
 }
 
 .tdl-location {
-    font-size: 14px;
-    color: #666;
+    font-size: 13px;
+    color: var(--tdl-ink-sm);
     margin-bottom: 8px;
-    line-height: 1.4;
+    line-height: 1.55;
 }
 
+/* ── Hours ──────────────────────────────────────────────────────────────── */
+.tdl-hours {
+    font-size: 12px;
+    color: var(--tdl-ink-md);
+    background: var(--tdl-bg);
+    padding: 7px 10px;
+    border-radius: var(--tdl-radius-sm);
+    margin: 8px 0;
+    line-height: 1.55;
+}
+
+.tdl-info-hours {
+    font-size: 12px;
+    color: var(--tdl-ink-md);
+    background: #f6f7f8;
+    padding: 5px 8px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+
+/* ── Accordion ──────────────────────────────────────────────────────────── */
 .tdl-accordion-wrap {
-    margin-bottom: 10px;
+    margin: 10px 0;
 }
 
 .tdl-accordion-toggle {
     background: none;
     border: none;
     padding: 0;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--tdl-primary);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--tdl-ink-md);
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 5px;
-    margin-bottom: 5px;
+    font-family: inherit;
     transition: color var(--tdl-transition);
 }
 
+.tdl-accordion-toggle:hover {
+    color: var(--tdl-ink-xl);
+}
+
 .tdl-toggle-icon {
-    font-size: 10px;
+    font-size: 9px;
+    opacity: 0.5;
 }
 
 .tdl-accordion-content {
     display: none;
-    padding-left: 10px;
-    border-left: 2px solid #eee;
     margin-top: 10px;
-    margin-bottom: 5px;
 }
 
 .tdl-accordion-content.active {
@@ -207,45 +396,32 @@
 
 .tdl-additional-location {
     font-size: 13px;
-    color: #666;
-    margin-bottom: 12px;
-    line-height: 1.4;
+    color: var(--tdl-ink-sm);
+    margin-bottom: 8px;
+    padding: 12px;
+    background: var(--tdl-bg);
+    border-radius: var(--tdl-radius-sm);
+    line-height: 1.55;
 }
 
 .tdl-additional-location:last-child {
     margin-bottom: 0;
 }
 
-.tdl-hours {
-    font-size: 13px;
-    color: #444;
-    background: #f9f9f9;
-    padding: 8px 12px;
-    border-radius: 4px;
-    margin-bottom: 10px;
-    border-left: 3px solid #ddd;
-}
-
-.tdl-info-hours {
-    font-size: 12px;
-    color: #444;
-    background: #f5f5f5;
-    padding: 5px 8px;
-    border-radius: 3px;
-    margin-bottom: 5px;
-}
-
+/* ── Contact ────────────────────────────────────────────────────────────── */
 .tdl-contact {
     display: flex;
-    gap: 15px;
+    gap: 12px;
     flex-wrap: wrap;
+    align-items: baseline;
 }
 
 .tdl-phone,
 .tdl-website {
-    font-size: 14px;
-    color: var(--tdl-link);
+    font-size: 13px;
+    color: var(--tdl-primary, var(--tdl-ink-lg));
     text-decoration: none;
+    font-weight: 500;
 }
 
 .tdl-phone:hover,
@@ -253,121 +429,751 @@
     text-decoration: underline;
 }
 
-/* No Results */
-.tdl-no-results {
-    text-align: center;
-    padding: 40px 20px;
-    color: #666;
+.tdl-contact-item.tdl-email {
+    flex-basis: 100%;
+    font-size: 12px;
+    color: var(--tdl-ink-sm);
+    margin-top: 2px;
 }
 
-/* Pagination */
+.tdl-contact-item.tdl-email .tdl-label {
+    color: var(--tdl-ink-xs);
+    font-weight: 500;
+}
+
+/* ── Service area ───────────────────────────────────────────────────────── */
+.tdl-service-area {
+    font-size: 12px;
+    color: var(--tdl-ink-sm);
+    margin: 6px 0;
+    line-height: 1.55;
+}
+
+/* ── Card / Info actions ────────────────────────────────────────────────── */
+.tdl-card-actions {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #f2f3f5;
+}
+
+.tdl-info-actions {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0;
+}
+
+/* ── Request Quote button ───────────────────────────────────────────────── */
+.tdl-request-quote {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: var(--tdl-ink-xl);
+    color: #fff;
+    border: none;
+    border-radius: var(--tdl-radius-sm);
+    cursor: pointer;
+    transition: background var(--tdl-transition);
+    font-family: inherit;
+    line-height: 1.4;
+}
+
+.tdl-request-quote:hover {
+    background: var(--tdl-ink-lg);
+}
+
+.tdl-request-quote--infowindow {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 14px;
+}
+
+/* ── Quote stub notice ──────────────────────────────────────────────────── */
+.tdl-quote-stub {
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: var(--tdl-bg);
+    border-radius: var(--tdl-radius-sm);
+    font-size: 12px;
+    color: var(--tdl-ink-sm);
+    line-height: 1.5;
+    animation: tdlFadeIn 0.2s ease;
+}
+
+@keyframes tdlFadeIn {
+    from { opacity: 0; transform: translateY(-3px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── No results ─────────────────────────────────────────────────────────── */
+.tdl-no-results {
+    text-align: center;
+    padding: 52px 24px;
+    color: var(--tdl-ink-xs);
+    font-size: 14px;
+}
+
+/* ── Pagination ─────────────────────────────────────────────────────────── */
 .tdl-pagination {
     display: flex;
-    gap: 8px;
+    gap: 4px;
     justify-content: center;
-    margin-top: 20px;
+    margin-top: 18px;
+    flex-wrap: wrap;
 }
 
 .tdl-page-btn {
-    min-width: 36px;
-    height: 36px;
-    padding: 0 12px;
-    border: 1px solid #ddd;
-    background: #fff;
-    border-radius: var(--tdl-radius);
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1.5px solid var(--tdl-border);
+    background: var(--tdl-white);
+    color: var(--tdl-ink-md);
+    border-radius: var(--tdl-radius-sm);
     cursor: pointer;
     transition: all var(--tdl-transition);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    line-height: 1;
 }
 
 .tdl-page-btn:hover {
-    border-color: var(--tdl-primary);
-    color: var(--tdl-primary);
+    border-color: #c4c7cc;
+    color: var(--tdl-ink-xl);
+    background: var(--tdl-bg);
 }
 
 .tdl-page-btn.active {
-    background: var(--tdl-btn-bg);
-    color: var(--tdl-btn-text);
-    border-color: var(--tdl-btn-bg);
+    background: var(--tdl-ink-xl);
+    color: #fff;
+    border-color: var(--tdl-ink-xl);
 }
 
-/* Info Window (Google Maps) */
+/* ── Info Window (Google / Leaflet popup) ───────────────────────────────── */
 .tdl-info-window {
-    padding: 5px;
-    max-width: 280px;
+    padding: 2px 0;
+    max-width: 270px;
+    min-width: 210px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Header block: distributor name + optional location sublabel */
+.tdl-iw-header {
+    margin-bottom: 10px;
 }
 
 .tdl-info-window h4 {
-    margin: 0 0 8px 0;
-    font-size: 16px;
-    color: #333;
+    margin: 0 0 2px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+}
+
+.tdl-iw-sublabel {
+    margin: 0;
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+/* Content sections — each separated by a hairline */
+.tdl-iw-section {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f1f3;
 }
 
 .tdl-info-window p {
-    margin: 0 0 8px 0;
-    font-size: 14px;
-    color: #666;
+    margin: 0 0 4px 0;
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.45;
 }
 
-.tdl-info-window p:last-child {
-    margin-bottom: 0;
+.tdl-info-window p:last-child { margin-bottom: 0; }
+
+.tdl-iw-address {
+    color: #4b5563 !important;
+}
+
+.tdl-iw-hours {
+    font-size: 12px;
+    color: #6b7280;
 }
 
 .tdl-info-window a {
-    color: var(--tdl-link, #0073aa);
+    color: #374151;
+    text-decoration: none;
+    font-weight: 500;
 }
 
-/* Responsive */
-@media (max-width: 900px) {
+.tdl-info-window a:hover { text-decoration: underline; }
+
+/* Actions row: directions link + quote button */
+.tdl-iw-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #f0f1f3;
+    flex-wrap: wrap;
+}
+
+.tdl-iw-directions {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 500;
+    color: #374151;
+    text-decoration: none;
+    padding: 6px 10px;
+    border: 1.5px solid #e8eaed;
+    border-radius: 6px;
+    text-align: center;
+    white-space: nowrap;
+    transition: background 0.15s ease;
+}
+
+.tdl-iw-directions:hover {
+    background: #f8f9fa;
+    text-decoration: none;
+}
+
+/* Phone + website on one inline row */
+.tdl-iw-contact-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+}
+
+.tdl-iw-contact-item {
+    font-size: 13px;
+    color: #374151;
+    text-decoration: none;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.tdl-iw-contact-item:hover { text-decoration: underline; }
+
+.tdl-iw-sep {
+    color: #d1d5db;
+    font-size: 12px;
+    line-height: 1;
+}
+
+/* Email rows inside popup */
+.tdl-iw-email {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0 0 3px 0;
+    line-height: 1.4;
+    word-break: break-all;
+}
+
+.tdl-iw-email:last-child { margin-bottom: 0; }
+
+.tdl-iw-email-label {
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+/* ── Mobile Map/List Toggle ─────────────────────────────────────────────── */
+.tdl-mobile-toggle {
+    display: none; /* desktop: always hidden */
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 960px) {
     .tdl-content.tdl-split {
         grid-template-columns: 1fr;
+        gap: 16px;
     }
 
     .tdl-map-container {
-        height: 400px !important;
+        height: 520px !important;
+        position: static;
+        /* overflow:hidden clips Leaflet popups taller than the map on mobile.
+           The border still renders rounded; only the tile corners are unclipped. */
+        overflow: visible;
     }
 
     .tdl-results-container {
         max-height: none;
     }
+
+    /* Toggle bar — visible on mobile only */
+    .tdl-mobile-toggle {
+        display: flex;
+        margin-bottom: 12px;
+        border: 1.5px solid var(--tdl-border);
+        border-radius: var(--tdl-radius);
+        overflow: hidden;
+        background: var(--tdl-white);
+        box-shadow: var(--tdl-shadow-xs);
+    }
+
+    .tdl-toggle-btn {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 44px; /* WCAG 2.5.5 minimum touch target */
+        padding: 10px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: inherit;
+        border: none;
+        background: transparent;
+        color: var(--tdl-ink-sm);
+        cursor: pointer;
+        transition: background var(--tdl-transition), color var(--tdl-transition);
+    }
+
+    .tdl-toggle-btn + .tdl-toggle-btn {
+        border-left: 1.5px solid var(--tdl-border);
+    }
+
+    .tdl-toggle-btn.active,
+    .tdl-toggle-btn[aria-pressed="true"] {
+        background: var(--tdl-ink-xl);
+        color: #fff;
+    }
+
+    /* Panel visibility driven by JS-applied classes */
+    .tdl-content.tdl-split.tdl-show-map .tdl-results-container {
+        display: none;
+    }
+
+    .tdl-content.tdl-split.tdl-show-list .tdl-map-container {
+        display: none;
+    }
+
+    /* 44px touch targets for interactive elements */
+    .tdl-request-quote {
+        min-height: 44px;
+        padding: 11px 18px;
+    }
+
+    .tdl-page-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .tdl-accordion-toggle {
+        min-height: 44px;
+    }
 }
 
 @media (max-width: 600px) {
-    .tdl-search-input-wrap {
+    /* Tabs scroll horizontally rather than wrapping to a second row */
+    .tdl-search-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .tdl-search-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Stack the input row vertically: panel on top, Search button below */
+    .tdl-search-input-row {
         flex-direction: column;
+        overflow: visible;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        gap: 8px;
+    }
+
+    .tdl-tab-panel {
+        background: var(--tdl-white);
+        border: 1.5px solid var(--tdl-border);
+        border-radius: var(--tdl-radius);
+        box-shadow: var(--tdl-shadow-sm);
+        overflow: visible;
+        position: relative;
     }
 
     .tdl-search-input {
-        border-right: 2px solid #ddd;
-        border-radius: var(--tdl-radius);
-        margin-bottom: 10px;
+        min-height: 44px;
+    }
+
+    .tdl-search-select {
+        min-height: 44px;
     }
 
     .tdl-search-btn {
         border-radius: var(--tdl-radius);
+        padding: 13px 22px;
+        width: 100%;
+        text-align: center;
+        min-height: 44px;
     }
 
     .tdl-map-container {
-        height: 300px !important;
+        height: 420px !important;
+        overflow: visible;
+    }
+
+    /* Info window: full-width on very small screens */
+    .tdl-info-window {
+        max-width: 100%;
+        min-width: 0;
     }
 }
 
-/* Google Places Autocomplete Element */
+/* ── Google Places Autocomplete Element ─────────────────────────────────── */
 #tdl-autocomplete-element {
     flex: 1;
-    --gmp-filled-button-container-color: var(--tdl-primary, #005696);
-    --gmp-filled-button-container-color-hover: var(--tdl-primary, #005696);
 }
 
 @media (max-width: 600px) {
     #tdl-autocomplete-element {
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         width: 100%;
     }
 }
 
-/* Print styles */
-@media print {
+/* ── Leaflet overrides ──────────────────────────────────────────────────── */
+.leaflet-popup-content-wrapper {
+    border-radius: var(--tdl-radius-sm) !important;
+    box-shadow: var(--tdl-shadow-lg) !important;
+    border: 1px solid var(--tdl-border);
+}
 
+.leaflet-popup-tip-container {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));
+}
+
+.leaflet-popup-content {
+    margin: 12px 14px !important;
+    line-height: 1.5;
+}
+
+/* On short mobile maps: cap the popup, let it scroll, and tighten spacing. */
+@media (max-width: 960px) {
+    .leaflet-popup-content-wrapper {
+        max-height: 460px;
+        overflow-y: auto;
+    }
+
+    /* Tighter section padding so more content fits before needing to scroll */
+    .tdl-info-window .tdl-iw-section {
+        margin-bottom: 7px;
+        padding-bottom: 7px;
+    }
+
+    .tdl-info-window .tdl-iw-header {
+        margin-bottom: 7px;
+    }
+
+    .tdl-info-window h4 {
+        font-size: 13px;
+    }
+
+    .tdl-info-window p,
+    .tdl-iw-address,
+    .tdl-iw-email {
+        font-size: 12px;
+    }
+
+    .tdl-iw-actions {
+        margin-top: 7px;
+        padding-top: 7px;
+    }
+}
+
+/* ── Leaflet dot marker ─────────────────────────────────────────────────── */
+.tdl-leaflet-marker {
+    background: none !important;
+    border: none !important;
+}
+
+.tdl-marker-pin {
+    background-color: var(--tdl-ink-xl, #111827);
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    border: 2.5px solid rgba(255,255,255,0.9);
+    box-shadow: 0 1px 5px rgba(0,0,0,0.5);
+    box-sizing: border-box;
+    transition: transform 0.15s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.tdl-marker-pin:hover {
+    transform: scale(1.5);
+}
+
+/* Transparent tap-area halo — expands the touch target to ~44px without
+   changing the visual pin size. The ::before sits inside the Leaflet icon
+   container which has overflow:visible so it extends beyond the 14×14 box. */
+.tdl-marker-pin::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+}
+
+/* ── Custom cluster icons ───────────────────────────────────────────────── */
+.tdl-cluster-icon {
+    background: none !important;
+    border: none !important;
+}
+
+.tdl-cluster {
+    border-radius: 50%;
+    background: rgba(17, 24, 39, 0.82);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border: 2px solid rgba(255,255,255,0.7);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.28);
+    backdrop-filter: blur(2px);
+}
+
+.tdl-cluster span {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+
+/* ── Quote Request Modal ────────────────────────────────────────────────── */
+
+@keyframes tdl-modal-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes tdl-modal-slide {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.tdl-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: tdl-modal-fade 0.15s ease;
+}
+
+.tdl-modal[hidden] {
+    display: none;
+}
+
+.tdl-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+
+.tdl-modal-dialog {
+    position: relative;
+    z-index: 1;
+    background: var(--tdl-white, #fff);
+    border-radius: var(--tdl-radius-lg, 14px);
+    width: 100%;
+    max-width: 540px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.08);
+    animation: tdl-modal-slide 0.2s ease;
+}
+
+.tdl-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 24px 0;
+    gap: 12px;
+}
+
+.tdl-modal-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--tdl-ink-xl, #111827);
+}
+
+.tdl-modal-close {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    background: none;
+    border: none;
+    border-radius: var(--tdl-radius-sm, 6px);
+    cursor: pointer;
+    color: var(--tdl-ink-sm, #6b7280);
+    transition: background var(--tdl-transition, 0.15s ease), color var(--tdl-transition, 0.15s ease);
+    padding: 0;
+}
+
+.tdl-modal-close:hover {
+    background: var(--tdl-bg, #f8f9fa);
+    color: var(--tdl-ink-xl, #111827);
+}
+
+.tdl-modal-close:focus-visible {
+    outline: 2px solid var(--tdl-primary, #0073aa);
+    outline-offset: 2px;
+}
+
+.tdl-modal-body {
+    padding: 20px 24px 28px;
+}
+
+/* Prevent body scroll while modal is open */
+body.tdl-modal-open {
+    overflow: hidden;
+}
+
+/* ── GF form overrides inside the modal ─────────────────────────────────── */
+
+.tdl-modal-body .gform_wrapper {
+    margin: 0 !important;
+}
+
+.tdl-modal-body .gform_body {
+    padding: 0;
+}
+
+.tdl-modal-body .gfield {
+    margin-bottom: 14px !important;
+}
+
+.tdl-modal-body .gfield_label {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: var(--tdl-ink-lg, #374151) !important;
+    margin-bottom: 5px !important;
+}
+
+.tdl-modal-body .ginput_container input,
+.tdl-modal-body .ginput_container textarea,
+.tdl-modal-body .ginput_container select {
+    width: 100% !important;
+    border: 1.5px solid var(--tdl-border, #e8eaed) !important;
+    border-radius: var(--tdl-radius-sm, 6px) !important;
+    padding: 9px 12px !important;
+    font-size: 14px !important;
+    color: var(--tdl-ink-xl, #111827) !important;
+    background: var(--tdl-white, #fff) !important;
+    box-shadow: var(--tdl-shadow-xs, 0 1px 2px rgba(0,0,0,0.05)) !important;
+    transition: border-color 0.15s ease !important;
+    box-sizing: border-box !important;
+}
+
+.tdl-modal-body .ginput_container input:focus,
+.tdl-modal-body .ginput_container textarea:focus,
+.tdl-modal-body .ginput_container select:focus {
+    outline: none !important;
+    border-color: var(--tdl-primary, #0073aa) !important;
+    box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.12) !important;
+}
+
+.tdl-modal-body .ginput_container textarea {
+    min-height: 100px !important;
+    resize: vertical !important;
+}
+
+.tdl-modal-body .gform_footer,
+.tdl-modal-body .gform_page_footer {
+    margin: 8px 0 0 !important;
+    padding: 0 !important;
+}
+
+.tdl-modal-body .gform_footer input[type="submit"],
+.tdl-modal-body .gform_page_footer input[type="submit"] {
+    background: var(--tdl-btn-bg, var(--tdl-primary, #0073aa)) !important;
+    color: var(--tdl-btn-text, #fff) !important;
+    border: none !important;
+    border-radius: var(--tdl-radius-sm, 6px) !important;
+    padding: 11px 24px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: opacity 0.15s ease !important;
+    width: 100% !important;
+}
+
+.tdl-modal-body .gform_footer input[type="submit"]:hover,
+.tdl-modal-body .gform_page_footer input[type="submit"]:hover {
+    opacity: 0.88 !important;
+}
+
+.tdl-modal-body .gform_confirmation_wrapper,
+.tdl-modal-body .gform_confirmation_message {
+    text-align: center;
+    padding: 24px 0 8px;
+    font-size: 15px;
+    color: var(--tdl-ink-lg, #374151);
+    line-height: 1.6;
+}
+
+.tdl-modal-body .validation_error {
+    border-left: 3px solid #dc2626;
+    background: #fef2f2;
+    padding: 10px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #991b1b;
+    margin-bottom: 12px !important;
+}
+
+/* Name field sub-labels (first/last) */
+.tdl-modal-body .name_first,
+.tdl-modal-body .name_last {
+    width: 48% !important;
+}
+
+/* ── Modal — Mobile ─────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+    .tdl-modal {
+        align-items: flex-end;
+    }
+
+    .tdl-modal-dialog {
+        max-width: 100%;
+        max-height: 92dvh;
+        border-radius: var(--tdl-radius-lg, 14px) var(--tdl-radius-lg, 14px) 0 0;
+    }
+}
+
+/* ── Print ──────────────────────────────────────────────────────────────── */
+@media print {
     .tdl-search-form,
     .tdl-map-container,
     .tdl-pagination {
@@ -377,82 +1183,6 @@
     .tdl-result-card {
         break-inside: avoid;
         box-shadow: none;
-        border: 1px solid #ccc;
+        border: 1px solid #ddd;
     }
-}
-
-/* Leaflet Maps Integration */
-.leaflet-popup-content-wrapper {
-    border-radius: var(--tdl-radius);
-    box-shadow: var(--tdl-shadow);
-}
-
-.leaflet-popup-content {
-    margin: 10px;
-    line-height: 1.5;
-}
-
-/* Leaflet Custom Marker */
-.tdl-leaflet-marker {
-    background: none !important;
-    border: none !important;
-}
-
-.tdl-marker-pin {
-    background-color: #ea4335;
-    color: white;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    text-align: center;
-    line-height: 26px;
-    /* box-sizing border-box handles the border subtraction if set, but here standard box model usually applies. 30px - 4px border = 26px content. */
-    border: 2px solid white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    font-weight: bold;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-}
-
-.tdl-marker-pin:hover {
-    transform: scale(1.1);
-    transition: transform 0.2s ease;
-}
-
-/* Autocomplete Dropdown */
-.tdl-autocomplete-results {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-top: none;
-    border-radius: 0 0 var(--tdl-radius) var(--tdl-radius);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    max-height: 200px;
-    overflow-y: auto;
-    display: none;
-}
-
-.tdl-autocomplete-item {
-    padding: 10px 16px;
-    cursor: pointer;
-    border-bottom: 1px solid #eee;
-    font-size: 14px;
-    color: var(--tdl-text);
-}
-
-.tdl-autocomplete-item:last-child {
-    border-bottom: none;
-}
-
-.tdl-autocomplete-item:hover,
-.tdl-autocomplete-item.selected {
-    background-color: #f5f5f5;
-    color: var(--tdl-primary);
 }
