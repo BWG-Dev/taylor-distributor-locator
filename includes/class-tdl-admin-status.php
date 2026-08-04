@@ -77,15 +77,35 @@ class TDL_Admin_Status {
     public static function render_status_page() {
         // Get stats
         $stats = get_option('tdl_geocoding_status', []);
-        $errors = get_option('tdl_geocoding_errors', []);
-        
-        // Get counts from DB
+
         global $wpdb;
         $table_loc = $wpdb->prefix . 'tdl_locations';
-        $total_locations = $wpdb->get_var("SELECT COUNT(*) FROM {$table_loc}");
-        $geocoded_locations = $wpdb->get_var("SELECT COUNT(*) FROM {$table_loc} WHERE latitude IS NOT NULL AND longitude IS NOT NULL AND latitude != 0");
-        $errored_locations = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table_loc} WHERE geocode_error IS NOT NULL");
-        $pending_locations = $total_locations - $geocoded_locations;
+
+        // Read errors directly from the DB — authoritative regardless of whether
+        // errors came from batch geocoding or the per-distributor CSV-import path.
+        // JOIN to wdw_posts excludes orphaned rows left behind by deleted distributors.
+        $error_rows = $wpdb->get_results(
+            "SELECT l.id, l.street_address, l.city, l.state_province, l.country_code, l.geocode_error
+             FROM {$table_loc} l
+             INNER JOIN {$wpdb->posts} p ON p.ID = l.distributor_id AND p.post_type = 'distributor' AND p.post_status = 'publish'
+             WHERE l.geocode_error IS NOT NULL
+             ORDER BY l.id ASC"
+        );
+        $total_locations    = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$table_loc} l
+             INNER JOIN {$wpdb->posts} p ON p.ID = l.distributor_id AND p.post_type = 'distributor' AND p.post_status = 'publish'"
+        );
+        $geocoded_locations = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$table_loc} l
+             INNER JOIN {$wpdb->posts} p ON p.ID = l.distributor_id AND p.post_type = 'distributor' AND p.post_status = 'publish'
+             WHERE l.latitude IS NOT NULL AND l.longitude IS NOT NULL AND l.latitude != 0"
+        );
+        $errored_locations  = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$table_loc} l
+             INNER JOIN {$wpdb->posts} p ON p.ID = l.distributor_id AND p.post_type = 'distributor' AND p.post_status = 'publish'
+             WHERE l.geocode_error IS NOT NULL"
+        );
+        $pending_locations  = $total_locations - $geocoded_locations;
         $percent = $total_locations > 0 ? round(($geocoded_locations / $total_locations) * 100) : 0;
         
         $is_running = !empty($stats['status']) && $stats['status'] === 'running';
@@ -178,33 +198,38 @@ class TDL_Admin_Status {
             <!-- Error Log -->
             <div class="tdl-card tdl-error-card">
                 <div class="tdl-card-header">
-                    <h2><?php echo esc_html__('Recent Geocoding Errors', 'taylor-distributor-locator'); ?></h2>
-                    <?php if (!empty($errors)): ?>
+                    <h2><?php echo esc_html__('Geocoding Errors', 'taylor-distributor-locator'); ?></h2>
+                    <?php if (!empty($error_rows)): ?>
                         <button id="tdl-clear-errors" class="button button-secondary button-small">
-                            <?php echo esc_html__('Clear Log', 'taylor-distributor-locator'); ?>
+                            <?php echo esc_html__('Clear All Errors', 'taylor-distributor-locator'); ?>
                         </button>
                     <?php endif; ?>
                 </div>
-                
-                <?php if (empty($errors)): ?>
-                    <p class="tdl-empty-state"><?php echo esc_html__('No errors logged recently.', 'taylor-distributor-locator'); ?></p>
+
+                <?php if (empty($error_rows)): ?>
+                    <p class="tdl-empty-state"><?php echo esc_html__('No geocoding errors.', 'taylor-distributor-locator'); ?></p>
                 <?php else: ?>
                     <table class="widefat tdl-error-table">
                         <thead>
                             <tr>
-                                <th><?php echo esc_html__('Date', 'taylor-distributor-locator'); ?></th>
                                 <th><?php echo esc_html__('Location ID', 'taylor-distributor-locator'); ?></th>
                                 <th><?php echo esc_html__('Address', 'taylor-distributor-locator'); ?></th>
                                 <th><?php echo esc_html__('Error', 'taylor-distributor-locator'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach (array_reverse($errors) as $error): ?>
+                            <?php foreach ($error_rows as $row):
+                                $address = implode(', ', array_filter([
+                                    $row->street_address,
+                                    $row->city,
+                                    $row->state_province,
+                                    $row->country_code,
+                                ]));
+                            ?>
                                 <tr>
-                                    <td><?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $error['time'])); ?></td>
-                                    <td><?php echo esc_html($error['location_id']); ?></td>
-                                    <td><?php echo esc_html($error['address']); ?></td>
-                                    <td class="tdl-error-msg"><?php echo esc_html($error['error']); ?></td>
+                                    <td><?php echo esc_html($row->id); ?></td>
+                                    <td><?php echo esc_html($address); ?></td>
+                                    <td class="tdl-error-msg"><?php echo esc_html($row->geocode_error); ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -274,13 +299,24 @@ class TDL_Admin_Status {
             spawn_cron();
         }
         
-        // Get fresh counts
+        // Get fresh counts — JOIN excludes orphaned rows from deleted distributors.
         global $wpdb;
         $table_loc = $wpdb->prefix . 'tdl_locations';
-        $total_locations = $wpdb->get_var("SELECT COUNT(*) FROM {$table_loc}");
-        $geocoded_locations = $wpdb->get_var("SELECT COUNT(*) FROM {$table_loc} WHERE latitude IS NOT NULL AND longitude IS NOT NULL AND latitude != 0");
-        $errored_locations = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table_loc} WHERE geocode_error IS NOT NULL");
-        $pending_locations = $total_locations - $geocoded_locations;
+        $total_locations    = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$table_loc} l
+             INNER JOIN {$wpdb->posts} p ON p.ID = l.distributor_id AND p.post_type = 'distributor' AND p.post_status = 'publish'"
+        );
+        $geocoded_locations = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$table_loc} l
+             INNER JOIN {$wpdb->posts} p ON p.ID = l.distributor_id AND p.post_type = 'distributor' AND p.post_status = 'publish'
+             WHERE l.latitude IS NOT NULL AND l.longitude IS NOT NULL AND l.latitude != 0"
+        );
+        $errored_locations  = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$table_loc} l
+             INNER JOIN {$wpdb->posts} p ON p.ID = l.distributor_id AND p.post_type = 'distributor' AND p.post_status = 'publish'
+             WHERE l.geocode_error IS NOT NULL"
+        );
+        $pending_locations  = $total_locations - $geocoded_locations;
         $percent = $total_locations > 0 ? round(($geocoded_locations / $total_locations) * 100) : 0;
         
         // Get recent errors
