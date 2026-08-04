@@ -36,6 +36,7 @@ require_once TDL_PLUGIN_DIR . 'includes/class-tdl-gf-integration.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-routing-log.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-email-router.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-admin-log.php';
+require_once TDL_PLUGIN_DIR . 'includes/class-tdl-hubspot.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-csv-importer.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-csv-exporter.php';
 require_once TDL_PLUGIN_DIR . 'includes/class-tdl-m2-importer.php';
@@ -65,6 +66,7 @@ function tdl_init() {
     TDL_Activator::maybe_run_migrations(); // Runs pending data migrations; no-op after first execution.
     TDL_Email_Router::init();
     TDL_Admin_Log::init();
+    TDL_HubSpot::init(); // M9 — independent of the M8 routing path above.
     TDL_CSV_Importer::init();
     TDL_CSV_Exporter::init();
     TDL_M2_Importer::init();

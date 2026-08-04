@@ -1,5 +1,120 @@
 # Dev Log — Taylor Distributor Locator
 
+## 2026-08-04 — M9 HubSpot integration implemented (pending QA)
+
+### Discovery (live portal inspection)
+
+Read-only API calls against portal **7290009** settled every open gap. See DECISIONS.md for the property table and rationale.
+
+- `accountType: STANDARD` — production, no sandbox
+- Lead Source **does exist** (`lead_source`, text) — the admin UI search had missed it among 2,298 properties
+- `taylor_distributor` (35-option dropdown) rejected in favour of `distributor_name` (text): WP holds 142 distinct companies, mostly international
+- Write scope confirmed via a 400-not-403 probe that created no record
+- WP post titles carry HTML entities (`ABS &#038; Taylor…`) — must be decoded before sending
+
+### Implementation
+
+#### `includes/class-tdl-hubspot.php` (new)
+
+Gravity Forms Webhooks Add-On is the transport, per client requirement. The add-on exposes only two filters — `gform_webhooks_request_url` and `gform_webhooks_request_args` (verified against the installed source; there is no `request_data` filter). This class supplies what the add-on cannot do natively:
+
+- **Payload reshaping.** HubSpot CRM v3 needs a nested `{"properties": {...}}` body; the add-on emits a flat map. Rebuilt in `filter_request_args()`.
+- **Credential injection.** The token is attached as an `Authorization` header at request time, so it never has to be typed into or stored in the GF feed UI.
+- **Server-side distributor resolution.** The company name is looked up from the distributor post ID (validated as a published `distributor` post), not read from the posted hidden field. Location suffix stripped, HTML entities decoded.
+- **Scoping.** Filters no-op unless the feed's Request URL resolves to a `hubapi.com` host, so other webhook feeds on any form are untouched.
+- **Abort path.** When disabled, tokenless, or the submission has no email, `filter_request_url()` returns `''`, which makes the add-on log a feed error and stop before any HTTP call.
+- **Logging.** The add-on has no post-request hook, so `http_api_debug` observes the response; entries go to the existing M8 routing log table prefixed `[HubSpot]`, using `routing_source: none` so M8's schema and allowed values are unchanged.
+- **Connection test.** `test_connection()` calls `account-info/v3/details` — read-only, reports portal ID and warns when the portal is production.
+
+Every entry point is wrapped in `try/catch (\Throwable)`; a failure returns the original args rather than propagating.
+
+#### `includes/class-tdl-admin-settings.php` (modified)
+
+New "HubSpot Integration" section. All integration config is admin-editable — nothing hardcoded: enable toggle, access token, API endpoint, the four property names, the lead-source value, and a Test Connection button (AJAX, nonce + `manage_options`).
+
+Token handling: `TDL_HUBSPOT_TOKEN` in `wp-config.php` wins over the stored option and renders the field disabled. The stored token is never echoed back — only a masked hint (`pat-na1-••••••••e1ae`) — and submitting the field empty preserves the existing value rather than wiping it.
+
+#### `includes/class-tdl-email-router.php` (modified — one line)
+
+`gform_after_submission_{id}` priority changed from 10 to **5**. GF feed add-ons process at priority 10 and `gravityformswebhooks` loads before this plugin, so at equal priority the webhook would run first and a hung HubSpot could consume the request's remaining `max_execution_time` before the distributor email was dispatched. Sending the email first is what makes "HubSpot failure must not block M8" true in the hang case, not just the error case.
+
+#### `taylor-distributor-locator.php` (modified)
+
+`require_once` + `TDL_HubSpot::init()`.
+
+### Files changed
+
+| File | Changes |
+|---|---|
+| `includes/class-tdl-hubspot.php` | **New** — payload builder, auth injection, abort path, logging, connection test |
+| `includes/class-tdl-admin-settings.php` | HubSpot section, 8 fields, masked token handling, AJAX test |
+| `includes/class-tdl-email-router.php` | Hook priority 10 → 5 (M9 independence) |
+| `taylor-distributor-locator.php` | require + init |
+
+### DB impact
+
+None. No schema change, no new table, no migration. Reuses the M8 routing log.
+
+### Manual step still required
+
+A Webhook feed must be created on Form 1 — see TODO.md. Without it nothing fires.
+
+---
+
+## 2026-08-04 — M9 unblocked (memory files updated, no code changes)
+
+### Summary
+
+No code was written. Project memory files were updated to reflect that **M9 — HubSpot Webhook is unblocked**, since M7 and M8 are complete.
+
+### M9 spec recorded
+
+Configure the **Gravity Forms Webhook Add-On** to POST distributor lead submissions from the quote form to Taylor Company's HubSpot account, capturing lead source and distributor data for the lead-gen funnel.
+
+Confirmed HubSpot contact properties (do not guess or create others):
+
+| HubSpot label | Internal name |
+|---|---|
+| Company Name | `company` |
+| [Taylor] Distributor Name | `distributor_name` |
+| [Taylor] Message | `taylor_message` |
+
+Expected outcome:
+- GF Webhook Add-On configured and POSTing to HubSpot
+- All form fields mapped to confirmed HubSpot contact properties
+- Lead Source = `Distributor Locator` set correctly
+- Distributor ID/name captured and sent
+- HubSpot failure does **not** block M8 email routing (fully independent paths)
+- End-to-end test submission documented
+
+### Open before build
+
+- Client must provide **HubSpot sandbox** access for end-to-end testing
+- Lead Source property **internal name** not provided (only the value)
+- Endpoint approach undecided: CRM v3 API (Bearer token) vs. HubSpot form-submit endpoint
+- GF Webhook Add-On install/license status unverified
+- No confirmed distributor **ID** property in HubSpot — only `distributor_name`
+
+### Branch policy change
+
+Only `master` and `staging` are kept. The five existing feature/fix branches will be deleted once their work is confirmed merged. M9 starts on a new branch.
+
+### Files changed
+
+| File | Changes |
+|---|---|
+| `PROJECT_NOTES.md` | Current module → M9 (unblocked); branch policy; M9 blockers |
+| `PHASE_PLAN.md` | M9 section rewritten: unblocked, full scope, confirmed properties, gaps, rules |
+| `DECISIONS.md` | New decisions: M9 unblocked via GF Webhook Add-On; branch cleanup |
+| `TODO.md` | New M9 pre-build + build checklists; status table; Git branch cleanup tasks |
+| `DEV_LOG.md` | This entry |
+
+### Note
+
+`includes/class-tdl-csv-importer.php` has an uncommitted stray-token syntax error near line 910 (`claude}` instead of `}`). Flagged to the developer; not modified.
+
+---
+
 ## 2026-05-20 — M5 WPML Support
 
 ### Completed

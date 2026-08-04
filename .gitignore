@@ -1,3 +1,5 @@
 Taylor distributors - data.csv
 logs
 *.sql
+# Per-developer Claude Code state, not shared
+.claude/settings.local.json
