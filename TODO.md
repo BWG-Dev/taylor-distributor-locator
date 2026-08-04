@@ -41,10 +41,65 @@
 - [ ] Confirm no PHP errors in debug log after form submission
 - [ ] Check GF entry saved correctly with distributor ID in field 7
 
+## Current — M9 HubSpot Webhook (code complete, pending QA)
+
+Pre-build confirmations — **all resolved 2026-08-04**:
+
+- [x] GF Webhooks Add-On installed and active
+- [x] Lead Source property confirmed: `lead_source` (text) — it existed; no creation needed
+- [x] Endpoint decided: HubSpot CRM v3 `POST /crm/v3/objects/contacts`
+- [x] Distributor ID property — does not exist; dropped from scope
+- [x] Token write scope verified (400-not-403 probe, no record created)
+- [x] Sandbox — none exists; production testing accepted with disposable emails (see DECISIONS.md)
+
+### Step 1 — Configure WordPress (Distributors → Settings → HubSpot Integration)
+
+- [ ] Paste the access token (or better: define `TDL_HUBSPOT_TOKEN` in `wp-config.php`)
+- [ ] Click **Test connection** — expect `Connected to portal 7290009 (STANDARD)` plus the production warning
+- [ ] Leave the four property names at their defaults (`company`, `distributor_name`, `taylor_message`, `lead_source`)
+- [ ] Tick **Enable HubSpot** only when ready to send
+
+### Step 2 — Create the Gravity Forms Webhook feed (required — nothing fires without it)
+
+Forms → **Request Quote** (Form 1) → Settings → **Webhooks** → Add New:
+
+- [ ] Name: `HubSpot Contact`
+- [ ] Request URL: `https://api.hubapi.com/crm/v3/objects/contacts`
+- [ ] Request Method: `POST`
+- [ ] Request Format: `JSON`
+- [ ] Leave field mapping empty and **do not add the token as a header** — the plugin replaces the body and injects `Authorization` at request time
+- [ ] Save
+
+### Step 3 — End-to-end test (production portal — disposable addresses only)
+
+- [ ] Use a unique plus-addressed email per attempt (`you+tdl01@…`) — never one already in the portal, never a real customer
+- [ ] Record every test address used, for cleanup
+- [ ] Submit a quote → contact appears in HubSpot with `email`, `firstname`, `lastname`, `phone`, `company`, `taylor_message`, `distributor_name`, `lead_source = Distributor Locator`
+- [ ] Confirm `distributor_name` has **no HTML entities** (`&` not `&#038;`) — test a distributor whose name contains an ampersand, e.g. *ABS & Taylor Enterprises, Inc.*
+- [ ] Confirm the location suffix is stripped (company name only, no `— City`)
+- [ ] Test an **international** distributor (e.g. Middleby China, Dayton OÜ) — proves the free-text property accepts names outside the 35-option dropdown
+- [ ] Distributors → Routing Log shows an `[HubSpot] Contact synced (HTTP 201)` row
+- [ ] Delete the test contacts from HubSpot afterwards
+
+### Step 4 — Prove M8 independence (the acceptance criterion)
+
+- [ ] Set a deliberately invalid token → submit → **distributor email still arrives**, log shows `[HubSpot] HTTP 401`
+- [ ] Untick Enable HubSpot → submit → email still arrives, log shows the skip, no HTTP request made
+- [ ] Restore the valid token
+
+### Step 5 — Cleanup and handoff
+
+- [ ] Rotate the access token (it was pasted into a chat transcript — treat as burned)
+- [ ] Delete all test contacts; verify none remain
+- [ ] Ask the client whether Taylor wants a brand-scoped `taylor__lead_source` for consistency with sibling brands
+- [ ] Ask whether the locator should also populate `taylor__form_type`
+- [ ] Create the M9 branch and commit
+
 ## Git
 
-- [ ] Commit M7 with message: `feat(m7): Gravity Forms quote modal — hidden distributor ID field, modal open/close, focus trap, AJAX submission`
-- [ ] Merge `feature/m7-gravity-form-and-modal` to `staging` after QA sign-off
+- [ ] Delete stale branches after confirming their work is merged — keep only `master` and `staging`:
+      `feature/m5-translation-support`, `feature/m7-gravity-form-and-modal`, `feature/m8-email-routing`, `fix/m3-dropmenu-filters`, `fix/taylor-update-call` (local + `origin`)
+- [ ] Verify M5/M7/M8 work is actually present in `staging` before deleting those branches
 
 ## Current — M5 WPML Support
 
@@ -71,7 +126,7 @@
 | M6 | Complete — pending device QA |
 | M7 | Complete — pending QA |
 | M8 | Complete — pending QA |
-| M9 | Blocked until M7 + M8 |
+| M9 | **Code complete** (2026-08-04) — pending GF feed setup + production QA |
 | M10 | Blocked until M1–M9 |
 
 ## Ongoing

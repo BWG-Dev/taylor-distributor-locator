@@ -30,13 +30,22 @@ After coding:
 
 ## Current Module
 
-**M5 — WPML Support** (complete, pending QA)
+**M9 — HubSpot Webhook** — unblocked as of 2026-08-04, not started.
 
-Branch: `feature/m5-translation-support`
+M7 and M8 are complete, which clears the M9 prerequisite. See PHASE_PLAN.md for the full M9 scope, confirmed HubSpot properties, expected outcome, and open gaps.
 
-M5 is functionally complete. WPML 4.9.3 (core) confirmed installed.
+M1–M8 are all functionally complete; several still carry pending QA checklists in TODO.md.
 
-Next module: **M9 — HubSpot Webhook** (blocked until M7 + M8 QA sign-off).
+### Branch policy
+
+Existing feature branches (`feature/m5-translation-support`, `feature/m7-gravity-form-and-modal`, `feature/m8-email-routing`, `fix/m3-dropmenu-filters`, `fix/taylor-update-call`) are being removed. Only `master` and `staging` are kept. A new branch will be created when M9 work begins.
+
+### M9 blockers before build
+
+- Client must provide **HubSpot sandbox access** for end-to-end testing.
+- Lead Source property **internal name** not yet provided.
+- Endpoint approach not yet decided (CRM v3 API vs. HubSpot form-submit endpoint).
+- GF Webhook Add-On install/license status on this site not yet verified.
 
 ## Known Project Architecture
 

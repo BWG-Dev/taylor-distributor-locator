@@ -273,16 +273,51 @@ Suggested commit:
 
 ## M9 — HubSpot Webhook
 
-Status: Blocked until M7 and M8 complete
+Status: **Code complete** (2026-08-04) — pending Gravity Forms feed setup and production QA. See DEV_LOG.md for the implementation and DECISIONS.md for the verified property table and accepted production-testing risk.
 
-Focus:
-- Confirmed HubSpot properties only
-- Non-blocking webhook
-- Logging
-- End-to-end test flow
+Branch: to be created when work begins (existing feature branches are being deleted; only `master` and `staging` are kept).
+
+### Overview
+
+Configure the **Gravity Forms Webhook Add-On** to POST distributor lead submissions to Taylor Company's HubSpot account, capturing lead source and distributor data as part of the lead-gen funnel.
+
+HubSpot failure must not block M8 email routing — the two modules must remain fully independent.
+
+### Confirmed HubSpot contact properties
+
+Do not guess or create any property beyond these three:
+
+| HubSpot label | Internal name |
+|---|---|
+| Company Name | `company` |
+| [Taylor] Distributor Name | `distributor_name` |
+| [Taylor] Message | `taylor_message` |
+
+### Expected outcome
+
+- Gravity Forms Webhook Add-On configured and POSTing to HubSpot
+- All form fields mapped to confirmed HubSpot contact properties
+- Lead Source = `"Distributor Locator"` set correctly
+- Distributor ID/name captured and sent to HubSpot
+- HubSpot failure does **not** block M8 email routing
+- End-to-end test submission documented
+
+### Open gaps to confirm before build
+
+- **HubSpot sandbox access** — client must provide it before this module begins (stated requirement)
+- Lead Source property **internal name** was not provided (only the value `"Distributor Locator"`)
+- Endpoint choice: CRM v3 API with Bearer token vs. HubSpot form-submit endpoint
+- Whether a distributor **ID** property exists in HubSpot (only `distributor_name` is confirmed)
+- Whether the GF Webhook Add-On is installed and licensed on this site
+
+### Rules
+
+- No hardcoded tokens, secrets, portal IDs, or endpoint URLs — use WP options / `wp-config` constants
+- Do not create new HubSpot properties
+- Log webhook failures; never let a failure surface to the user or interrupt `wp_mail()` routing
 
 Suggested commit:
-`Add non-blocking HubSpot webhook integration`
+`feat(m9): HubSpot webhook via Gravity Forms Webhook Add-On`
 
 ---
 
