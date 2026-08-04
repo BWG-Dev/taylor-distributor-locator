@@ -40,8 +40,15 @@ class TDL_Email_Router {
 
 		$form_id = TDL_GF_Integration::get_form_id();
 
-		// Fire after GF saves the entry. Priority 10, 2 args ($entry, $form).
-		add_action( 'gform_after_submission_' . $form_id, [ __CLASS__, 'route_submission' ], 10, 2 );
+		// Fire after GF saves the entry, 2 args ($entry, $form).
+		//
+		// Priority 5, not 10: Gravity Forms feed add-ons (including Webhooks, which
+		// M9 uses for HubSpot) process feeds on gform_after_submission at priority
+		// 10, and gravityformswebhooks loads before this plugin. At equal priority
+		// the webhook would run first, so a hung HubSpot could consume the request's
+		// remaining max_execution_time before the distributor email is dispatched.
+		// Routing the email first makes M8 delivery genuinely independent of M9.
+		add_action( 'gform_after_submission_' . $form_id, [ __CLASS__, 'route_submission' ], 5, 2 );
 
 		// Suppress GF's static-address admin notifications to prevent double-sending.
 		// This filter is always registered (via plugins_loaded) so it fires whether GF
