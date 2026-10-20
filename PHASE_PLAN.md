@@ -273,9 +273,9 @@ Suggested commit:
 
 ## M9 — HubSpot Webhook
 
-Status: **Code complete** (2026-08-04) — pending Gravity Forms feed setup and production QA. See DEV_LOG.md for the implementation and DECISIONS.md for the verified property table and accepted production-testing risk.
+Status: **Complete** — code complete 2026-08-04; end-to-end verified on the development environment (routing log records `[HubSpot] Contact synced (HTTP 201)` on 2026-08-04 and 2026-08-11, alongside M8 email routing). The Gravity Forms webhook feed exists and is active. Production QA still required after launch. See DEV_LOG.md for the implementation and DECISIONS.md for the verified property table and accepted production-testing risk.
 
-Branch: to be created when work begins (existing feature branches are being deleted; only `master` and `staging` are kept).
+Branch: `feature/m9-hubspot-webhook`.
 
 ### Overview
 
@@ -323,13 +323,30 @@ Suggested commit:
 
 ## M10 — QA / Documentation / Handoff
 
-Status: Blocked until M1–M9 complete
+Status: **In progress** (started 2026-08-17) — unblocked, M1–M9 functionally complete and the project is approved to wrap up.
 
-Focus:
-- QA
-- Documentation
-- Video tutorial
-- Handoff support
+Branch: `feature/m9-hubspot-webhook` (documentation committed alongside M9 until the merge-forward is done — see the corrected branch policy in DECISIONS.md).
+
+### Delivered
+
+**Client-facing (the handoff deliverable):**
+
+- **`docs/Distributor-Locator-Installation-and-Settings-Guide.pdf`** — 22-page PDF, Letter size. Covers prerequisites, installation, placing the shortcode, an admin tour, every setting explained in plain language (map/general, enquiry emails, HubSpot, colours), connecting the quote form, placing map pins, nine considerations, a verification test, troubleshooting, and getting help. Technical detail appears only where the reader cannot act without it; three tasks are tagged as developer/host work.
+- **`docs/installation-and-settings-guide.html`** — print-styled source for the PDF. Re-render with headless Chrome `--print-to-pdf --no-pdf-header-footer`.
+
+**Developer / host:**
+
+- **`docs/INSTALLATION-AND-CONFIGURATION.md`** — 19-section technical guide covering requirements, the Toolset Types dependency, deployment options, install, the complete settings reference, Google Maps setup, geocoding, the locator page, quote form and email routing, HubSpot, WPML, ongoing data management, a go-live checklist, troubleshooting, known limitations, and outstanding client questions.
+- **`docs/GO-LIVE-CHECKLIST.md`** — launch-day tick-box checklist (A–L) plus a rollback procedure.
+- Shared web version: https://claude.ai/code/artifact/ab94c1bf-91b4-433c-9d13-e6d3863256f1
+
+### Remaining
+
+- Video tutorial (client-facing walkthrough of the admin screens).
+- Outstanding QA checklists for M5, M6, M7, M8 in TODO.md.
+- Production QA of M9 once the site is live.
+- Merge-forward of feature branches into `staging` and `master`.
+- Client answers to the nine open items in §18 of the guide.
 
 Suggested commit:
-`Add QA documentation and handoff materials`
+`docs(m10): installation, configuration, and go-live handoff documentation`

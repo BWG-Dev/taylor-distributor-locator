@@ -30,22 +30,47 @@ After coding:
 
 ## Current Module
 
-**M9 — HubSpot Webhook** — unblocked as of 2026-08-04, not started.
+**M10 — QA / Documentation / Handoff** — started 2026-08-17. Project approved to wrap up.
 
-M7 and M8 are complete, which clears the M9 prerequisite. See PHASE_PLAN.md for the full M9 scope, confirmed HubSpot properties, expected outcome, and open gaps.
+M1–M9 are functionally complete. M9 is code complete and has been exercised end to end on the
+development environment (routing log shows `[HubSpot] Contact synced (HTTP 201)` on 2026-08-04
+and 2026-08-11, alongside M8 email routing). Several modules still carry pending QA checklists
+in TODO.md.
 
-M1–M8 are all functionally complete; several still carry pending QA checklists in TODO.md.
+A 60-day post-launch support period begins at launch. The launch date has not been set; the PM
+will give advance notice.
 
-### Branch policy
+### Handoff documentation (delivered 2026-08-17)
 
-Existing feature branches (`feature/m5-translation-support`, `feature/m7-gravity-form-and-modal`, `feature/m8-email-routing`, `fix/m3-dropmenu-filters`, `fix/taylor-update-call`) are being removed. Only `master` and `staging` are kept. A new branch will be created when M9 work begins.
+**For the client:**
+- `docs/Distributor-Locator-Installation-and-Settings-Guide.pdf` — 22-page guide covering
+  installation, every setting explained in plain language, and nine key considerations.
+  Deliberately unbranded: no agency credit, no support-term reference, no client wordmark.
+- `docs/installation-and-settings-guide.html` — print source; re-render with headless Chrome.
 
-### M9 blockers before build
+**For the developer / host:**
+- `docs/INSTALLATION-AND-CONFIGURATION.md` — full technical install/configure/verify guide.
+- `docs/GO-LIVE-CHECKLIST.md` — launch-day tick-box checklist with rollback steps.
+- Shared web version: https://claude.ai/code/artifact/ab94c1bf-91b4-433c-9d13-e6d3863256f1
 
-- Client must provide **HubSpot sandbox access** for end-to-end testing.
-- Lead Source property **internal name** not yet provided.
-- Endpoint approach not yet decided (CRM v3 API vs. HubSpot form-submit endpoint).
-- GF Webhook Add-On install/license status on this site not yet verified.
+### Branch policy — CORRECTED 2026-08-17
+
+The earlier decision to delete the five feature/fix branches **must not be executed as written.**
+`master` is 34 commits behind `feature/m9-hubspot-webhook` and `staging` is 32 behind. All M3–M9
+work exists only on feature branches — deleting them would destroy it.
+
+Required before any branch cleanup: merge the feature branches forward into `staging`, then
+`master`, in module order, and verify the work is present before deleting anything.
+
+### Open launch blockers
+
+- `tdl_cc_email` is set to the placeholder `routing_example@taylor.com` — must be replaced or cleared.
+- 302 of 685 locations are recorded as geocode errors; only 337 (49%) have coordinates. Client
+  decision needed on whether to correct source addresses before launch.
+- Production Google Maps API key / Map ID not yet supplied.
+- HubSpot token must be rotated for production (the development value was shared in a transcript).
+- SMTP / SPF / DKIM / DMARC not yet configured — highest-risk item for lead delivery.
+- Production locator page not yet confirmed (shortcode currently on page ID 10).
 
 ## Known Project Architecture
 

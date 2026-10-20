@@ -95,11 +95,49 @@ Forms → **Request Quote** (Form 1) → Settings → **Webhooks** → Add New:
 - [ ] Ask whether the locator should also populate `taylor__form_type`
 - [ ] Create the M9 branch and commit
 
+## Current — M10 Documentation & Handoff
+
+Delivered 2026-08-17:
+
+- [x] `docs/Distributor-Locator-Installation-and-Settings-Guide.pdf` — **client deliverable**, 22 pages: installation, every setting explained plainly, nine key considerations. Unbranded
+- [x] `docs/installation-and-settings-guide.html` — print source for the PDF
+- [x] `docs/INSTALLATION-AND-CONFIGURATION.md` — technical guide for developer/host
+- [x] `docs/GO-LIVE-CHECKLIST.md` — launch-day checklist + rollback
+- [x] Shared web version of the technical guide published for the PM
+
+Remaining:
+
+- [ ] Send both documents to the PM and get the nine open questions in §18 answered
+- [ ] Video tutorial walkthrough of the admin screens
+- [ ] Fill in `<launch-date>` and `<support-contact>` once known
+- [ ] Decide whether to fix `uninstall.php` (see below) before handoff
+
+### Launch blockers to resolve with the client
+
+- [ ] **Replace or clear `tdl_cc_email`** — currently the placeholder `routing_example@taylor.com`
+- [ ] **Geocoding coverage: 337/685 (49%), 302 errored.** Decide: accept, correct source addresses, or request better data
+- [ ] Production Google Maps API key + Map ID (or approval to reuse the current key)
+- [ ] **Rotate the HubSpot token** for production — the development value was shared in a transcript
+- [ ] SMTP + SPF/DKIM/DMARC configured on the sending domain (highest deliverability risk)
+- [ ] Confirm which page the locator belongs on (currently page ID 10)
+- [ ] Confirm whether the City / Region search tab should be visible (currently off)
+
+### Known defect — flagged, not fixed (needs approval)
+
+- [ ] `uninstall.php` deletes posts of type `tdl_distributor`, which no longer exists — the CPT is
+      `distributor`. It also drops `tdl_locations` and `tdl_service_zones` but not `tdl_routing_log`.
+      A plugin *delete* would therefore destroy location data while orphaning the distributor posts.
+      Documented as "deactivate, never delete". One-line fix available on request.
+
 ## Git
 
-- [ ] Delete stale branches after confirming their work is merged — keep only `master` and `staging`:
-      `feature/m5-translation-support`, `feature/m7-gravity-form-and-modal`, `feature/m8-email-routing`, `fix/m3-dropmenu-filters`, `fix/taylor-update-call` (local + `origin`)
-- [ ] Verify M5/M7/M8 work is actually present in `staging` before deleting those branches
+- [ ] **Merge forward before any branch deletion.** `master` is 34 commits behind
+      `feature/m9-hubspot-webhook`; `staging` is 32 behind. All M3–M9 work lives only on feature
+      branches — deleting them now would destroy it. See the corrected decision in DECISIONS.md.
+- [ ] Merge feature branches into `staging` in module order, verify, then into `master`
+- [ ] Only after verification: delete `feature/m5-translation-support`,
+      `feature/m7-gravity-form-and-modal`, `feature/m8-email-routing`, `fix/m3-dropmenu-filters`,
+      `fix/taylor-update-call` (local + `origin`)
 
 ## Current — M5 WPML Support
 
@@ -126,8 +164,8 @@ Forms → **Request Quote** (Form 1) → Settings → **Webhooks** → Add New:
 | M6 | Complete — pending device QA |
 | M7 | Complete — pending QA |
 | M8 | Complete — pending QA |
-| M9 | **Code complete** (2026-08-04) — pending GF feed setup + production QA |
-| M10 | Blocked until M1–M9 |
+| M9 | Complete — verified end-to-end on dev; production QA after launch |
+| M10 | **In progress** — handoff docs delivered 2026-08-17; video tutorial + QA sign-offs remain |
 
 ## Ongoing
 

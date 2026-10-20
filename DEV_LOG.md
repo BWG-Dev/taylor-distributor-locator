@@ -1,5 +1,83 @@
 # Dev Log — Taylor Distributor Locator
 
+## 2026-08-17 — M10 handoff documentation (no code changes)
+
+### Summary
+
+Project approved to wrap up, with a 60-day support period starting at launch (date TBC). Produced
+the installation and configuration documentation the client needs to take the site live. No plugin
+code was modified.
+
+### Delivered
+
+| File | Audience | Contents |
+|---|---|---|
+| `docs/Distributor-Locator-Installation-and-Settings-Guide.pdf` | **Client deliverable** | 22-page PDF: how to install the plugin, every setting explained in plain language, and nine considerations that matter. Unbranded — no agency credit, no support-term reference |
+| `docs/installation-and-settings-guide.html` | — | Print-styled source for the PDF above. Re-render with headless Chrome (`--print-to-pdf`); Letter size, page breaks per section |
+| `docs/INSTALLATION-AND-CONFIGURATION.md` | Developer / host | 19-section technical guide: requirements, Toolset dependency, deployment options, install, settings reference, Google Maps, geocoding, shortcode, GF/routing, HubSpot, WPML, data management, go-live checklist, troubleshooting, limitations, open client questions |
+| `docs/GO-LIVE-CHECKLIST.md` | Developer / host | Launch-day tick-box checklist (sections A–L) plus rollback procedure |
+
+The client PDF was rewritten mid-session from a day-to-day operations guide to an
+install-and-configure guide, per the developer's direction. Rendering command:
+
+```
+chrome --headless --disable-gpu --no-pdf-header-footer \
+  --print-to-pdf="docs/Distributor-Locator-Installation-and-Settings-Guide.pdf" \
+  "file:///.../docs/installation-and-settings-guide.html"
+```
+
+**Layout bug found and fixed during rendering.** Three list components used CSS grid on
+the `<li>` with an absolutely-required marker in `::before`. Because each child element
+of the `li` becomes its own grid item, the tag pills and paragraphs landed in separate
+cells and body text wrapped one word per line — the document rendered at 35 pages instead
+of 22. Fixed by positioning the markers absolutely and padding the list item, so the item
+content stays a single flow. Worth remembering for any future print stylesheet here.
+
+A shared web version of the guide is published at
+https://claude.ai/code/artifact/ab94c1bf-91b4-433c-9d13-e6d3863256f1
+
+### Verified while writing (all facts taken from code and the live dev database, not from memory)
+
+- The `distributor` CPT and all eight `wpcf-*` contact fields are defined by **Toolset Types 3.6.1**,
+  not by this plugin — there is no `register_post_type()` call anywhere in the codebase. This is the
+  most important deployment fact and was previously recorded incorrectly in the project memory.
+- Stack tested against: WP 7.0.3, PHP 8.3.14, GF 2.10.5, GF Webhooks 1.7.0, GF reCAPTCHA 2.2.2,
+  Types 3.6.1, WPML 4.9.3, Kadence 1.5.2.
+- Live data: 164 published distributors, 685 locations, 53,979 service zones, 11 routing-log rows.
+- M9 is proven end to end on this environment — the webhook feed exists and is active, and the
+  routing log records `[HubSpot] Contact synced (HTTP 201)` alongside M8 routing warnings.
+- Current settings captured for the doc: provider `google`, Map ID set, zoom 5, centre 42.46/−89.07,
+  city tab off, HubSpot enabled with the token stored in the database.
+
+### Issues found and flagged (not fixed — awaiting approval)
+
+1. **`uninstall.php` targets the wrong post type.** It deletes posts of type `tdl_distributor`,
+   which no longer exists; the CPT is `distributor`. It also drops `tdl_locations` and
+   `tdl_service_zones` but not `tdl_routing_log`. Net effect of a plugin *delete*: location and
+   service-zone data destroyed, distributor posts orphaned, routing log left behind. Documented as
+   "deactivate, never delete"; a one-line fix is available on request.
+2. **`tdl_cc_email` holds the placeholder `routing_example@taylor.com`** — would CC a non-existent
+   address on every live lead.
+3. **Geocoding coverage is 337/685 (49%)**, with 302 locations flagged as errors. Half the map pins
+   will be missing at launch unless the source addresses are corrected.
+4. **Branch cleanup decision is unsafe as written.** `master` is 34 commits behind the M9 branch and
+   `staging` 32 behind; all M3–M9 work lives only on feature branches. Corrected in PROJECT_NOTES.md
+   and DECISIONS.md.
+
+### Files changed
+
+| File | Changes |
+|---|---|
+| `docs/INSTALLATION-AND-CONFIGURATION.md` | **New** |
+| `docs/GO-LIVE-CHECKLIST.md` | **New** |
+| `PROJECT_NOTES.md` | Current module → M10; handoff docs; corrected branch policy; launch blockers |
+| `PHASE_PLAN.md` | M9 → complete; M10 unblocked and in progress |
+| `DECISIONS.md` | Branch-cleanup decision corrected; Toolset Types dependency recorded |
+| `TODO.md` | M10 documentation section; status table updated |
+| `DEV_LOG.md` | This entry |
+
+---
+
 ## 2026-08-04 — M9 HubSpot integration implemented (pending QA)
 
 ### Discovery (live portal inspection)

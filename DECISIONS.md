@@ -110,6 +110,52 @@ Only `master` and `staging` are kept long-term. Existing feature/fix branches wi
 Reason:
 Five stale branches with unclear merge state make review and release tracking unreliable.
 
+**Correction (2026-08-17): do not delete anything yet.**
+Verified branch state: `master` is **34 commits behind** `feature/m9-hubspot-webhook` and `staging` is **32 behind**. `master` still sits at "Refactor M1 foundation to rely on Toolset Types configuration" and `staging` at the M2 importer. All M3–M9 work exists **only on feature branches**, so executing the cleanup as originally written would destroy it.
+
+Revised sequence: merge the feature branches forward into `staging`, then `master`, in module order; confirm the work is present in the target branch; only then delete. The "keep only master and staging" end state remains the goal.
+
+---
+
+## Client-facing documentation stays unbranded
+
+Decision (2026-08-17), made by the developer during the handoff-document review.
+
+The client deliverable — `docs/Distributor-Locator-Installation-and-Settings-Guide.pdf` — carries **no agency credit, no client wordmark, and no reference to the support period**. The cover shows the document title, what it covers, the date, and the plugin version it applies to. Nothing else.
+
+Reason: the document is handed to the client to use and re-share internally. Agency branding and commercial terms belong in the engagement paperwork, not in an operational guide someone consults while configuring a plugin.
+
+How to apply: keep future revisions of the client PDF unbranded. Support terms, contract dates, and agency credit go in the covering email or the developer-facing docs, which are unaffected by this decision.
+
+---
+
+## Two documentation audiences, kept separate
+
+Decision (2026-08-17).
+
+Handoff documentation is split rather than combined:
+
+- **Client** — installation, settings explained in plain language, and considerations. Technical detail only where the reader cannot act without it; anything requiring a developer or host is tagged as such rather than explained.
+- **Developer / host** — full technical reference: option keys, database tables, REST endpoints, API restrictions, known defects.
+
+Reason: a single document serving both audiences would either lose the client in option keys and table names, or strip out detail the person doing the server-side work actually needs. The split also means the client document can stay unbranded and stable while the technical one continues to change.
+
+---
+
+## Toolset Types is a hard runtime dependency
+
+Decision recorded (2026-08-17), verified against the codebase and the live database.
+
+The `distributor` post type and all eight contact fields (`wpcf-phone`, `wpcf-website`, `wpcf-email_main`, `wpcf-email_sales`, `wpcf-email_parts`, `wpcf-email_service`, `wpcf-email_installations`, `wpcf-service_area_description`) are registered by **Toolset Types 3.6.1**, not by this plugin. There is no `register_post_type()` call anywhere in the plugin, and the definitions live in the `wpcf-custom-types` and `wpcf-fields` database options.
+
+Consequences, which the handoff documentation states explicitly:
+
+- Deactivating Toolset Types hides the Distributors menu and empties the locator. Data survives.
+- A database migration carries the definitions across; a fresh install does not — the post type and all eight field slugs must be recreated by hand before importing data.
+- `email_sales` keeps its exact slug for the reasons already recorded below.
+
+This supersedes the earlier note that the plugin uses no Toolset components. The custom tables, REST API, meta boxes, and search logic remain fully custom — only the CPT and contact-field definitions come from Types.
+
 ---
 
 ## Do not force Toolset migration
