@@ -11,16 +11,7 @@ $us_states = TDL_REST_API::get_us_states();
 $ca_provinces = TDL_REST_API::get_ca_provinces();
 $mx_states = TDL_REST_API::get_mx_states();
 
-// Get all countries except US, CA, MX
-// Get all countries except US, CA, MX
 $all_countries = TDL_REST_API::get_country_names();
-unset($all_countries['US'], $all_countries['CA'], $all_countries['MX']);
-
-// Keep original sorting logic or just rely on API? API returns array keyed by code.
-// The template iterates $all_countries as $code => $name.
-// TDL_REST_API::get_country_names() returns [Code => Name]
-// So we just need to filter out US, CA, MX.
-
 asort($all_countries);
 ?>
 
@@ -93,7 +84,7 @@ asort($all_countries);
     
     <!-- Countries Tab -->
     <div class="tdl-zone-panel" data-panel="countries">
-        <p class="description"><?php esc_html_e('Select countries this distributor serves (not where they are located). US, Canada, and Mexico are handled in the States tab.', 'taylor-distributor-locator'); ?></p>
+        <p class="description"><?php esc_html_e('Select countries this distributor serves (not where they are located). Checking a country means the distributor serves the entire country. Use the States tab to limit coverage to specific states or provinces.', 'taylor-distributor-locator'); ?></p>
         <div class="tdl-checkbox-list tdl-countries-list">
             <?php foreach ($all_countries as $code => $name): ?>
                 <label>

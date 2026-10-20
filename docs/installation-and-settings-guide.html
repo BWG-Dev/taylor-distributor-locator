@@ -1,0 +1,927 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Distributor Locator — Installation &amp; Settings Guide</title>
+<style>
+  @page {
+    size: Letter;
+    margin: 20mm 18mm 18mm;
+  }
+
+  :root {
+    --ink: #1A2229;
+    --ink-soft: #4C5C66;
+    --ink-faint: #7C8A93;
+    --rule: #D2DADE;
+    --rule-soft: #E6EBEE;
+    --accent: #0F6E70;
+    --accent-soft: #E6F1F1;
+    --warn: #8A5A00;
+    --warn-soft: #FCF2DF;
+    --sunk: #F1F4F5;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --body: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { background: #FFFFFF; }
+
+  body {
+    margin: 0;
+    background: #FFFFFF;
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 10.8pt;
+    line-height: 1.55;
+  }
+
+  .page { max-width: 7.1in; margin: 0 auto; }
+
+  /* ── Cover ─────────────────────────────────────────── */
+
+  .cover {
+    page-break-after: always;
+    padding-top: 1.1in;
+  }
+
+  .brandline {
+    font-size: 8.5pt;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 26px;
+  }
+
+  .cover h1 {
+    font-family: var(--display);
+    font-size: 38pt;
+    line-height: 1.05;
+    font-weight: 600;
+    margin: 0 0 18px;
+    letter-spacing: -0.015em;
+  }
+
+  .cover .sub {
+    font-size: 13pt;
+    color: var(--ink-soft);
+    max-width: 30em;
+    margin: 0 0 44px;
+    line-height: 1.5;
+  }
+
+  .cover-meta {
+    border-top: 2px solid var(--ink);
+    padding-top: 16px;
+    display: flex;
+    gap: 34px;
+    flex-wrap: wrap;
+    font-size: 9.5pt;
+  }
+
+  .cover-meta div span {
+    display: block;
+    font-size: 8pt;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .cover-note {
+    margin-top: 52px;
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 16px 20px;
+    font-size: 10pt;
+  }
+
+  .cover-note p { margin: 0 0 8px; }
+  .cover-note p:last-child { margin: 0; }
+
+  /* ── Contents ──────────────────────────────────────── */
+
+  .contents { page-break-after: always; }
+
+  .contents ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    counter-reset: c;
+  }
+
+  /* Marker is absolutely positioned rather than a grid/flex item: these list
+     items contain several child elements, and any track-based layout would put
+     each child in its own cell. */
+  .contents li {
+    counter-increment: c;
+    position: relative;
+    padding: 4.5px 0 4.5px 28px;
+    border-bottom: 1px solid var(--rule-soft);
+    font-size: 10.4pt;
+    line-height: 1.4;
+  }
+
+  .contents li::before {
+    content: counter(c);
+    position: absolute;
+    left: 0;
+    top: 6px;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 9pt;
+  }
+
+  .contents li em {
+    display: block;
+    font-style: normal;
+    font-size: 8.8pt;
+    color: var(--ink-faint);
+    line-height: 1.35;
+  }
+
+  /* ── Structure ─────────────────────────────────────── */
+
+  section { page-break-before: always; }
+  section.run-on { page-break-before: auto; }
+
+  h2 {
+    font-family: var(--display);
+    font-size: 20pt;
+    line-height: 1.15;
+    font-weight: 600;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+
+  h2 .n {
+    font-family: var(--body);
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 7px;
+  }
+
+  .lede {
+    color: var(--ink-soft);
+    font-size: 11pt;
+    margin: 0 0 22px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--ink);
+    max-width: 34em;
+  }
+
+  h3 {
+    font-size: 11.5pt;
+    font-weight: 700;
+    margin: 24px 0 8px;
+    page-break-after: avoid;
+  }
+
+  h4 {
+    font-size: 10.5pt;
+    font-weight: 700;
+    margin: 18px 0 6px;
+    color: var(--ink-soft);
+    page-break-after: avoid;
+  }
+
+  p { margin: 0 0 11px; max-width: 36em; }
+  ul, ol { margin: 0 0 12px; padding-left: 21px; max-width: 36em; }
+  li { margin-bottom: 5px; }
+  ol li { padding-left: 3px; }
+
+  strong { font-weight: 700; }
+
+  .term {
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .path {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  code {
+    font-family: "Cascadia Mono", Consolas, "Courier New", monospace;
+    font-size: 0.88em;
+    background: var(--sunk);
+    padding: 1px 4px;
+    border-radius: 2px;
+  }
+
+  /* ── Who-does-what tags ────────────────────────────── */
+
+  .tag {
+    display: inline-block;
+    font-size: 7.5pt;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 2px;
+    vertical-align: 1.5px;
+    margin-right: 6px;
+    white-space: nowrap;
+  }
+
+  .tag.you { background: var(--accent-soft); color: var(--accent); }
+  .tag.dev { background: var(--sunk); color: var(--ink-soft); }
+
+  .legend {
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 14px 18px;
+    margin: 0 0 20px;
+    font-size: 10pt;
+    background: #FFFFFF;
+  }
+
+  .legend p { margin: 0 0 7px; max-width: none; }
+  .legend p:last-child { margin: 0; }
+
+  /* ── Tables ────────────────────────────────────────── */
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 9.8pt;
+    margin: 0 0 16px;
+    page-break-inside: avoid;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 8px 11px;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+  }
+
+  th {
+    background: var(--sunk);
+    font-size: 8.5pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  tbody tr:last-child td { border-bottom: 1px solid var(--rule); }
+
+  /* ── Callouts ──────────────────────────────────────── */
+
+  .box {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 13px 17px;
+    margin: 0 0 16px;
+    max-width: 36em;
+    page-break-inside: avoid;
+  }
+
+  .box.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+
+  .box .label {
+    display: block;
+    font-size: 8pt;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 5px;
+  }
+
+  .box.warn .label { color: var(--warn); }
+
+  .box p { margin: 0 0 8px; max-width: none; }
+  .box p:last-child { margin: 0; }
+  .box ul { margin-bottom: 0; max-width: none; }
+
+  /* ── Steps ─────────────────────────────────────────── */
+
+  ol.steps {
+    list-style: none;
+    padding: 0;
+    counter-reset: s;
+    max-width: 36em;
+  }
+
+  ol.steps > li {
+    counter-increment: s;
+    position: relative;
+    padding-left: 32px;
+    margin-bottom: 13px;
+    page-break-inside: avoid;
+  }
+
+  ol.steps > li::before {
+    content: counter(s);
+    position: absolute;
+    left: 0;
+    top: 2px;
+    background: var(--accent);
+    color: #FFFFFF;
+    font-size: 8.5pt;
+    font-weight: 700;
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  ol.steps > li p { margin: 0 0 5px; }
+  ol.steps > li p:last-child { margin: 0; }
+  ol.steps ul { margin: 6px 0 0; }
+
+  /* ── Checklist ─────────────────────────────────────── */
+
+  ul.check {
+    list-style: none;
+    padding: 0;
+    max-width: 36em;
+  }
+
+  ul.check li {
+    position: relative;
+    padding: 6px 0 6px 21px;
+    margin: 0;
+    border-bottom: 1px solid var(--rule-soft);
+    page-break-inside: avoid;
+  }
+
+  ul.check li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 11px;
+    height: 11px;
+    border: 1.4px solid var(--ink-faint);
+    border-radius: 2px;
+  }
+
+  /* ── Example panel ─────────────────────────────────── */
+
+  .example {
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 15px 18px;
+    margin: 0 0 16px;
+    max-width: 36em;
+    page-break-inside: avoid;
+  }
+
+  .example .label {
+    display: block;
+    font-size: 8pt;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--ink-faint);
+    margin-bottom: 8px;
+  }
+
+  .example p:last-child { margin: 0; }
+
+  .footer-note {
+    margin-top: 26px;
+    padding-top: 12px;
+    border-top: 1px solid var(--rule);
+    font-size: 9pt;
+    color: var(--ink-faint);
+  }
+
+  .fill {
+    display: inline-block;
+    min-width: 150px;
+    border-bottom: 1px solid var(--ink-faint);
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ── COVER ──────────────────────────────────────────── -->
+<div class="cover">
+  <h1>Distributor Locator</h1>
+  <p class="sub">How to install the plugin, what every setting does, and the decisions worth making carefully before your locator goes live.</p>
+
+  <div class="cover-meta">
+    <div><span>Guide</span>Installation &amp; Settings, version 1.0</div>
+    <div><span>Date</span>17 August 2026</div>
+    <div><span>Applies to</span>Plugin version 0.6.0</div>
+  </div>
+
+  <div class="cover-note">
+    <p><strong>Who this guide is for.</strong> Whoever installs the locator and sets it up — a site administrator, a marketing manager, or an IT colleague. It assumes you can find your way around the WordPress admin area, but nothing beyond that.</p>
+    <p>Three tasks genuinely need a developer or your web host: the Google Maps account, email delivery, and storing the HubSpot key securely. Each is marked clearly so you know when to hand over.</p>
+  </div>
+</div>
+
+<!-- ── CONTENTS ───────────────────────────────────────── -->
+<div class="contents">
+  <h2>Contents</h2>
+  <p class="lede">Sections 1 to 4 install the locator. Sections 5 to 8 explain every setting. Section 11 is the part worth reading twice.</p>
+  <ol>
+    <li>Before you start<em>What needs to be in place first</em></li>
+    <li>Installing the plugin<em>Five steps, about ten minutes</em></li>
+    <li>Putting the locator on a page<em>And the options you can pass it</em></li>
+    <li>A tour of the admin area<em>Where everything lives</em></li>
+    <li>Settings: map and general<em>Every field explained</em></li>
+    <li>Settings: enquiry emails<em>Where customer enquiries are sent</em></li>
+    <li>Settings: HubSpot<em>Sending enquiries to your CRM</em></li>
+    <li>Settings: colours<em>Matching your site&rsquo;s look</em></li>
+    <li>Connecting the quote form<em>The last piece of setup</em></li>
+    <li>Placing your map pins<em>Turning addresses into map positions</em></li>
+    <li>Considerations worth your attention<em>Nine things that matter more than they look</em></li>
+    <li>Checking everything works<em>A test to run before you announce it</em></li>
+    <li>If something looks wrong<em>Common situations and what to do</em></li>
+    <li>Getting help<em>What to send, and what to avoid doing first</em></li>
+  </ol>
+</div>
+
+<!-- ── 1 ──────────────────────────────────────────────── -->
+<section class="run-on">
+  <h2><span class="n">Section 1</span>Before you start</h2>
+  <p class="lede">The locator does not work alone. Three other plugins must be installed and switched on first, and one of them is more important than it looks.</p>
+
+  <h3>The three plugins it depends on</h3>
+  <table>
+    <thead><tr><th style="width:30%">Plugin</th><th>What it does for the locator</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Toolset Types</strong></td>
+        <td>Holds the structure of your distributor records — the company name, phone, website, and the five email addresses. <strong>Without it, the locator has nothing to display.</strong></td>
+      </tr>
+      <tr>
+        <td><strong>Gravity Forms</strong></td>
+        <td>Provides the Request Quote form that opens when a customer clicks the button.</td>
+      </tr>
+      <tr>
+        <td><strong>Gravity Forms Webhooks</strong></td>
+        <td>An add-on for Gravity Forms. It carries enquiries across to HubSpot. Only needed if you are using the HubSpot connection.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>Check all three under <span class="path">Plugins</span> and make sure each is active before going any further.</p>
+
+  <div class="box warn">
+    <span class="label">The one to be careful with</span>
+    <p><strong>Toolset Types is not optional and cannot be swapped out.</strong> It is where the shape of your distributor records is stored. If someone deactivates it, the Distributors menu vanishes and the locator empties out.</p>
+    <p>Your data is not lost when that happens — everything returns the moment Types is switched back on — but the website is visibly broken in the meantime. It is worth telling anyone else with admin access.</p>
+  </div>
+
+  <h3>What your hosting needs</h3>
+  <ul>
+    <li><strong>A secure site (HTTPS).</strong> Both Google Maps and HubSpot require it.</li>
+    <li><strong>A reasonably modern server.</strong> Your host will know what PHP 8.1 or newer means; most hosting has been on it for years.</li>
+    <li><strong>Scheduled tasks working normally.</strong> The locator uses WordPress&rsquo;s built-in scheduler to place map pins in the background.</li>
+  </ul>
+
+  <h3>Take a backup</h3>
+  <p>Before installing anything, take a full backup of the site — files and database. Your host almost certainly offers this in one click. Nothing in this guide is destructive, but the habit is worth keeping.</p>
+</section>
+
+<!-- ── 2 ──────────────────────────────────────────────── -->
+<section>
+  <h2><span class="n">Section 2</span>Installing the plugin</h2>
+  <p class="lede">If your site is being moved across from a staging or development version, most of this is already done for you — skip to Section 5 and check the settings instead.</p>
+
+  <ol class="steps">
+    <li>
+      <p><strong>Go to <span class="path">Plugins &rarr; Add New &rarr; Upload Plugin</span>.</strong></p>
+      <p>Choose the plugin ZIP file you were supplied and click Install Now.</p>
+    </li>
+    <li>
+      <p><strong>Click Activate.</strong></p>
+      <p>Behind the scenes this creates the storage the locator needs — one place for distributor addresses, one for the areas they cover, and one for a record of enquiries. Nothing is asked of you.</p>
+    </li>
+    <li>
+      <p><strong>Confirm it worked.</strong></p>
+      <p>A new <span class="path">Distributors</span> menu should appear in the left-hand sidebar. If it does not, the most likely reason is that Toolset Types is not active — see Section 1.</p>
+    </li>
+    <li>
+      <p><strong>Load your distributor data, if the site is new.</strong></p>
+      <p>If you are starting fresh rather than copying an existing site, this is the point to import distributors from a spreadsheet. Ask whoever supplied the plugin for the export file — it saves re-entering 164 companies by hand.</p>
+    </li>
+    <li>
+      <p><strong>Move on to the settings.</strong></p>
+      <p>Go to <span class="path">Distributors &rarr; Settings</span>. Sections 5 to 8 of this guide walk through that screen field by field.</p>
+    </li>
+  </ol>
+
+  <div class="box">
+    <span class="label">A note on updates</span>
+    <p>When a new version of the plugin is supplied, install it the same way — upload and activate over the top. Your distributors, addresses, service areas, and settings are all kept. Take a backup first out of habit.</p>
+  </div>
+</section>
+
+<!-- ── 3 ──────────────────────────────────────────────── -->
+<section>
+  <h2><span class="n">Section 3</span>Putting the locator on a page</h2>
+  <p class="lede">The locator appears wherever you place a short piece of text called a shortcode. Usually that is a dedicated &ldquo;Find a Distributor&rdquo; page.</p>
+
+  <h3>The basic method</h3>
+  <ol class="steps">
+    <li><p><strong>Create or edit the page</strong> where the locator should appear.</p></li>
+    <li><p><strong>Add a Shortcode block</strong> and type <code>[tdl_locator]</code> into it.</p></li>
+    <li><p><strong>Publish the page</strong> and view it. The search box, list, and map should all appear.</p></li>
+    <li><p><strong>Add the page to your site menu</strong> so customers can find it.</p></li>
+  </ol>
+
+  <h3>Optional adjustments</h3>
+  <p>You can change how the locator behaves on a particular page by adding options inside the shortcode. Most sites never need these — the settings screen covers the same ground for the whole site — but they are useful if you want a second, simpler version somewhere.</p>
+
+  <table>
+    <thead><tr><th style="width:31%">Option</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>map_height</code></td><td>Makes the map taller or shorter. The default is 600 pixels.</td></tr>
+      <tr><td><code>show_map</code></td><td>Set to <code>false</code> for a list with no map.</td></tr>
+      <tr><td><code>show_list</code></td><td>Set to <code>false</code> for a map with no list.</td></tr>
+      <tr><td><code>default_country</code></td><td>Starts the page filtered to one country, for example <code>US</code>.</td></tr>
+      <tr><td><code>results_per_page</code></td><td>Overrides how many results appear per page.</td></tr>
+      <tr><td><code>zoom</code></td><td>How far in the map is zoomed when the page loads.</td></tr>
+      <tr><td><code>center_lat</code> / <code>center_lng</code></td><td>Where the map is centred when the page loads.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="example">
+    <span class="label">Example</span>
+    <p>A taller map, showing only US distributors when the page first loads:</p>
+    <p><code>[tdl_locator map_height="700px" default_country="US"]</code></p>
+  </div>
+</section>
+
+<!-- ── 4 ──────────────────────────────────────────────── -->
+<section>
+  <h2><span class="n">Section 4</span>A tour of the admin area</h2>
+  <p class="lede">Everything to do with the locator lives under one menu, called <span class="path">Distributors</span>.</p>
+
+  <table>
+    <thead><tr><th style="width:32%">Menu item</th><th>What it is for</th></tr></thead>
+    <tbody>
+      <tr><td><strong>All Distributors</strong></td><td>The full list of companies. Search it, sort it, filter it, and click any name to edit.</td></tr>
+      <tr><td><strong>Add New</strong></td><td>Create a new distributor.</td></tr>
+      <tr><td><strong>Settings</strong></td><td>Everything in Sections 5 to 8 of this guide.</td></tr>
+      <tr><td><strong>Routing Log</strong></td><td>A record of every customer enquiry and where it was sent. Your first stop whenever anything seems wrong.</td></tr>
+      <tr><td><strong>Geocoding Status</strong></td><td>Map pins — how many addresses have been placed, and a button to place the rest.</td></tr>
+      <tr><td><strong>Import CSV</strong></td><td>Add or update many distributors at once from a spreadsheet.</td></tr>
+      <tr><td><strong>Export CSV</strong></td><td>Download everything to a spreadsheet. Useful as a backup.</td></tr>
+    </tbody>
+  </table>
+
+  <p>You may also see <strong>M2 Initial Import</strong>. That was used once to load the original distributor list and is not needed again — please leave it alone.</p>
+
+  <h3>What a distributor record contains</h3>
+  <p>Open any company from the list and you will find four groups of information:</p>
+  <ul>
+    <li><strong>Contact details</strong> — phone, website, and five email addresses: main, sales, parts, service, and installations.</li>
+    <li><strong>Physical Locations</strong> — their actual address or addresses. This is what puts a pin on the map.</li>
+    <li><strong>Service Zones</strong> — the ZIP codes, states, or countries they are allowed to sell into. This is what makes them appear in a search.</li>
+    <li><strong>Parent Distributor</strong> — used when a company is a branch of a larger one already in the list.</li>
+  </ul>
+  <p>The difference between the second and third of these matters a great deal, and Section 11 comes back to it.</p>
+</section>
+
+<!-- ── 5 ──────────────────────────────────────────────── -->
+<section>
+  <h2><span class="n">Section 5</span>Settings: map and general</h2>
+  <p class="lede">Go to <span class="path">Distributors &rarr; Settings</span>. The first group of fields controls the map and how results are presented. Remember to click Save Changes at the bottom.</p>
+
+  <h3>Map Provider</h3>
+  <p>Two choices:</p>
+  <ul>
+    <li><strong>Google Maps</strong> — the familiar map most visitors expect. Requires a Google account with billing enabled, and this is what your site is set up to use.</li>
+    <li><strong>OpenStreetMap</strong> — a free alternative that needs no account and no billing. Perfectly usable, and a sensible fallback if the Google account ever lapses, but less polished.</li>
+  </ul>
+
+  <h3>Google Maps API Key <span class="tag dev">Developer</span></h3>
+  <p>A long code that identifies your Google account to the map service. Without it, the map area stays blank.</p>
+  <p>Getting one involves creating a project in Google Cloud, enabling billing, and switching on three services. This is a job for your developer or IT team — and there are two safety measures they should apply that are covered in Section 11.</p>
+
+  <h3>Google Map ID <span class="tag dev">Developer</span></h3>
+  <p>A second, shorter code from the same Google account. It controls the map&rsquo;s visual style, and the map pins will not appear without it. It comes from the same place as the key.</p>
+
+  <h3>Default Map Zoom</h3>
+  <p>How far in the map is zoomed before anyone searches, from 1 (the whole world) to 20 (a single street). Your site uses <strong>5</strong>, which shows most of North America.</p>
+
+  <h3>Default Map Centre</h3>
+  <p>Two numbers giving the point the map is centred on when the page loads. Yours is set near Rockton, Illinois. You would only change these to shift the opening view toward a different region.</p>
+
+  <h3>Results Per Page</h3>
+  <p>How many distributors appear before the visitor has to click through to the next page. The default is <strong>20</strong>. Higher numbers mean more scrolling and a slower page; lower numbers mean more clicking.</p>
+
+  <h3>Show City / Region Tab</h3>
+  <p>Adds a fourth way to search, alongside ZIP code, state, and country. It is currently <strong>switched off</strong>. Some visitors find searching by city natural; others find four options one too many. It is a genuine preference — try it and see.</p>
+
+  <h3>Cache Duration</h3>
+  <p>To keep the locator fast, search results are remembered for a short time rather than recalculated for every visitor. This setting is how long, in minutes. The default of <strong>60</strong> is a good balance and there is rarely a reason to change it.</p>
+  <p>Edits you make to a distributor appear straight away regardless — the locator notices your changes and refreshes itself.</p>
+
+  <h3>Clear Search Cache</h3>
+  <p>A button rather than a setting. Click it if you have changed distributor data outside the normal admin screens — after a spreadsheet import, for instance — and the website is still showing the old version.</p>
+</section>
+
+<!-- ── 6 ──────────────────────────────────────────────── -->
+<section>
+  <h2><span class="n">Section 6</span>Settings: enquiry emails</h2>
+  <p class="lede">This short group of settings controls what happens when a customer submits the Request Quote form.</p>
+
+  <h3>How enquiries are routed</h3>
+  <p>You do not configure the destination here, and that is deliberate. Each enquiry goes to the distributor the customer was actually looking at, using the addresses on that distributor&rsquo;s own record:</p>
+  <ul>
+    <li>First choice: that distributor&rsquo;s <strong>sales email</strong>.</li>
+    <li>If that is empty: their <strong>main email</strong>, and a warning is recorded so you can spot the gap.</li>
+    <li>If both are empty: nothing is sent, and an error is recorded. The enquiry is never silently dropped.</li>
+  </ul>
+  <p>So the way to change where a distributor&rsquo;s enquiries go is to edit the sales email on their record — not to change anything on this screen.</p>
+
+  <h3>CC Email</h3>
+  <p>Optional. If you would like someone at Taylor to receive a copy of every enquiry — a sales inbox, say — put that address here. Leave it blank and only the distributor is contacted.</p>
+  <div class="box warn">
+    <span class="label">Check this field before you launch</span>
+    <p>It currently contains a placeholder address left over from testing. Either replace it with a real address or clear it — otherwise every live enquiry tries to copy somewhere that does not exist.</p>
+  </div>
+
+  <h3>Quote Form ID</h3>
+  <p>Tells the locator which Gravity Form is the Request Quote form. It is set to <strong>1</strong> and should be left alone unless the form is ever rebuilt from scratch, in which case put the new form&rsquo;s number here.</p>
+</section>
+
+<!-- ── 7 ──────────────────────────────────────────────── -->
+<section>
+  <h2><span class="n">Section 7</span>Settings: HubSpot</h2>
+  <p class="lede">This group connects the locator to your HubSpot account, so every enquiry also becomes a contact in your CRM. If you are not using HubSpot, leave the first box unticked and ignore the rest.</p>
+
+  <h3>Enable HubSpot</h3>
+  <p>The master switch. Leave it off until everything else is filled in and you are ready to receive live leads. When it is off, nothing is sent to HubSpot and no attempt is made.</p>
+
+  <h3>Access Token <span class="tag dev">Developer</span></h3>
+  <p>The password-equivalent that lets your website write to your HubSpot account. Your HubSpot administrator generates it.</p>
+  <p>You can paste it here, but the better arrangement is for your developer to store it in the site&rsquo;s configuration file instead, where it is kept out of the database and out of backups. If they have done that, this field will show as locked, which is a good sign rather than a problem.</p>
+  <p>The field never shows a token back to you once saved — only a partial hint. Leaving it blank keeps the existing one; you cannot wipe it by accident.</p>
+
+  <h3>API Endpoint</h3>
+  <p>The address on HubSpot&rsquo;s system that contacts are sent to. It is filled in correctly already. The only thing to know is that this exact address must also appear in the Gravity Forms setup in Section 9 — the two have to match.</p>
+
+  <h3>The four property fields</h3>
+  <p>HubSpot stores information in named fields, and these four settings tell the locator which of yours to fill in. They are already set to the correct names for your account, verified against it directly. <strong>Leave them as they are</strong> unless your HubSpot administrator changes something.</p>
+
+  <table>
+    <thead><tr><th style="width:30%">Setting</th><th>What it fills in</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Company Property</strong></td><td>The company name the customer typed into the form.</td></tr>
+      <tr><td><strong>Distributor Property</strong></td><td>Which distributor the enquiry was about. Looked up from the website, not from the form, so it cannot be tampered with.</td></tr>
+      <tr><td><strong>Message Property</strong></td><td>What the customer wrote in the message box.</td></tr>
+      <tr><td><strong>Lead Source Property</strong></td><td>Records where the lead came from. Clear this field if you would rather not set a lead source at all.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="box warn">
+    <span class="label">One field to leave strictly alone</span>
+    <p>The <strong>Distributor Property</strong> must point at a free-text field in HubSpot. There is a similarly named drop-down field in your account that covers only 35 US distributors — but your list runs to more than 140 companies, most of them international.</p>
+    <p>If it were pointed at the drop-down, HubSpot would quietly discard any name not on its list. Roughly three quarters of your leads would arrive with no distributor recorded, and nothing anywhere would report an error. The current setting avoids this.</p>
+  </div>
+
+  <h3>Lead Source Value</h3>
+  <p>The words written into the lead source field on every enquiry — currently <em>Distributor Locator</em>. This is what lets your team report on locator-generated leads separately from every other source.</p>
+
+  <h3>Test connection</h3>
+  <p>A button that checks your token works and tells you which HubSpot account it reaches. It only looks; it never creates or changes anything. Use it after entering a token, and again if HubSpot ever stops receiving enquiries.</p>
+</section>
+
+<!-- ── 8 ──────────────────────────────────────────────── -->
+<section>
+  <h2><span class="n">Section 8</span>Settings: colours</h2>
+  <p class="lede">Nine optional colour fields covering buttons, links, text, card borders, and highlights.</p>
+
+  <p><strong>The recommendation is to leave all nine blank.</strong> When they are empty the locator picks up your theme&rsquo;s own colours automatically, which means it keeps matching your site if the brand palette is ever updated.</p>
+
+  <p>Set a colour only when you want the locator to differ deliberately from the rest of the site. If you do, change one at a time and look at the result — the fields cover buttons, links, and card highlights, and a change to one can affect the readability of another.</p>
+
+  <div class="box">
+    <span class="label">If the locator looks wrong after a theme change</span>
+    <p>Check here first. A locator that inherited its colours will follow the new theme automatically; one with colours set by hand will not, and may need those values updating.</p>
+  </div>
+</section>
+
+<!-- ── 9 ──────────────────────────────────────────────── -->
+<section>
+  <h2><span class="n">Section 9</span>Connecting the quote form</h2>
+  <p class="lede">One piece of setup lives outside the locator&rsquo;s own settings, in Gravity Forms. Without it, enquiries still reach distributors by email but never appear in HubSpot.</p>
+
+  <h3>The hidden fields</h3>
+  <p>The Request Quote form has two hidden fields that record which distributor an enquiry relates to. They are added automatically the first time the form loads — you do not need to create them, and they are meant to look empty when you view the form. <strong>Do not delete them.</strong></p>
+
+  <h3>Setting up the HubSpot connection</h3>
+  <p>Only needed if you are using HubSpot. In Gravity Forms, open the Request Quote form, go to <span class="path">Settings &rarr; Webhooks</span>, and add a new one:</p>
+
+  <table>
+    <thead><tr><th style="width:30%">Field</th><th>What to enter</th></tr></thead>
+    <tbody>
+      <tr><td>Name</td><td>Anything recognisable — <em>HubSpot Contact</em> works well</td></tr>
+      <tr><td>Request URL</td><td>The same address shown in the API Endpoint setting (Section 7)</td></tr>
+      <tr><td>Request Method</td><td>POST</td></tr>
+      <tr><td>Request Format</td><td>JSON</td></tr>
+      <tr><td>Field mapping</td><td><strong>Leave empty.</strong> The locator fills this in itself</td></tr>
+      <tr><td>Headers</td><td><strong>Do not add your token here.</strong> It is attached automatically</td></tr>
+    </tbody>
+  </table>
+
+  <p>Save it. That is the whole setup — the two blank sections are correct, not oversights.</p>
+
+  <div class="box">
+    <span class="label">Worth knowing</span>
+    <p>If your site was copied across from a staging version, this connection came with it. Check whether one already exists before adding a second.</p>
+  </div>
+
+  <h3>Spam protection</h3>
+  <p>The quote form is public, which means it will eventually attract automated spam. Gravity Forms&rsquo; reCAPTCHA add-on is installed and should be switched on for this form before launch. It is a five-minute job for whoever manages your forms, and it saves distributors receiving junk enquiries with your name on them.</p>
+</section>
+
+<!-- ── 10 ─────────────────────────────────────────────── -->
+<section>
+  <h2><span class="n">Section 10</span>Placing your map pins</h2>
+  <p class="lede">A pin appears on the map only once a written address has been converted into a map position. That happens automatically, but it needs an address complete enough to identify.</p>
+
+  <h3>Running it</h3>
+  <p>Go to <span class="path">Distributors &rarr; Geocoding Status</span>. You will see how many addresses have been placed, how many are waiting, and how many could not be matched.</p>
+
+  <table>
+    <thead><tr><th style="width:34%">Button</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Run Geocoding</strong></td><td>Places every address not yet done. Safe to run at any time.</td></tr>
+      <tr><td><strong>Re-geocode All</strong></td><td>Tries again, including addresses that failed before. Use after correcting a batch of addresses.</td></tr>
+      <tr><td><strong>Cancel</strong></td><td>Stops a run in progress.</td></tr>
+    </tbody>
+  </table>
+
+  <p>The work happens in the background — start it and carry on with something else. A single company can also be done from the <strong>Run Geocode</strong> button in the distributor list.</p>
+
+  <h3>Why an address fails</h3>
+  <p>Almost always one of these: no city, no country, a PO box with no street address, a misspelled street name, or an international address written in an unfamiliar format. Correct the address on the record and run <strong>Re-geocode All</strong>. If it still fails, the address itself is probably wrong and worth checking with the distributor.</p>
+
+  <div class="box">
+    <span class="label">A distributor without a pin is not invisible</span>
+    <p>They still appear in every search their service area qualifies them for, with full contact details. Only the map pin is missing.</p>
+  </div>
+</section>
+
+<!-- ── 11 ─────────────────────────────────────────────── -->
+<section>
+  <h2><span class="n">Section 11</span>Considerations worth your attention</h2>
+  <p class="lede">Nine things that are easy to overlook and expensive to discover later. The first three are the ones that most often cause trouble.</p>
+
+  <h3>1. Email delivery needs setting up properly <span class="tag dev">Developer</span></h3>
+  <p>By default, websites send email in a way many mail systems treat as suspicious. Messages land in junk folders or disappear silently.</p>
+  <p>If that happens here, distributors will not receive their enquiries — and nobody would know, because the website reports everything as sent. Ask your host to configure proper email sending for the site and to add the standard sender records for your domain. It takes under an hour and it is the single most likely cause of &ldquo;we never got that lead&rdquo; after launch.</p>
+
+  <h3>2. Locations and service areas are different things</h3>
+  <p>This is the single most important idea in the system, and mixing the two up explains nearly every &ldquo;the search is broken&rdquo; report.</p>
+  <table>
+    <thead><tr><th style="width:24%"></th><th style="width:38%">Physical Locations</th><th>Service Zones</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Means</strong></td><td>Where their building is</td><td>Where they may sell</td></tr>
+      <tr><td><strong>Controls</strong></td><td>Their pin on the map</td><td>Whether they appear in a search</td></tr>
+      <tr><td><strong>If empty</strong></td><td>No pin, but still findable</td><td><strong>Never appears in any search</strong></td></tr>
+    </tbody>
+  </table>
+  <div class="example">
+    <span class="label">Why this matters in practice</span>
+    <p>A distributor based in Illinois who is authorised to sell into northern Mexico <em>should</em> appear when a customer in Monterrey searches their postal code — while their pin stays in Illinois. Both behaviours are correct.</p>
+    <p>And a newly added distributor with a perfect address but no service zones will have a pin on the map yet never appear in a single search result. That is the most common mistake when adding companies by hand.</p>
+  </div>
+
+  <h3>3. About half your addresses cannot be mapped yet</h3>
+  <p>Your records hold 685 individual addresses, of which <strong>337 can currently be placed on the map</strong>. The rest are missing a city, a postal code, or a country, or are PO boxes that do not correspond to a physical place.</p>
+  <p>Those distributors still appear in searches and are fully contactable — they simply have no pin, so the map looks sparser than it could. You can launch as-is, correct the worst offenders, or fix them gradually over time; the pin appears automatically once an address is complete.</p>
+
+  <h3>4. Protect your Google Maps key <span class="tag dev">Developer</span></h3>
+  <p>The map key is visible in your website&rsquo;s page source — that is unavoidable and normal. What matters is that it is restricted so it only works from your own domain, and that a spending limit is set on the Google account. Without those two measures, a copied key can be used elsewhere at your expense.</p>
+
+  <h3>5. Every HubSpot test creates a real contact</h3>
+  <p>There is no separate practice environment for your HubSpot account, so any test enquiry becomes a genuine contact in your live CRM — and may trigger whatever automations you have set up.</p>
+  <p>When testing, use an email address nobody has used before, keep a note of each one, and delete the test contacts afterwards. Never test with a real customer&rsquo;s address.</p>
+
+  <h3>6. Distributor email addresses are public</h3>
+  <p>All five addresses on each distributor record are shown on the locator so customers can make contact. That is the point of the page, but it does mean those addresses can be collected by automated scrapers, as with any published contact page. Worth knowing before you add a personal address to a record.</p>
+
+  <h3>7. The sales email field is doing more work than it looks</h3>
+  <p>Enquiry routing depends entirely on it. Changing its <em>value</em> is normal and expected. But if anyone renames or removes the field itself, enquiries quietly start going to the fallback address instead — with no error message, and possibly weeks before anyone notices.</p>
+
+  <h3>8. Deactivate, never delete</h3>
+  <p>Switching the plugin off is completely safe and reversible. <strong>Deleting it permanently destroys every address and service area you have entered.</strong> If you ever believe it should be removed entirely, take a backup and an export first.</p>
+
+  <h3>9. Always dry-run a spreadsheet import</h3>
+  <p>The import screen has a dry run option that reports exactly what would change, row by row, without saving anything. It costs a minute and catches mistakes that would otherwise take hours to unpick. Export a copy of your current data first — that file is how you get back if an import goes wrong.</p>
+</section>
+
+<!-- ── 12 ─────────────────────────────────────────────── -->
+<section>
+  <h2><span class="n">Section 12</span>Checking everything works</h2>
+  <p class="lede">Run through this once after setup and before you tell anyone the page is live. Twenty minutes, and it catches almost everything.</p>
+
+  <h4>The page itself</h4>
+  <ul class="check">
+    <li>The locator page loads, and the map appears rather than a blank grey area</li>
+    <li>Pins are visible, and clusters split apart as you zoom in</li>
+    <li>A ZIP or postal code search returns sensible results</li>
+    <li>A state search and a country search both work</li>
+    <li>Searching an area you know well returns the companies you expect</li>
+    <li>Clicking a pin opens the details, with correct phone and website</li>
+  </ul>
+
+  <h4>The enquiry journey</h4>
+  <ul class="check">
+    <li>The Request Quote button opens the form</li>
+    <li>The form submits without the page reloading, and confirms</li>
+    <li>The enquiry arrives at the correct distributor&rsquo;s inbox</li>
+    <li>If you set a CC address, it received a copy</li>
+    <li><span class="path">Distributors &rarr; Routing Log</span> shows the enquiry with a blue Info entry</li>
+    <li>If using HubSpot: the contact appears, with the right distributor and lead source</li>
+    <li>Your test contacts are deleted from HubSpot afterwards</li>
+  </ul>
+
+  <h4>On a phone</h4>
+  <ul class="check">
+    <li>The map and list switch cleanly between each other</li>
+    <li>Tapping a pin opens its details and keeps them open</li>
+    <li>The quote form is comfortable to fill in on a small screen</li>
+  </ul>
+</section>
+
+<!-- ── 13 ─────────────────────────────────────────────── -->
+<section>
+  <h2><span class="n">Section 13</span>If something looks wrong</h2>
+  <p class="lede">Work down the table. Most situations resolve in a couple of minutes.</p>
+
+  <table>
+    <thead><tr><th style="width:30%">What you are seeing</th><th style="width:33%">Most likely reason</th><th>What to do</th></tr></thead>
+    <tbody>
+      <tr><td>The Distributors menu has vanished</td><td>Toolset Types was deactivated</td><td>Reactivate it. Your data is safe (Section 1)</td></tr>
+      <tr><td>The map area is blank or grey</td><td>A problem with the Google Maps account or key</td><td>Check the key and that billing is active (Section 5)</td></tr>
+      <tr><td>The map loads but no pins appear</td><td>Map ID missing, or addresses not yet placed</td><td>Check the Map ID, then Section 10</td></tr>
+      <tr><td>A distributor never appears in searches</td><td>No service zones on their record</td><td>Add the areas they cover (Section 11)</td></tr>
+      <tr><td>One distributor has no pin</td><td>Their address could not be matched</td><td>Check it is complete, then re-geocode</td></tr>
+      <tr><td>An edit is not showing on the site</td><td>A cached copy of the page</td><td>Refresh; if it persists, Clear Search Cache</td></tr>
+      <tr><td>A distributor says enquiries never arrive</td><td>Sales email missing or mistyped, or their spam filter</td><td>Check the Routing Log to see where it went</td></tr>
+      <tr><td>A distributor receives two copies</td><td>A duplicate notification on the form</td><td>Ask for help — do not change the form</td></tr>
+      <tr><td>Enquiries stop reaching HubSpot</td><td>The token has expired or been revoked</td><td>Use Test connection (Section 7). Emails are unaffected</td></tr>
+    </tbody>
+  </table>
+
+  <div class="box">
+    <span class="label">Email and HubSpot are deliberately independent</span>
+    <p>The enquiry is emailed to the distributor first, and sent to HubSpot second. If HubSpot is down or misconfigured, <strong>the distributor still receives the enquiry</strong> — that was a requirement of the build and it has been tested by deliberately breaking the connection. The reverse holds too, so when something is amiss, check both rather than assuming one explains the other.</p>
+  </div>
+</section>
+
+<!-- ── 14 ─────────────────────────────────────────────── -->
+<section>
+  <h2><span class="n">Section 14</span>Getting help</h2>
+  <p class="lede">Before reporting anything, check the Routing Log for enquiry problems and the Geocoding Status page for map problems. They answer most questions on their own.</p>
+
+  <h3>What to include</h3>
+  <ul>
+    <li>The page address where you saw the problem</li>
+    <li>What you searched for, or what you submitted</li>
+    <li>What you expected, and what happened instead</li>
+    <li>The date and time</li>
+    <li>A screenshot, if there is anything to see</li>
+    <li>For enquiry problems: the relevant line from the Routing Log</li>
+  </ul>
+
+  <h3>What not to do first</h3>
+  <p>Two reflexes make things worse rather than better:</p>
+  <ul>
+    <li><strong>Do not delete or reinstall the plugin</strong> to &ldquo;reset&rdquo; it. Deleting destroys your addresses and service areas.</li>
+    <li><strong>Do not rebuild the quote form.</strong> Rebuilding it breaks the link between enquiries and distributors, and enquiries start arriving with no way of knowing who they were for.</li>
+  </ul>
+  <p>Almost every problem is a display or delivery issue rather than a data one, and can be corrected without touching either.</p>
+
+  <h3>Your contacts</h3>
+  <table>
+    <tbody>
+      <tr><td style="width:38%"><strong>Support contact</strong></td><td><span class="fill"></span></td></tr>
+      <tr><td><strong>Hosting provider</strong></td><td><span class="fill"></span></td></tr>
+      <tr><td><strong>HubSpot administrator</strong></td><td><span class="fill"></span></td></tr>
+      <tr><td><strong>Google account owner</strong></td><td><span class="fill"></span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="footer-note">
+    Taylor Distributor Locator — Installation &amp; Settings Guide, version 1.0, 17 August 2026. Applies to plugin version 0.6.0. A separate technical document covers server-level installation and configuration in detail.
+  </div>
+</section>
+
+</div>
+</body>
+</html>

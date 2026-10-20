@@ -58,27 +58,40 @@ class TDL_Shortcode {
             'zoom' => $atts['zoom'],
             'centerLat' => $atts['center_lat'],
             'centerLng' => $atts['center_lng'],
-            'mapId' => get_option('tdl_google_maps_map_id', ''),
+            'mapId'                => get_option('tdl_google_maps_map_id', ''),
+            'showCityTab'              => (bool) get_option( 'tdl_show_city_tab', true ),
+            'gfFormId'                 => TDL_GF_Integration::get_form_id(),
+            'gfDistributorFieldId'     => TDL_GF_Integration::get_distributor_field_id(),
+            'gfDistributorNameFieldId' => TDL_GF_Integration::get_distributor_name_field_id(),
             'i18n' => [
-                'searchPlaceholder' => __('Enter ZIP code, city, state, or country...', 'taylor-distributor-locator'),
-                'search' => __('Search', 'taylor-distributor-locator'),
-                'searching' => __('Searching distributors...', 'taylor-distributor-locator'),
-                'noResults' => __('No distributors found.', 'taylor-distributor-locator'),
-                'distributorsFound' => __('%d distributor(s) found', 'taylor-distributor-locator'),
-                'visitWebsite' => __('Visit Website', 'taylor-distributor-locator'),
-                'getDirections' => __('Get Directions', 'taylor-distributor-locator'),
-                'additionalLocations' => __('%d additional location(s)', 'taylor-distributor-locator'),
-                'error' => __('An error occurred. Please try again.', 'taylor-distributor-locator'),
-                'serviceArea' => __('Service Area', 'taylor-distributor-locator'),
-                'emailMain' => __('Main', 'taylor-distributor-locator'),
-                'emailSales' => __('Sales', 'taylor-distributor-locator'),
-                'emailParts' => __('Parts', 'taylor-distributor-locator'),
-                'emailService' => __('Service', 'taylor-distributor-locator'),
-                'emailInstalls' => __('Installations', 'taylor-distributor-locator'),
-                'hours' => __('Hours of Operation', 'taylor-distributor-locator'),
+                'searchPlaceholder' => TDL_WPML::translate( 'search_placeholder',   __( 'Enter ZIP code, city, state, or country...', 'taylor-distributor-locator' ) ),
+                'search'            => TDL_WPML::translate( 'search_button',        __( 'Search', 'taylor-distributor-locator' ) ),
+                'searching'         => TDL_WPML::translate( 'searching',            __( 'Searching distributors...', 'taylor-distributor-locator' ) ),
+                'noResults'         => TDL_WPML::translate( 'no_results',           __( 'No distributors found.', 'taylor-distributor-locator' ) ),
+                'distributorsFound' => TDL_WPML::translate( 'distributors_found',   __( '%d distributor(s) found', 'taylor-distributor-locator' ) ),
+                'visitWebsite'      => TDL_WPML::translate( 'visit_website',        __( 'Visit Website', 'taylor-distributor-locator' ) ),
+                'getDirections'     => TDL_WPML::translate( 'get_directions',       __( 'Get Directions', 'taylor-distributor-locator' ) ),
+                'additionalLocations' => TDL_WPML::translate( 'additional_locations', __( '%d additional location(s)', 'taylor-distributor-locator' ) ),
+                'error'             => TDL_WPML::translate( 'error_generic',        __( 'An error occurred. Please try again.', 'taylor-distributor-locator' ) ),
+                'requestQuote'      => TDL_WPML::translate( 'request_quote',        __( 'Request Quote', 'taylor-distributor-locator' ) ),
+                'serviceArea'       => TDL_WPML::translate( 'service_area',         __( 'Service Area', 'taylor-distributor-locator' ) ),
+                'emailMain'         => TDL_WPML::translate( 'email_main_label',     __( 'Main', 'taylor-distributor-locator' ) ),
+                'emailSales'        => TDL_WPML::translate( 'email_sales_label',    __( 'Sales', 'taylor-distributor-locator' ) ),
+                'emailParts'        => TDL_WPML::translate( 'email_parts_label',    __( 'Parts', 'taylor-distributor-locator' ) ),
+                'emailService'      => TDL_WPML::translate( 'email_service_label',  __( 'Service', 'taylor-distributor-locator' ) ),
+                'emailInstalls'     => TDL_WPML::translate( 'email_installs_label', __( 'Installations', 'taylor-distributor-locator' ) ),
+                'hours'             => TDL_WPML::translate( 'hours_label',          __( 'Hours of Operation', 'taylor-distributor-locator' ) ),
             ],
         ];
         
+        // Render the GF quote form HTML (also enqueues GF scripts).
+        // gravity_form() with $ajax=true uses GF's built-in AJAX submission — no page reload.
+        // $echo=false returns HTML so we can embed it in the modal template.
+        $gf_form_html = '';
+        if ( class_exists( 'GFForms' ) && $config['gfFormId'] > 0 ) {
+            $gf_form_html = gravity_form( $config['gfFormId'], false, false, false, null, true, 0, false );
+        }
+
         // Start output buffering
         ob_start();
         
@@ -134,10 +147,33 @@ class TDL_Shortcode {
                 '1.9.4',
                 true
             );
+            // Leaflet MarkerCluster
+            wp_enqueue_style(
+                'leaflet-markercluster',
+                'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css',
+                ['leaflet'],
+                '1.5.3'
+            );
+            wp_enqueue_style(
+                'leaflet-markercluster-default',
+                'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css',
+                ['leaflet-markercluster'],
+                '1.5.3'
+            );
+            wp_enqueue_script(
+                'leaflet-markercluster',
+                'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js',
+                ['leaflet'],
+                '1.5.3',
+                true
+            );
             $script_deps[] = 'leaflet';
+            $script_deps[] = 'leaflet-markercluster';
         }
 
-        // Plugin JS
+        // Plugin JS — in_footer:true keeps it non-render-blocking.
+        // Google Maps API already uses loading=async in its URL; Leaflet tiles
+        // load lazily by default. No additional defer needed here.
         wp_enqueue_script(
             'tdl-locator',
             TDL_PLUGIN_URL . 'assets/js/tdl-locator.js',
@@ -145,13 +181,23 @@ class TDL_Shortcode {
             TDL_VERSION,
             true
         );
-        
-        // Google Maps API - must load after our script with callback
+
+        // Google Maps API + MarkerClusterer.
+        // Clusterer is loaded before the Maps API so it's available when the
+        // Maps API callback (tdlInitMap) fires. The clusterer UMD bundle
+        // doesn't reference google.maps at parse time — only at runtime.
         if ($map_provider === 'google' && !empty($api_key)) {
+            wp_enqueue_script(
+                'google-markerclusterer',
+                'https://unpkg.com/@googlemaps/markerclusterer@2.5.3/dist/index.min.js',
+                ['tdl-locator'],
+                '2.5.3',
+                true
+            );
             wp_enqueue_script(
                 'google-maps',
                 'https://maps.googleapis.com/maps/api/js?key=' . esc_attr($api_key) . '&callback=tdlInitMap&libraries=marker,places&v=weekly&loading=async',
-                ['tdl-locator'],
+                ['google-markerclusterer'],
                 null,
                 true
             );

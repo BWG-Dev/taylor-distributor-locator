@@ -487,3 +487,27 @@ Current branch recommendation
 Whether any blockers exist
 Whether code changes are allowed yet
 Do not modify files until a concrete plan is approved.
+
+## Project Memory Files
+
+In addition to this CLAUDE.md file, always use these project-memory files when they exist:
+
+- PROJECT_NOTES.md — current project state, verified status, known issues, and next step.
+- PHASE_PLAN.md — module-by-module implementation plan and status.
+- DECISIONS.md — approved technical and business decisions.
+- DEV_LOG.md — dated work history and session summaries.
+- TODO.md — active checklist.
+
+At the start of each session:
+1. Read CLAUDE.md.
+2. Read PROJECT_NOTES.md, PHASE_PLAN.md, DECISIONS.md, DEV_LOG.md, and TODO.md if present.
+3. Check git status.
+4. Summarize the current module, current state, blockers, and next safest step.
+5. Do not modify files until a concrete plan is approved.
+
+At the end of each completed task or phase:
+1. Update PROJECT_NOTES.md.
+2. Update DEV_LOG.md.
+3. Update TODO.md.
+4. Update PHASE_PLAN.md if phase/module status changed.
+5. Update DECISIONS.md if a new decision was made.

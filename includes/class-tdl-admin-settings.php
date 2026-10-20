@@ -18,6 +18,7 @@ class TDL_Admin_Settings {
         add_action('admin_footer', [__CLASS__, 'render_settings_scripts']);
         add_action('admin_init', [__CLASS__, 'process_clear_cache']);
         add_action('admin_notices', [__CLASS__, 'render_admin_notices']);
+        add_action('wp_ajax_tdl_hubspot_test', [__CLASS__, 'ajax_hubspot_test']);
     }
     
     /**
@@ -156,6 +157,24 @@ class TDL_Admin_Settings {
             ['name' => 'tdl_results_per_page', 'min' => 1, 'max' => 100]
         );
         
+        // Show City/Region search tab
+        register_setting('tdl_settings', 'tdl_show_city_tab', [
+            'type'              => 'boolean',
+            'sanitize_callback' => [__CLASS__, 'sanitize_checkbox'],
+            'default'           => true,
+        ]);
+        add_settings_field(
+            'tdl_show_city_tab',
+            __('Show City / Region Tab', 'taylor-distributor-locator'),
+            [__CLASS__, 'render_checkbox_field'],
+            'tdl-settings',
+            'tdl_general_section',
+            [
+                'name'        => 'tdl_show_city_tab',
+                'label'       => __('Show the City / Region search tab on the frontend locator', 'taylor-distributor-locator'),
+            ]
+        );
+
         // Cache Duration
         register_setting('tdl_settings', 'tdl_cache_duration', [
             'type' => 'integer',
@@ -180,6 +199,155 @@ class TDL_Admin_Settings {
             'tdl_general_section'
         );
         
+        // Email Routing section — M8 settings.
+        add_settings_section(
+            'tdl_email_section',
+            __('Email Routing', 'taylor-distributor-locator'),
+            [__CLASS__, 'render_email_section_description'],
+            'tdl-settings'
+        );
+
+        // CC Email — awaiting client confirmation; empty by default.
+        register_setting('tdl_settings', 'tdl_cc_email', [
+            'type'              => 'string',
+            'sanitize_callback' => 'sanitize_email',
+            'default'           => '',
+        ]);
+        add_settings_field(
+            'tdl_cc_email',
+            __('CC Email (optional)', 'taylor-distributor-locator'),
+            [__CLASS__, 'render_cc_email_field'],
+            'tdl-settings',
+            'tdl_email_section'
+        );
+
+        // GF Quote Form ID — configurable in case the form is recreated.
+        register_setting('tdl_settings', 'tdl_gf_quote_form_id', [
+            'type'              => 'integer',
+            'sanitize_callback' => 'absint',
+            'default'           => 1,
+        ]);
+        add_settings_field(
+            'tdl_gf_quote_form_id',
+            __('Quote Form ID', 'taylor-distributor-locator'),
+            [__CLASS__, 'render_number_field'],
+            'tdl-settings',
+            'tdl_email_section',
+            ['name' => 'tdl_gf_quote_form_id', 'min' => 1, 'max' => 9999]
+        );
+
+        // HubSpot Integration section — M9 settings.
+        // Every value the integration needs lives here so nothing is hardcoded
+        // and the client can adjust property names without a code change.
+        add_settings_section(
+            'tdl_hubspot_section',
+            __('HubSpot Integration', 'taylor-distributor-locator'),
+            [__CLASS__, 'render_hubspot_section_description'],
+            'tdl-settings'
+        );
+
+        register_setting('tdl_settings', TDL_HubSpot::OPT_ENABLED, [
+            'type'              => 'boolean',
+            'sanitize_callback' => [__CLASS__, 'sanitize_checkbox'],
+            'default'           => false,
+        ]);
+        add_settings_field(
+            TDL_HubSpot::OPT_ENABLED,
+            __('Enable HubSpot', 'taylor-distributor-locator'),
+            [__CLASS__, 'render_hubspot_enabled_field'],
+            'tdl-settings',
+            'tdl_hubspot_section'
+        );
+
+        // Token is write-only in the UI: the stored value is never rendered back.
+        register_setting('tdl_settings', TDL_HubSpot::OPT_TOKEN, [
+            'type'              => 'string',
+            'sanitize_callback' => [__CLASS__, 'sanitize_hubspot_token'],
+            'default'           => '',
+        ]);
+        add_settings_field(
+            TDL_HubSpot::OPT_TOKEN,
+            __('Access Token', 'taylor-distributor-locator'),
+            [__CLASS__, 'render_hubspot_token_field'],
+            'tdl-settings',
+            'tdl_hubspot_section'
+        );
+
+        register_setting('tdl_settings', TDL_HubSpot::OPT_ENDPOINT, [
+            'type'              => 'string',
+            'sanitize_callback' => 'esc_url_raw',
+            'default'           => TDL_HubSpot::DEFAULT_ENDPOINT,
+        ]);
+        add_settings_field(
+            TDL_HubSpot::OPT_ENDPOINT,
+            __('API Endpoint', 'taylor-distributor-locator'),
+            [__CLASS__, 'render_hubspot_endpoint_field'],
+            'tdl-settings',
+            'tdl_hubspot_section'
+        );
+
+        // Property names — sanitize_key would lowercase and strip, which is exactly
+        // the character set HubSpot internal names use.
+        $hubspot_props = [
+            TDL_HubSpot::OPT_PROP_COMPANY => [
+                'label'   => __('Company Property', 'taylor-distributor-locator'),
+                'default' => TDL_HubSpot::DEFAULT_PROP_COMPANY,
+                'desc'    => __('HubSpot internal name for the company field.', 'taylor-distributor-locator'),
+            ],
+            TDL_HubSpot::OPT_PROP_DIST => [
+                'label'   => __('Distributor Property', 'taylor-distributor-locator'),
+                'default' => TDL_HubSpot::DEFAULT_PROP_DIST,
+                'desc'    => __('Must be a free-text property. Do not use "taylor_distributor" — it is a dropdown covering only 35 US distributors, and HubSpot silently discards unmatched values.', 'taylor-distributor-locator'),
+            ],
+            TDL_HubSpot::OPT_PROP_MESSAGE => [
+                'label'   => __('Message Property', 'taylor-distributor-locator'),
+                'default' => TDL_HubSpot::DEFAULT_PROP_MESSAGE,
+                'desc'    => __('HubSpot internal name for the message/needs field.', 'taylor-distributor-locator'),
+            ],
+            TDL_HubSpot::OPT_PROP_SOURCE => [
+                'label'   => __('Lead Source Property', 'taylor-distributor-locator'),
+                'default' => TDL_HubSpot::DEFAULT_PROP_SOURCE,
+                'desc'    => __('Leave blank to omit lead source entirely. Note the portal also has "leadsource" (a Salesforce-synced dropdown) — that one requires the option to exist first.', 'taylor-distributor-locator'),
+            ],
+        ];
+
+        foreach ($hubspot_props as $option => $meta) {
+            register_setting('tdl_settings', $option, [
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_key',
+                'default'           => $meta['default'],
+            ]);
+            add_settings_field(
+                $option,
+                $meta['label'],
+                [__CLASS__, 'render_hubspot_prop_field'],
+                'tdl-settings',
+                'tdl_hubspot_section',
+                ['name' => $option, 'default' => $meta['default'], 'desc' => $meta['desc']]
+            );
+        }
+
+        register_setting('tdl_settings', TDL_HubSpot::OPT_SOURCE_VALUE, [
+            'type'              => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'default'           => TDL_HubSpot::DEFAULT_SOURCE_VALUE,
+        ]);
+        add_settings_field(
+            TDL_HubSpot::OPT_SOURCE_VALUE,
+            __('Lead Source Value', 'taylor-distributor-locator'),
+            [__CLASS__, 'render_hubspot_source_value_field'],
+            'tdl-settings',
+            'tdl_hubspot_section'
+        );
+
+        add_settings_field(
+            'tdl_hubspot_test',
+            __('Connection', 'taylor-distributor-locator'),
+            [__CLASS__, 'render_hubspot_test_field'],
+            'tdl-settings',
+            'tdl_hubspot_section'
+        );
+
         // Colors settings section
         add_settings_section(
             'tdl_colors_section',
@@ -237,6 +405,209 @@ class TDL_Admin_Settings {
         <?php
     }
     
+    /**
+     * Render email routing section description
+     */
+    public static function render_email_section_description() {
+        echo '<p>' . esc_html__( 'Configure email routing for the distributor quote form. Quote requests are routed to each distributor\'s Sales Email field, with fallback to Main Email.', 'taylor-distributor-locator' ) . '</p>';
+    }
+
+    /**
+     * Render the CC email field
+     */
+    public static function render_cc_email_field() {
+        $value = get_option( 'tdl_cc_email', '' );
+        printf(
+            '<input type="email" name="tdl_cc_email" value="%s" class="regular-text" placeholder="%s" />',
+            esc_attr( $value ),
+            esc_attr__( 'e.g. team@taylorcompany.com', 'taylor-distributor-locator' )
+        );
+        echo '<p class="description">' . esc_html__( 'Optional. When set, all routed quote emails also CC this address. Leave blank until the client confirms the address.', 'taylor-distributor-locator' ) . '</p>';
+    }
+
+    // ── HubSpot (M9) ───────────────────────────────────────────────────────────
+
+    /**
+     * Render HubSpot section description
+     */
+    public static function render_hubspot_section_description() {
+        echo '<p>' . esc_html__( 'Sends quote-form submissions to HubSpot as contacts. Transport is the Gravity Forms Webhooks Add-On — you must also add a Webhook feed on the quote form pointing at the API endpoint below (method POST, format JSON). The access token is attached automatically; do not enter it in the Gravity Forms feed.', 'taylor-distributor-locator' ) . '</p>';
+        echo '<p>' . esc_html__( 'A HubSpot failure never blocks distributor email routing. Results are recorded under Distributors → Routing Log, prefixed [HubSpot].', 'taylor-distributor-locator' ) . '</p>';
+    }
+
+    /**
+     * Render the HubSpot enable checkbox
+     */
+    public static function render_hubspot_enabled_field() {
+        $enabled = (bool) get_option( TDL_HubSpot::OPT_ENABLED, false );
+        printf(
+            '<label><input type="checkbox" name="%s" value="1" %s /> %s</label>',
+            esc_attr( TDL_HubSpot::OPT_ENABLED ),
+            checked( $enabled, true, false ),
+            esc_html__( 'Send quote submissions to HubSpot', 'taylor-distributor-locator' )
+        );
+        echo '<p class="description">' . esc_html__( 'When unchecked, the webhook is aborted before any HTTP request is made.', 'taylor-distributor-locator' ) . '</p>';
+    }
+
+    /**
+     * Render the access token field.
+     *
+     * The stored token is never echoed back into the page — only a masked hint.
+     * Submitting the field empty preserves the existing value.
+     */
+    public static function render_hubspot_token_field() {
+        if ( TDL_HubSpot::token_is_from_constant() ) {
+            printf(
+                '<input type="text" class="regular-text" value="%s" disabled />',
+                esc_attr__( 'Defined in wp-config.php', 'taylor-distributor-locator' )
+            );
+            echo '<p class="description">' . esc_html__( 'TDL_HUBSPOT_TOKEN is set in wp-config.php and takes precedence over this field. This is the recommended production setup — the credential stays out of the database.', 'taylor-distributor-locator' ) . '</p>';
+            return;
+        }
+
+        $stored = (string) get_option( TDL_HubSpot::OPT_TOKEN, '' );
+        printf(
+            '<input type="password" name="%s" value="" class="regular-text" autocomplete="new-password" placeholder="%s" />',
+            esc_attr( TDL_HubSpot::OPT_TOKEN ),
+            esc_attr( $stored !== '' ? self::mask_secret( $stored ) : 'pat-na1-…' )
+        );
+
+        if ( $stored !== '' ) {
+            echo '<p class="description">' . esc_html__( 'A token is stored. Leave blank to keep it, or paste a new one to replace it.', 'taylor-distributor-locator' ) . '</p>';
+        }
+        echo '<p class="description">' . wp_kses_post( __( 'Preferred: define <code>TDL_HUBSPOT_TOKEN</code> in <code>wp-config.php</code> instead, so the credential is never stored in the database.', 'taylor-distributor-locator' ) ) . '</p>';
+    }
+
+    /**
+     * Keep the existing token when the field is submitted empty, so the masked
+     * placeholder cannot silently wipe a working credential.
+     */
+    public static function sanitize_hubspot_token( $value ) {
+        $value = trim( (string) $value );
+
+        // Strip common copy/paste artifacts: wrapping quotes, and trailing
+        // backslashes or whitespace picked up from wrapped terminal output or
+        // chat clients. A single stray character produces an opaque HTTP 401,
+        // so it is worth removing them here rather than debugging it later.
+        $value = trim( $value, "\"' \t\n\r\0\x0B\\" );
+
+        if ( $value === '' ) {
+            return (string) get_option( TDL_HubSpot::OPT_TOKEN, '' );
+        }
+        return sanitize_text_field( $value );
+    }
+
+    /**
+     * Show enough of a secret to identify it, never enough to use it.
+     */
+    private static function mask_secret( $secret ) {
+        $secret = (string) $secret;
+        if ( strlen( $secret ) < 12 ) {
+            return str_repeat( '•', 8 );
+        }
+        return substr( $secret, 0, 8 ) . str_repeat( '•', 8 ) . substr( $secret, -4 );
+    }
+
+    /**
+     * Render the API endpoint field
+     */
+    public static function render_hubspot_endpoint_field() {
+        $value = (string) get_option( TDL_HubSpot::OPT_ENDPOINT, TDL_HubSpot::DEFAULT_ENDPOINT );
+        printf(
+            '<input type="url" name="%s" value="%s" class="large-text code" />',
+            esc_attr( TDL_HubSpot::OPT_ENDPOINT ),
+            esc_attr( $value )
+        );
+        echo '<p class="description">' . esc_html__( 'This exact URL must also be set as the Request URL on the Gravity Forms Webhook feed — the feed is only recognised as a HubSpot feed if it points at hubapi.com.', 'taylor-distributor-locator' ) . '</p>';
+    }
+
+    /**
+     * Render a HubSpot property-name field
+     */
+    public static function render_hubspot_prop_field( $args ) {
+        $name  = $args['name'];
+        $value = (string) get_option( $name, $args['default'] );
+        printf(
+            '<input type="text" name="%s" value="%s" class="regular-text code" placeholder="%s" />',
+            esc_attr( $name ),
+            esc_attr( $value ),
+            esc_attr( $args['default'] )
+        );
+        if ( ! empty( $args['desc'] ) ) {
+            echo '<p class="description">' . esc_html( $args['desc'] ) . '</p>';
+        }
+    }
+
+    /**
+     * Render the lead source value field
+     */
+    public static function render_hubspot_source_value_field() {
+        $value = (string) get_option( TDL_HubSpot::OPT_SOURCE_VALUE, TDL_HubSpot::DEFAULT_SOURCE_VALUE );
+        printf(
+            '<input type="text" name="%s" value="%s" class="regular-text" />',
+            esc_attr( TDL_HubSpot::OPT_SOURCE_VALUE ),
+            esc_attr( $value )
+        );
+        echo '<p class="description">' . esc_html__( 'Value written to the Lead Source property on every locator lead.', 'taylor-distributor-locator' ) . '</p>';
+    }
+
+    /**
+     * Render the connection test button.
+     * Read-only — calls HubSpot's account-info endpoint, touches no CRM records.
+     */
+    public static function render_hubspot_test_field() {
+        $nonce = wp_create_nonce( 'tdl_hubspot_test' );
+        ?>
+        <button type="button" class="button" id="tdl-hubspot-test"><?php esc_html_e( 'Test connection', 'taylor-distributor-locator' ); ?></button>
+        <span id="tdl-hubspot-test-result" style="margin-left:10px;"></span>
+        <p class="description"><?php esc_html_e( 'Verifies the token and reports the portal ID and whether it is a production or sandbox account. Saves settings first if you have unsaved changes.', 'taylor-distributor-locator' ); ?></p>
+        <script>
+        (function () {
+            var btn = document.getElementById('tdl-hubspot-test');
+            if (!btn) { return; }
+            btn.addEventListener('click', function () {
+                var out = document.getElementById('tdl-hubspot-test-result');
+                btn.disabled = true;
+                out.textContent = <?php echo wp_json_encode( __( 'Checking…', 'taylor-distributor-locator' ) ); ?>;
+                var body = new URLSearchParams();
+                body.append('action', 'tdl_hubspot_test');
+                body.append('nonce', <?php echo wp_json_encode( $nonce ); ?>);
+                fetch(ajaxurl, { method: 'POST', credentials: 'same-origin', body: body })
+                    .then(function (r) { return r.json(); })
+                    .then(function (res) {
+                        var ok = res && res.success;
+                        out.textContent = (ok ? '✓ ' : '✗ ') + ((res.data && res.data.message) || '');
+                        out.style.color = ok ? '#1d7d3f' : '#b32d2e';
+                    })
+                    .catch(function () {
+                        out.textContent = <?php echo wp_json_encode( __( 'Request failed.', 'taylor-distributor-locator' ) ); ?>;
+                        out.style.color = '#b32d2e';
+                    })
+                    .finally(function () { btn.disabled = false; });
+            });
+        })();
+        </script>
+        <?php
+    }
+
+    /**
+     * AJAX: run the read-only HubSpot connection test.
+     */
+    public static function ajax_hubspot_test() {
+        check_ajax_referer( 'tdl_hubspot_test', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => __( 'Permission denied.', 'taylor-distributor-locator' ) ] );
+        }
+
+        $result = TDL_HubSpot::test_connection();
+
+        if ( empty( $result['ok'] ) ) {
+            wp_send_json_error( [ 'message' => $result['message'] ] );
+        }
+        wp_send_json_success( [ 'message' => $result['message'] ] );
+    }
+
     /**
      * Render colors section description
      */
@@ -300,6 +671,26 @@ class TDL_Admin_Settings {
         );
     }
     
+    /**
+     * Render a checkbox field
+     */
+    public static function render_checkbox_field( $args ) {
+        $value = get_option( $args['name'], true );
+        printf(
+            '<label><input type="checkbox" name="%s" value="1" %s /> %s</label>',
+            esc_attr( $args['name'] ),
+            checked( $value, true, false ),
+            esc_html( $args['label'] ?? '' )
+        );
+    }
+
+    /**
+     * Sanitize checkbox to boolean — unchecked sends nothing, checked sends '1'.
+     */
+    public static function sanitize_checkbox( $value ): bool {
+        return ! empty( $value );
+    }
+
     /**
      * Get a color setting with fallback
      */
